@@ -3,1041 +3,1700 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Five Nights at Meester Gijs</title>
+<title>Five Nights at Meester Gijs — VR</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Creepster&family=VT323&display=swap');
-
-*{margin:0;padding:0;box-sizing:border-box;user-select:none}
-:root{
-  --red:#c0121a;--redhi:#ff2233;
-  --green:#1db954;--greenlo:#0d4a22;
-  --amber:#e8920a;--amberlo:#3a2200;
-  --blue:#1e90ff;--bluelo:#001a3a;
-  --bg:#06060a;--wall:#0e0e14;--panel:#111118;
-  --border:#1c1c28;--borderhi:#2a2a3a;
-  --text:#8888aa;--texthi:#ccccdd;
-  --scan: repeating-linear-gradient(0deg,rgba(0,0,0,.08) 0px,rgba(0,0,0,.08) 1px,transparent 1px,transparent 3px);
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#000; overflow:hidden; font-family:'Share Tech Mono',monospace; }
+#overlay {
+  position:fixed; inset:0; z-index:100;
+  background:radial-gradient(ellipse at center,#0c0000,#000);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  color:#cc0000; font-family:monospace;
 }
-html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Share Tech Mono',monospace}
-.screen{position:absolute;inset:0;display:none}
-
-/* ══ WARNING SCREEN ══ */
-#warnScreen{
-  position:fixed;inset:0;z-index:300;
-  background:#000;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:20px;
+#overlay h1 { font-size:clamp(1.8rem,5vw,3.5rem); letter-spacing:4px; text-shadow:0 0 30px #ff000088; margin-bottom:10px; }
+#overlay p { color:#664444; font-size:.85rem; letter-spacing:2px; margin-bottom:6px; max-width:520px; text-align:center; }
+.menu-btn {
+  margin-top:18px; padding:12px 40px;
+  background:transparent; border:1px solid #660000; color:#880000;
+  font-family:monospace; font-size:1rem; letter-spacing:4px;
+  cursor:pointer; transition:all .2s;
 }
-.warn-flicker{
-  position:absolute;inset:0;pointer-events:none;z-index:0;
-  background:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0px,rgba(0,0,0,.12) 1px,transparent 1px,transparent 4px);
-  animation:warnScan 8s linear infinite;
+.menu-btn:hover { border-color:#cc0000; color:#ff2200; box-shadow:0 0 20px #66000055; }
+.menu-btn.active { border-color:#33ff77; color:#33ff77; }
+.night-grid { display:flex; gap:10px; margin:14px 0; flex-wrap:wrap; justify-content:center; }
+.nb { padding:10px 16px; border:1px solid #1a0000; color:#330000; background:#000; cursor:pointer; font-family:monospace; font-size:.75rem; letter-spacing:2px; transition:all .15s; }
+.nb:hover { border-color:#440000; color:#770000; }
+.nb.sel { border-color:#880000; color:#cc0000; background:rgba(180,0,0,.06); }
+#hud2d {
+  position:fixed; top:0; left:0; right:0; z-index:50;
+  padding:10px 16px; display:flex; justify-content:space-between; align-items:flex-start;
+  pointer-events:none; display:none;
 }
-@keyframes warnScan{0%{background-position:0 0}100%{background-position:0 100%}}
-.warn-box{
-  position:relative;z-index:2;
-  max-width:min(600px,90vw);
-  border:2px solid #ff0000;
-  background:#000;
-  padding:36px 40px;
-  box-shadow:0 0 40px rgba(255,0,0,.25),inset 0 0 60px rgba(255,0,0,.04);
-  animation:warnBoxPulse 2s ease-in-out infinite;
+.hud-panel { background:rgba(4,4,10,.95); border:1px solid #2a2a44; padding:8px 14px; pointer-events:all; }
+.hud-time { font-size:1.8rem; color:#e8920a; font-family:monospace; letter-spacing:2px; }
+.hud-small { font-size:.55rem; color:#5555aa; letter-spacing:3px; }
+.o2-bar-wrap { width:160px; }
+.bar-track { height:8px; background:#040810; border:1px solid #0a1828; margin:4px 0; }
+.bar-fill { height:100%; background:linear-gradient(90deg,#0055ee,#55bbff); transition:width .5s; }
+.bar-fill.warn { background:linear-gradient(90deg,#cc6600,#ffaa00); }
+.bar-fill.crit { background:linear-gradient(90deg,#cc0000,#ff3300); animation:bCrit .35s infinite; }
+@keyframes bCrit { 50%{opacity:.3} }
+.action-btns { display:flex; flex-direction:column; gap:6px; }
+.act-btn { padding:8px 16px; background:rgba(8,8,26,.95); border:1px solid #7777cc; color:#ddddff; font-family:monospace; font-size:.65rem; letter-spacing:3px; cursor:pointer; transition:all .15s; }
+.act-btn:hover { border-color:#aaaaee; color:#fff; }
+.act-btn.active { border-color:#33ff77; color:#55ff99; background:rgba(20,160,70,.14); }
+.act-btn.warn { border-color:#ff6600; color:#ff9900; animation:btnWarn .6s infinite; }
+@keyframes btnWarn { 50%{opacity:.5} }
+#camUi { position:fixed; inset:0; z-index:60; background:rgba(2,3,2,.97); display:none; flex-direction:column; padding:10px; gap:8px; }
+.cam-feed-wrap { flex:1; position:relative; background:#020602; border:1px solid #0a140a; min-height:0; }
+#camCanvas2d { position:absolute; inset:0; width:100%; height:100%; }
+.cam-strip2d { display:flex; gap:6px; height:70px; }
+.ct2 { flex:1; background:#010601; border:1px solid #0a140a; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:monospace; font-size:.55rem; color:#226622; letter-spacing:2px; transition:border-color .15s; position:relative; }
+.ct2:hover,.ct2.on { border-color:#33bb55; }
+.ct2 .cdot { position:absolute; top:4px; right:4px; width:6px; height:6px; border-radius:50%; display:none; }
+.cdot.gd { background:#ff2200; display:block; animation:dp .6s infinite; }
+.cdot.hd { background:#ff9900; display:block; animation:dp .5s infinite; }
+.cdot.jd { background:#cc3300; display:block; animation:dp .7s infinite; }
+.cdot.cpd { background:#ff6600; display:block; animation:dp .9s infinite; }
+.cdot.dd { background:#ff00ff; display:block; animation:dp .5s infinite; }
+@keyframes dp { 50%{opacity:0} }
+.cam-hdr2d { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #0c140c; padding-bottom:8px; }
+.cam-close2d { background:transparent; border:1px solid #222; color:#444; padding:5px 14px; font-family:monospace; font-size:.6rem; cursor:pointer; }
+.cam-close2d:hover { border-color:#666; color:#888; }
+.mb-panel2d { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(0deg,rgba(0,0,0,.95),rgba(0,0,0,.6)); padding:8px 12px; display:none; flex-direction:column; gap:6px; }
+.mb-wind-btn { padding:8px; background:rgba(50,38,0,.7); border:1px solid #5a4400; color:#bbaa33; font-family:monospace; font-size:.65rem; letter-spacing:3px; cursor:pointer; }
+.mb-wind-btn.winding { background:rgba(100,78,0,.9); border-color:#ccaa00; color:#ffee44; }
+.vent-btn2d { padding:6px 14px; background:transparent; border:1px solid #4a3820; color:#887755; font-family:monospace; font-size:.6rem; letter-spacing:2px; cursor:pointer; }
+.vent-btn2d.shut { border-color:#2a2010; color:#554430; }
+.lure-btn2d { padding:8px 16px; background:rgba(8,22,8,.95); border:1px solid #448844; color:#88dd88; font-family:monospace; font-size:.6rem; letter-spacing:3px; cursor:pointer; }
+.lure-btn2d.ready { border-color:#55ee55; color:#77ff77; animation:lureGl 1.5s infinite; }
+.lure-btn2d:disabled { border-color:#121e12; color:#2d3e2d; cursor:not-allowed; }
+@keyframes lureGl { 50%{box-shadow:0 0 16px rgba(60,200,60,.5)} }
+.alarm-btn2d { padding:6px 14px; background:rgba(18,6,0,.9); border:1px solid #442200; color:#885533; font-family:monospace; font-size:.6rem; letter-spacing:2px; cursor:pointer; }
+.alarm-btn2d.ready { border-color:#ff4400; color:#ff6600; animation:alGl 1s infinite; }
+.alarm-btn2d.target { border-color:#ff0000; color:#ff2200; animation:alTgt .5s infinite; }
+.alarm-btn2d:disabled { border-color:#1a0800; color:#331a0a; cursor:not-allowed; }
+@keyframes alGl { 50%{box-shadow:0 0 12px rgba(255,80,0,.4)} }
+@keyframes alTgt { 50%{box-shadow:0 0 20px rgba(255,0,0,.7)} }
+#jsScreen2d { position:fixed; inset:0; z-index:200; background:#000; display:none; align-items:center; justify-content:center; }
+#jsImg2d { width:100%; height:100%; object-fit:cover; }
+#deathScreen2d { position:fixed; inset:0; z-index:190; background:radial-gradient(ellipse at center,#0c0000,#000); display:none; flex-direction:column; align-items:center; justify-content:center; }
+.death-title2d { font-size:3rem; color:#880000; letter-spacing:4px; margin-bottom:10px; text-shadow:0 0 40px #ff0000; }
+.death-cause2d { color:#4a3030; font-size:.85rem; max-width:400px; text-align:center; line-height:1.8; margin-bottom:24px; }
+#winScreen2d { position:fixed; inset:0; z-index:190; background:radial-gradient(ellipse at center,#001a05,#000); display:none; flex-direction:column; align-items:center; justify-content:center; }
+.win-time2d { font-size:4rem; color:#22dd55; letter-spacing:5px; text-shadow:0 0 60px #00ff44; margin-bottom:10px; }
+.retry-btn { padding:12px 44px; background:transparent; border:1px solid #440000; color:#660000; font-family:monospace; font-size:.8rem; letter-spacing:4px; cursor:pointer; transition:all .2s; }
+.retry-btn:hover { border-color:#aa0000; color:#aa0000; }
+#alarmFlash { position:fixed; inset:0; z-index:80; pointer-events:none; display:none; background:radial-gradient(ellipse at center,transparent 35%,rgba(180,0,0,.22) 100%); animation:alPulse .6s ease-in-out infinite; }
+@keyframes alPulse { 50%{opacity:.4} }
+#flashEl2d { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:170; transition:opacity .06s; }
+canvas#threeCanvas { display:block; width:100vw; height:100vh; }
+#vrBtn { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:110; }
+#warnScreen2d {
+  position:fixed; inset:0; z-index:300; background:#000;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px;
 }
-@keyframes warnBoxPulse{0%,100%{box-shadow:0 0 30px rgba(255,0,0,.2),inset 0 0 60px rgba(255,0,0,.03)}50%{box-shadow:0 0 60px rgba(255,0,0,.4),inset 0 0 80px rgba(255,0,0,.07)}}
-.warn-skull{font-size:clamp(2.5rem,6vw,4rem);text-align:center;margin-bottom:16px;animation:skullBlink 1.5s steps(1) infinite}
-@keyframes skullBlink{0%,89%{opacity:1}90%,100%{opacity:0}}
-.warn-title{
-  font-family:'VT323',monospace;
-  font-size:clamp(1.4rem,3.5vw,2.2rem);
-  color:#ff0000;letter-spacing:6px;
-  text-align:center;margin-bottom:20px;
-  text-shadow:0 0 20px #ff0000;
-  animation:warnTitleFlicker 3s infinite;
-}
-@keyframes warnTitleFlicker{0%,94%,96%,100%{opacity:1}95%{opacity:.3}}
-.warn-line{
-  font-family:'Share Tech Mono',monospace;
-  font-size:clamp(.6rem,1.1vw,.8rem);
-  color:#cc3333;letter-spacing:2px;
-  line-height:2;margin-bottom:8px;
-  padding-left:14px;border-left:2px solid #440000;
-}
-.warn-line.accent{color:#ff4444;font-size:clamp(.65rem,1.2vw,.85rem)}
-.warn-line.dim{color:#552222;font-size:clamp(.52rem,.9vw,.65rem)}
-.warn-line.fullscreen{color:#ff8800;font-size:clamp(.62rem,1.1vw,.78rem);border-left-color:#663300;}
-.warn-divider{border:none;border-top:1px solid #330000;margin:18px 0}
-.warn-proceed-btn{
-  display:block;width:100%;margin-top:24px;
-  background:transparent;border:1px solid #880000;
-  color:#cc0000;padding:14px;
-  font-family:'VT323',monospace;font-size:clamp(1rem,2vw,1.4rem);
-  letter-spacing:8px;text-transform:uppercase;cursor:pointer;
-  transition:all .2s;position:relative;overflow:hidden;
-  animation:warnBtnPulse 1.5s ease-in-out infinite;
-}
-.warn-proceed-btn::before{content:'';position:absolute;inset:0;background:#cc0000;transform:scaleX(0);transform-origin:left;transition:transform .3s;z-index:-1}
-.warn-proceed-btn:hover::before{transform:scaleX(1)}
-.warn-proceed-btn:hover{color:#fff;letter-spacing:10px;box-shadow:0 0 30px #cc000066}
-@keyframes warnBtnPulse{0%,100%{box-shadow:0 0 6px #44000044}50%{box-shadow:0 0 18px #88000088}}
-.warn-err-code{font-family:'Share Tech Mono',monospace;font-size:.5rem;color:#220000;letter-spacing:3px;text-align:center;margin-top:14px;opacity:.6}
-.blink{animation:blinkAnim .8s steps(1) infinite}
-@keyframes blinkAnim{0%,49%{opacity:1}50%,100%{opacity:0}}
-
-/* ══ START SCREEN ══ */
-#startScreen{
-  display:none;flex-direction:column;align-items:center;justify-content:center;
-  background:#000;z-index:200;overflow-y:auto;position:relative;
-}
-#startScreen::before{
-  content:'';position:fixed;inset:0;pointer-events:none;z-index:1;
-  background:repeating-linear-gradient(0deg,rgba(0,0,0,.1) 0px,rgba(0,0,0,.1) 1px,transparent 1px,transparent 3px);
-}
-#startScreen::after{
-  content:'';position:fixed;inset:0;pointer-events:none;z-index:1;
-  background:
-    radial-gradient(ellipse 50% 30% at 0% 100%,rgba(180,0,0,.18) 0%,transparent 70%),
-    radial-gradient(ellipse 50% 30% at 100% 0%,rgba(100,0,0,.12) 0%,transparent 70%);
-  animation:cornerFlicker 4s ease-in-out infinite;
-}
-@keyframes cornerFlicker{0%,100%{opacity:1}45%{opacity:.6}46%{opacity:1}47%{opacity:.4}48%{opacity:1}}
-.start-inner{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;padding:24px 0;width:100%}
-
-/* ══ GIJS RECHTS HERO ══ */
-#gijsHero{
-  position:fixed;
-  top:0;right:0;bottom:0;
-  width:min(500px,42vw);
-  z-index:0;
-  pointer-events:none;
-  overflow:hidden;
-}
-#gijsHero::before{
-  content:'';position:absolute;inset:0;z-index:2;
-  background:linear-gradient(
-    to right,
-    rgba(0,0,0,1) 0%,
-    rgba(0,0,0,0.75) 25%,
-    rgba(0,0,0,0.3) 55%,
-    rgba(0,0,0,0.05) 100%
-  );
-}
-#gijsHero::after{
-  content:'';position:absolute;inset:0;z-index:3;
-  background:radial-gradient(ellipse 90% 70% at 80% 55%,rgba(180,0,0,0.13) 0%,transparent 70%);
-  pointer-events:none;
-}
-#gijsHeroImg{
-  position:absolute;
-  bottom:0;right:0;
-  width:100%;
-  height:auto;
-  max-height:96vh;
-  object-fit:contain;
-  object-position:bottom right;
-  opacity:0.88;
-  filter:brightness(0.42) contrast(2.4) saturate(0.22) hue-rotate(330deg);
-  animation:gijsGlitchMain 3s infinite;
-  mix-blend-mode:screen;
-  transform-origin:bottom right;
-}
-@keyframes gijsGlitchMain{
-  0%,87%,100%{filter:brightness(0.42) contrast(2.4) saturate(0.22) hue-rotate(330deg);transform:scale(1);opacity:0.88;}
-  88%{filter:brightness(1.2) contrast(4) saturate(6) hue-rotate(0deg);transform:scale(1.02) translateX(12px) skewX(-2deg);opacity:0.95;}
-  89%{filter:brightness(0.3) contrast(5) saturate(0) hue-rotate(180deg);transform:scale(0.99) translateX(-8px) skewX(2deg);opacity:0.7;}
-  90%{filter:brightness(1.4) contrast(3) saturate(8) hue-rotate(60deg);transform:scale(1.04);opacity:0.92;}
-  91%{filter:brightness(0.42) contrast(2.4) saturate(0.22) hue-rotate(330deg);transform:scale(1);opacity:0.88;}
-  95%{filter:brightness(0.7) contrast(2.8) saturate(1.5) hue-rotate(200deg);transform:scale(1.01) translateX(4px);opacity:0.9;}
-  96%{filter:brightness(0.42) contrast(2.4) saturate(0.22) hue-rotate(330deg);transform:scale(1);opacity:0.88;}
-}
-.gijs-ghost{
-  position:absolute;
-  bottom:0;right:0;
-  width:100%;
-  height:auto;
-  max-height:96vh;
-  object-fit:contain;
-  object-position:bottom right;
-  pointer-events:none;
-  mix-blend-mode:screen;
-  transform-origin:bottom right;
-}
-.gijs-ghost.red{filter:brightness(0.4) contrast(3) saturate(0) sepia(1) hue-rotate(320deg);opacity:0;animation:gijsGhostR 3s infinite;}
-.gijs-ghost.cyan{filter:brightness(0.4) contrast(3) saturate(0) sepia(1) hue-rotate(160deg);opacity:0;animation:gijsGhostC 3s infinite;}
-@keyframes gijsGhostR{0%,87%,92%,100%{opacity:0;transform:translateX(0)}88%{opacity:0.35;transform:translateX(18px)}89%{opacity:0.2;transform:translateX(-10px)}90%,91%{opacity:0.28;transform:translateX(8px)}}
-@keyframes gijsGhostC{0%,87%,92%,100%{opacity:0;transform:translateX(0)}88%{opacity:0.35;transform:translateX(-18px)}89%{opacity:0.2;transform:translateX(10px)}90%,91%{opacity:0.28;transform:translateX(-8px)}}
-.gijs-scanbar{position:absolute;left:0;right:0;height:3px;background:rgba(255,0,0,0.15);top:0;animation:gijsScanbar 6s linear infinite;z-index:4;pointer-events:none;}
-@keyframes gijsScanbar{0%{top:-10px;opacity:0}5%{opacity:1}95%{opacity:0.3}100%{top:100%;opacity:0}}
-
-/* ══ TERMINAL HEADER ══ */
-.term-bar{width:min(820px,95vw);background:#0a0000;border:1px solid #1a0000;border-bottom:2px solid #330000;padding:6px 14px;display:flex;align-items:center;gap:8px;margin-bottom:0;}
-.term-dot{width:10px;height:10px;border-radius:50%}
-.term-dot.r{background:#ff3b30}.term-dot.y{background:#ffcc00;opacity:.5}.term-dot.g{background:#30d158;opacity:.3}
-.term-title-bar{flex:1;text-align:center;font-size:.55rem;color:#331111;letter-spacing:5px}
-.term-window{width:min(820px,95vw);background:#020000;border:1px solid #1a0000;border-top:none;padding:32px 36px 26px;margin-bottom:14px;position:relative;overflow:hidden;}
-.term-window::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,0,0,.015) 0px,rgba(255,0,0,.015) 1px,transparent 1px,transparent 4px);pointer-events:none;}
-.start-eyebrow{font-size:clamp(.45rem,.75vw,.6rem);color:#330000;letter-spacing:8px;text-transform:uppercase;margin-bottom:10px;font-family:'Share Tech Mono',monospace;}
-.start-eyebrow::before{content:'> ';color:#550000}
-.start-title{font-family:'Creepster',cursive;font-size:clamp(2.8rem,9vw,6.4rem);color:#cc0000;line-height:1;text-align:center;letter-spacing:3px;text-shadow:0 0 40px #ff000055,0 0 80px #ff000022,2px 2px 0 #3a0000;animation:titleGlitch 5s infinite;margin-bottom:8px;}
-@keyframes titleGlitch{0%,92%,100%{text-shadow:0 0 40px #ff000055,2px 2px 0 #3a0000;transform:none}93%{text-shadow:-3px 0 #ff0000,3px 0 #880000;transform:translateX(2px)}94%{text-shadow:3px 0 #ff0000,-2px 0 #440000;transform:translateX(-1px)}95%{text-shadow:0 0 40px #ff000055,2px 2px 0 #3a0000;transform:none}}
-.start-sub{font-family:'VT323',monospace;font-size:clamp(1rem,2.4vw,1.6rem);color:#330000;letter-spacing:6px;margin-bottom:28px;text-align:center;}
-.lore-card{max-width:100%;border:1px solid #1a0000;border-left:3px solid #440000;background:rgba(8,0,0,.85);padding:18px 20px;margin-bottom:18px;position:relative;}
-.lore-card::before{content:'DOSSIER';position:absolute;top:-9px;left:16px;background:#020000;padding:0 6px;font-size:.5rem;color:#330000;letter-spacing:5px;font-family:'Share Tech Mono',monospace;}
-.lore-card p{color:#664444;font-size:clamp(.6rem,.95vw,.72rem);line-height:1.9;font-family:'Share Tech Mono',monospace;}
-.lore-card strong{color:#cc4444}
-.lore-card .quote{border-left:2px solid #330000;padding:8px 12px;margin:12px 0;font-style:italic;color:#663333;font-size:clamp(.58rem,.88vw,.68rem);font-family:'Share Tech Mono',monospace;}
-.lore-card .warn{color:#442222;font-size:.65em;margin-top:10px;opacity:.75;font-family:'Share Tech Mono',monospace;}
-.start-hint{margin-top:14px;font-size:.52rem;color:#1a0000;letter-spacing:4px;font-family:'Share Tech Mono',monospace}
-.start-hint::before{content:'// '}
-
-/* ══ NACHT LABEL BOVEN KNOPPEN ══ */
-.ns-label{
-  flex:1;text-align:center;
-  font-family:'VT323',monospace;
-  font-size:clamp(.85rem,1.6vw,1.15rem);
-  color:#cc2222;
-  letter-spacing:2px;
-  text-transform:uppercase;
-  text-shadow:0 0 10px rgba(200,0,0,.45);
-  pointer-events:none;
-  line-height:1.2;
-}
-.ns-label-custom{color:#cc6600;text-shadow:0 0 10px rgba(200,80,0,.45);font-size:clamp(.7rem,1.3vw,.95rem);letter-spacing:1px;}
-
-/* ══ NACHT SELECTIE ══ */
-.night-select{display:flex;gap:8px;margin-bottom:18px;max-width:min(820px,95vw);width:100%}
-.night-btn{flex:1;background:#000;border:1px solid #1a0000;color:#330000;padding:12px 6px 10px;font-family:'Share Tech Mono',monospace;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;overflow:hidden;}
-.night-btn::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:var(--red);transform:scaleX(0);transition:transform .2s;}
-.night-btn:hover{border-color:#440000;color:#770000}
-.night-btn:hover::after{transform:scaleX(1)}
-.night-btn.selected{border-color:#880000;color:#cc0000;background:rgba(180,0,0,.06);box-shadow:0 0 14px #44000033;}
-.night-btn.selected::after{transform:scaleX(1)}
-.night-btn.night5-sel{border-color:#cc3300!important;color:#ff4400!important;background:rgba(200,40,0,.08)!important;box-shadow:0 0 20px #88220033!important;}
-.nb-num{font-family:'VT323',monospace;font-size:clamp(.55rem,.9vw,.7rem);color:#220000;letter-spacing:3px}
-.nb-num span{font-size:clamp(1.2rem,2.4vw,1.7rem);display:block;line-height:1;margin-bottom:1px;font-family:'Creepster',cursive}
-.night-btn.selected .nb-num,.night-btn.selected .nb-num span{color:#cc0000}
-.night-btn.night5-sel .nb-num,.night-btn.night5-sel .nb-num span{color:#ff4400}
-.nb-title{font-size:clamp(.4rem,.68vw,.54rem);letter-spacing:2px;text-transform:uppercase;text-align:center;line-height:1.4}
-.nb-enemies{font-size:clamp(.35rem,.57vw,.46rem);color:#221111;letter-spacing:1px;text-align:center;line-height:1.5}
-.night-btn.selected .nb-enemies{color:#552222}
-.night-btn.night5-sel .nb-enemies{color:#663300}
-.nb-diff{font-size:clamp(.5rem,.8vw,.62rem);letter-spacing:2px;margin-top:2px}
-.diff-1{color:#1a3a0a}.diff-2{color:#3a5a0a}.diff-3{color:#666600}.diff-4{color:#883300}.diff-5{color:#aa0000;animation:diffFlash .7s infinite}
-@keyframes diffFlash{0%,100%{color:#aa0000;text-shadow:none}50%{color:#ff2200;text-shadow:0 0 8px #ff2200}}
-.start-btn{background:#000;border:1px solid #660000;color:#880000;padding:14px 60px;font-family:'VT323',monospace;font-size:clamp(1.1rem,2.4vw,1.7rem);letter-spacing:6px;text-transform:uppercase;cursor:pointer;transition:all .2s;animation:btnAnim 2s ease-in-out infinite;position:relative;overflow:hidden;}
-.start-btn::before{content:'> ';color:#330000;transition:color .2s}
-.start-btn:not(:disabled)::after{content:'';position:absolute;inset:0;background:#880000;transform:scaleX(0);transform-origin:left;transition:transform .25s;z-index:-1}
-.start-btn:not(:disabled):hover::after{transform:scaleX(1)}
-.start-btn:not(:disabled):hover{color:#ff0000;letter-spacing:8px;box-shadow:0 0 24px #66000055}
-.start-btn:not(:disabled):hover::before{color:#ff0000}
-.start-btn.night5-btn{border-color:#cc3300;color:#cc3300;animation:btnAnimHard 2s ease-in-out infinite}
-.start-btn.night5-btn:not(:disabled)::after{background:#cc3300}
-.start-btn.night5-btn:not(:disabled):hover{box-shadow:0 0 24px #88220055}
-.start-btn:disabled{border-color:#110000;color:#110000;cursor:not-allowed;animation:none;box-shadow:none}
-.start-btn:disabled::before{color:#110000}
-@keyframes btnAnim{0%,100%{box-shadow:0 0 4px #22000022}50%{box-shadow:0 0 14px #44000044}}
-@keyframes btnAnimHard{0%,100%{box-shadow:0 0 4px #44110022}50%{box-shadow:0 0 16px #88220055}}
-
-/* ══ GAME ══ */
-#gameScreen{display:none;position:absolute;inset:0;overflow:hidden}
-#officeCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.vignette{position:absolute;inset:0;pointer-events:none;z-index:9;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.8) 100%)}
-
-/* ══ DEUREN ══ */
-.door-zone{position:absolute;top:0;bottom:0;width:min(170px,17vw);z-index:12}
-.dz-l{left:0}.dz-r{right:0}
-.door-frame{position:absolute;top:12%;width:min(80px,9.5vw);height:60%;background:#040408;border:2px solid #181820;box-shadow:inset 0 0 20px rgba(0,0,0,.8)}
-.dz-l .door-frame{left:35px}.dz-r .door-frame{right:35px}
-.door-panel{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 15px,rgba(255,255,255,.018) 15px,rgba(255,255,255,.018) 16px),linear-gradient(90deg,#0a0508,#080306);transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.4,0,.2,1)}
-.dz-r .door-panel{transform-origin:right}
-.door-panel.shut{transform:scaleX(1)}
-.door-warn-stripe{position:absolute;inset:0;background:repeating-linear-gradient(45deg,#1a0000 0,#1a0000 5px,transparent 5px,transparent 14px);opacity:0;transition:opacity .3s}
-.door-panel.shut .door-warn-stripe{opacity:.35}
-.door-handle{position:absolute;top:50%;width:8px;height:30px;background:#2a1a00;border-radius:4px;transform:translateY(-50%);box-shadow:0 0 6px rgba(0,0,0,.6)}
-.dz-l .door-handle{right:4px}.dz-r .door-handle{left:4px}
-.d-light{position:absolute;top:10%;width:14px;height:14px;border-radius:50%;border:2px solid #1a1a1a;background:#111;box-shadow:inset 0 1px 2px rgba(0,0,0,.9);transition:background .12s,box-shadow .12s}
-.dz-l .d-light{left:10px}.dz-r .d-light{right:10px}
-.dl-safe{background:#00e050!important;box-shadow:0 0 14px #00e050,0 0 3px #00e050!important}
-
-/* ══ HUD ══ */
-#hud{position:absolute;inset:0;pointer-events:none;z-index:20;display:grid;grid-template-columns:1fr auto 1fr;grid-template-rows:auto 1fr auto;padding:10px 14px 14px}
-.hud-tl{grid-column:1;grid-row:1;display:flex;flex-direction:column;gap:10px}
-.hud-time-wrap{background:rgba(4,4,10,.96);border:1px solid #2a2a44;border-top:2px solid #6666bb;padding:10px 16px;backdrop-filter:blur(6px);display:inline-flex;flex-direction:column;gap:2px;box-shadow:0 0 16px rgba(60,60,200,.2)}
-.hud-time{font-family:'VT323',monospace;font-size:clamp(1.8rem,4.5vw,3.2rem);color:var(--amber);text-shadow:0 0 20px rgba(232,146,10,.8),0 0 40px rgba(232,146,10,.4);letter-spacing:3px;line-height:1}
-.hud-night-lbl{font-size:clamp(.45rem,.8vw,.6rem);color:#5555aa;letter-spacing:5px;text-transform:uppercase}
-.hud-o2-panel{background:rgba(4,6,12,.96);border:1px solid #0a1e3a;border-top:2px solid #2266cc;padding:10px 14px;backdrop-filter:blur(6px);min-width:min(180px,22vw);box-shadow:0 0 14px rgba(20,80,200,.18)}
-.o2-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-.o2-label{font-size:clamp(.45rem,.85vw,.65rem);color:#55aaff;letter-spacing:3px;text-transform:uppercase}
-.o2-pct{font-size:clamp(.5rem,1vw,.72rem);color:#88ccff;font-family:'VT323',monospace;letter-spacing:1px}
-.o2-track{height:8px;background:#040810;border:1px solid #0a1828;border-radius:1px;overflow:hidden;position:relative}
-.o2-track::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(0,0,0,.3) 8px,rgba(0,0,0,.3) 9px)}
-.o2-fill{height:100%;border-radius:1px;transition:width .5s linear,background .5s;background:linear-gradient(90deg,#0055ee,#55bbff)}
-.o2-fill.warn{background:linear-gradient(90deg,#cc6600,#ffaa00)}
-.o2-fill.crit{background:linear-gradient(90deg,#cc0000,#ff3300);animation:o2Crit .35s infinite}
-@keyframes o2Crit{0%,100%{opacity:1}50%{opacity:.3}}
-.o2-status{margin-top:5px;font-size:clamp(.4rem,.7vw,.55rem);color:#334488;letter-spacing:2px}
-.hud-tr{grid-column:3;grid-row:1;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:all}
-
-.cam-toggle-btn{
-  background:rgba(8,8,26,.97);border:2px solid #7777cc;border-top:3px solid #bbbbff;
-  padding:13px 24px;color:#ddddff;font-family:'Share Tech Mono',monospace;
-  font-size:clamp(.62rem,1.1vw,.78rem);letter-spacing:4px;text-transform:uppercase;
-  cursor:pointer;backdrop-filter:blur(6px);transition:all .2s;text-align:right;
-  box-shadow:0 0 22px rgba(110,110,240,.3),inset 0 0 12px rgba(80,80,200,.1);
-  text-shadow:0 0 10px rgba(180,180,255,.5);
-}
-.cam-toggle-btn:hover{border-color:#aaaaee;border-top-color:#eeeeff;color:#ffffff;box-shadow:0 0 32px rgba(150,150,255,.5);text-shadow:0 0 14px rgba(220,220,255,.7)}
-.cam-toggle-btn.active{border-color:#33ff77;border-top-color:#99ffbb;color:#55ff99;background:rgba(20,160,70,.14);box-shadow:0 0 28px rgba(29,185,84,.55);text-shadow:0 0 14px rgba(50,255,120,.7)}
-
-.lure-panel{background:rgba(4,12,4,.97);border:2px solid #448844;border-top:3px solid #88cc88;padding:10px 14px;backdrop-filter:blur(6px);text-align:right;min-width:min(200px,25vw);box-shadow:0 0 20px rgba(40,160,40,.22)}
-.lure-btn{display:block;width:100%;background:rgba(8,22,8,.95);border:1px solid #448844;border-top:2px solid #77bb77;color:#88dd88;font-family:'Share Tech Mono',monospace;font-size:clamp(.54rem,.95vw,.7rem);letter-spacing:3px;text-transform:uppercase;padding:9px 10px;cursor:pointer;transition:all .2s;text-align:center;margin-bottom:6px;text-shadow:0 0 6px rgba(100,200,100,.3)}
-.lure-btn.ready{border-color:#55ee55;border-top-color:#aaff99;color:#77ff77;background:rgba(30,120,30,.25);box-shadow:0 0 22px rgba(70,220,70,.45);animation:lureGlow 1.5s infinite;text-shadow:0 0 12px rgba(100,255,100,.65)}
-.lure-btn.ready:hover{background:rgba(40,150,40,.38);box-shadow:0 0 32px rgba(60,200,60,.65)}
-.lure-btn:disabled{border-color:#121e12;border-top-color:#1a2a1a;color:#2d3e2d;cursor:not-allowed;background:transparent}
-@keyframes lureGlow{0%,100%{box-shadow:0 0 8px rgba(60,200,60,.3)}50%{box-shadow:0 0 22px rgba(60,200,60,.65)}}
-.lure-cd{font-size:clamp(.42rem,.7vw,.55rem);color:#446644;letter-spacing:2px;text-align:right}
-.lure-cd.hot{color:#88ff55;animation:lureGlow .8s infinite;text-shadow:0 0 8px rgba(130,240,80,.45)}
-.hud-bc{grid-column:2;grid-row:3;display:flex;justify-content:center;align-items:flex-end;pointer-events:all}
-.hud-status-bar{background:rgba(4,4,10,.97);border:1px solid #22223a;border-top:2px solid #444466;padding:7px 22px;display:flex;gap:20px;align-items:center;font-size:clamp(.45rem,.75vw,.6rem);color:#4444aa;letter-spacing:3px;box-shadow:0 0 14px rgba(40,40,120,.2)}
-.hud-status-dot{width:6px;height:6px;border-radius:50%;background:#1a1a2a;border:1px solid #333355}
-.hud-status-dot.on{background:#1db954;box-shadow:0 0 7px #1db954;animation:dotPulse 2s infinite;border-color:#33ff77}
-.hud-status-dot.warn{background:#ff9900!important;box-shadow:0 0 7px #ff9900!important;animation:dotPulse .5s infinite!important;border-color:#ffcc44!important}
-.hud-status-dot.crit{background:#ff0000!important;box-shadow:0 0 10px #ff0000!important;animation:dotPulse .25s infinite!important;border-color:#ff4444!important}
-@keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.4}}
-
-.door-btn{
-  position:absolute;bottom:12%;width:min(90px,10.5vw);height:min(50px,6vw);
-  background:#181826;border:2px solid #5555aa;border-top:3px solid #9999dd;
-  border-radius:4px;color:#ccccff;font-family:'Share Tech Mono',monospace;
-  font-size:clamp(9px,1.4vw,15px);letter-spacing:2px;text-transform:uppercase;
-  cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;
-  box-shadow:0 2px 14px rgba(0,0,0,.7),0 0 10px rgba(80,80,180,.2);
-  text-shadow:0 0 6px rgba(160,160,255,.3);
-}
-.dz-l .door-btn{left:6px}.dz-r .door-btn{right:6px}
-.door-btn:hover{background:#22223a;border-color:#8888cc;border-top-color:#ccccff;color:#ffffff;box-shadow:0 0 20px rgba(120,120,255,.4)}
-.door-btn.on{background:#3a0000;border-color:#ff3333;border-top-color:#ff7777;color:#ffaaaa;box-shadow:0 0 22px #ff222266,0 2px 8px rgba(0,0,0,.6);text-shadow:0 0 10px rgba(255,120,120,.6);animation:doorBtnPulse 1s ease-in-out infinite}
-@keyframes doorBtnPulse{0%,100%{box-shadow:0 0 14px #ff222244}50%{box-shadow:0 0 28px #ff222299}}
-
-/* ══ ALARM OVERLAY ══ */
-#alarmOverlay{position:absolute;inset:0;z-index:25;pointer-events:none;display:none;background:radial-gradient(ellipse at center,transparent 35%,rgba(180,0,0,.22) 100%);animation:alarmPulse .6s ease-in-out infinite}
-@keyframes alarmPulse{0%,100%{opacity:1}50%{opacity:.4}}
-#alarmBanner{display:none!important}
-
-/* ══ CAMERA OVERLAY ══ */
-#camOverlay{position:absolute;inset:0;z-index:30;background:rgba(2,3,2,.96);display:none;flex-direction:column;padding:12px;gap:10px}
-.cam-hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #0c140c;padding-bottom:10px}
-.cam-hdr-title{color:#1a6a2a;font-size:clamp(.6rem,1.1vw,.75rem);letter-spacing:5px;text-transform:uppercase}
-.cam-hdr-right{display:flex;align-items:center;gap:10px}
-.cam-rec{color:#ff1133;font-size:clamp(.5rem,.8vw,.62rem);animation:recBlink 1s infinite}
-@keyframes recBlink{0%,100%{opacity:1}50%{opacity:0}}
-.cam-close-btn{background:transparent;border:1px solid #222;color:#444;padding:5px 14px;font-family:'Share Tech Mono',monospace;font-size:clamp(.5rem,.8vw,.6rem);letter-spacing:3px;cursor:pointer;transition:all .15s}
-.cam-close-btn:hover{border-color:#666;color:#888}
-.alarm-cam-btn{background:rgba(18,6,0,.9);border:1px solid #442200;border-top:2px solid #663300;color:#885533;padding:6px 16px;font-family:'Share Tech Mono',monospace;font-size:clamp(.52rem,.82vw,.62rem);letter-spacing:3px;cursor:pointer;transition:all .15s;position:relative;box-shadow:0 0 6px rgba(100,40,0,.15)}
-.alarm-cam-btn:hover:not(:disabled){border-color:#ff4400;border-top-color:#ff6600;color:#ff7733;box-shadow:0 0 14px rgba(255,60,0,.35);background:rgba(30,10,0,.95)}
-.alarm-cam-btn.ready{border-color:#ff4400;border-top-color:#ff7700;color:#ff6600;background:rgba(40,12,0,.9);box-shadow:0 0 12px rgba(255,80,0,.3);animation:alarmBtnGlow 1s infinite}
-.alarm-cam-btn.target{border-color:#ff0000;border-top-color:#ff4400;color:#ff2200;box-shadow:0 0 20px rgba(255,0,0,.6);animation:alarmBtnTarget .5s infinite}
-.alarm-cam-btn:disabled{border-color:#1a0800;border-top-color:#220e00;color:#331a0a;cursor:not-allowed;background:transparent;box-shadow:none}
-@keyframes alarmBtnGlow{0%,100%{box-shadow:0 0 4px rgba(255,60,0,.2)}50%{box-shadow:0 0 14px rgba(255,60,0,.5)}}
-@keyframes alarmBtnTarget{0%,100%{box-shadow:0 0 8px rgba(255,0,0,.4);border-color:#ff0000}50%{box-shadow:0 0 22px rgba(255,0,0,.8);border-color:#ff6600}}
-.alarm-cd-lbl{font-size:clamp(.4rem,.65vw,.52rem);color:#332200;letter-spacing:2px;white-space:nowrap}
-.alarm-cd-lbl.hot{color:#ff5500;animation:alarmBtnGlow .8s infinite}
-
-/* ══ CAM MAIN FEED ══ */
-.cam-main{flex:1;position:relative;background:#020602;border:1px solid #0a140a;overflow:hidden;min-height:0}
-.cam-scanlines{position:absolute;inset:0;background:var(--scan);pointer-events:none;z-index:5;opacity:.7}
-.cam-vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.7) 100%);pointer-events:none;z-index:5}
-.cam-noise{position:absolute;inset:0;pointer-events:none;z-index:4;opacity:.05;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-.cam-active-static .cam-noise{opacity:.14;animation:staticA .08s infinite}
-@keyframes staticA{0%,100%{opacity:.14}50%{opacity:.05}}
-.cam-lbl{position:absolute;top:10px;left:12px;color:rgba(29,185,84,.55);font-size:clamp(.5rem,.85vw,.68rem);letter-spacing:4px;z-index:6;text-transform:uppercase}
-.cam-ts{position:absolute;top:10px;right:12px;color:rgba(29,185,84,.35);font-size:clamp(.45rem,.75vw,.6rem);z-index:6}
-.cam-canvas{position:absolute;inset:0;width:100%;height:100%;transition:filter .05s}
-.monster-on-cam{position:absolute;bottom:0;left:50%;transform:translateX(-50%);z-index:3;max-height:92%;max-width:55%;object-fit:contain;filter:brightness(.6) contrast(1.4) saturate(.6) sepia(.3);animation:mBreath 2.5s ease-in-out infinite}
-.hobo-on-cam{position:absolute;bottom:0;right:8%;z-index:3;max-height:80%;max-width:45%;object-fit:contain;filter:brightness(.5) contrast(1.5) saturate(.4) hue-rotate(30deg);animation:hoboBreath 1.8s ease-in-out infinite}
-.jeffrey-on-cam{position:absolute;bottom:0;left:50%;transform:translateX(-50%);z-index:4;max-height:88%;max-width:50%;object-fit:contain;filter:brightness(.55) contrast(1.5) saturate(.3);animation:jeffreyBreath 1.2s ease-in-out infinite}
-.chapo-on-cam{position:absolute;bottom:0;left:2%;z-index:2;max-height:78%;max-width:38%;object-fit:contain;transition:filter 1s,transform 1s,opacity 1s}
-.tom-on-cam{position:absolute;bottom:0;left:50%;transform:translateX(-50%);z-index:3;max-height:95%;max-width:60%;object-fit:contain;transition:filter .8s,transform .8s,opacity .8s}
-.diddy-on-cam{position:absolute;bottom:0;left:50%;transform:translateX(-50%);z-index:5;max-height:95%;max-width:60%;object-fit:contain;filter:brightness(.55) contrast(1.5) saturate(.5);animation:mBreath 2s ease-in-out infinite}
-@keyframes mBreath{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.02) translateY(-4px)}}
-@keyframes hoboBreath{0%,100%{transform:scale(1) translateY(0)}50%{transform:scale(1.03) translateY(-6px)}}
-@keyframes jeffreyBreath{0%,100%{transform:scale(1) translateY(0)}50%{transform:scale(1.04) translateY(-8px)}}
-@keyframes tomCrit{0%,100%{transform:translateX(-50%) scale(1.08)}33%{transform:translateX(-48%) scale(1.10) rotate(-.5deg)}66%{transform:translateX(-52%) scale(1.09) rotate(.5deg)}}
-
-/* ══ AANVAL FLASH ══ */
-#attackFlashOverlay{position:absolute;inset:0;z-index:50;pointer-events:none;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.0)}
-#attackFlashOverlay.active{display:flex}
-#attackFlashImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(1.2) contrast(1.4) saturate(1.6);animation:attackFlashAnim .12s steps(1) infinite}
-@keyframes attackFlashAnim{0%{opacity:1;transform:scale(1) translateX(0)}25%{opacity:.7;transform:scale(1.04) translateX(-6px)}50%{opacity:1;transform:scale(1.02) translateX(4px)}75%{opacity:.8;transform:scale(1.05) translateX(-3px)}100%{opacity:1;transform:scale(1)}}
-#attackFlashOverlay .flash-static{position:absolute;inset:0;z-index:2;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,0,0,.08) 0px,rgba(255,0,0,.08) 2px,transparent 2px,transparent 5px);animation:flashStatic .05s infinite}
-@keyframes flashStatic{0%{opacity:1;transform:translateY(0)}50%{opacity:.6;transform:translateY(2px)}100%{opacity:1;transform:translateY(-1px)}}
-#attackFlashOverlay .flash-vignette{position:absolute;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at center,transparent 30%,rgba(200,0,0,.5) 100%)}
-
-/* ══ MADURO CAM ══ */
-.maduro-on-cam{position:absolute;inset:0;z-index:8;width:100%;height:100%;object-fit:cover;display:none;filter:brightness(0.82) contrast(1.2) saturate(1.1);animation:maduroBreath 1.8s ease-in-out infinite}
-@keyframes maduroBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.015)}}
-.maduro-disabled-overlay{position:absolute;inset:0;z-index:22;display:none;flex-direction:column;align-items:center;justify-content:center;background:#000;gap:14px}
-.maduro-disabled-overlay.active{display:flex}
-.maduro-err-title{font-family:'VT323',monospace;font-size:clamp(2rem,5vw,3.2rem);color:#ff0000;letter-spacing:6px;text-shadow:0 0 20px #ff0000;animation:errBlink .45s infinite}
-@keyframes errBlink{0%,100%{opacity:1}50%{opacity:.25}}
-.maduro-err-code{font-family:'Share Tech Mono',monospace;font-size:clamp(.6rem,1.3vw,.85rem);color:#660000;letter-spacing:4px;text-align:center}
-.maduro-err-bar{width:min(280px,65%);height:6px;background:#1a0000;border:1px solid #440000;position:relative;overflow:hidden}
-.maduro-err-bar-fill{height:100%;background:linear-gradient(90deg,#660000,#ff0000);width:0%;transition:width linear}
-.maduro-err-sub{font-family:'Share Tech Mono',monospace;font-size:clamp(.45rem,.8vw,.58rem);color:#330000;letter-spacing:3px;text-align:center}
-.maduro-err-noise{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,0,0,.03) 0px,rgba(255,0,0,.03) 1px,transparent 1px,transparent 4px);pointer-events:none;z-index:1}
-
-/* ══ CAM DOTS ══ */
-.ct-mdot{display:none;position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#ff2200;box-shadow:0 0 6px #ff2200;z-index:3;animation:mdBlink .6s infinite}
-.ct-mdot.on{display:block}
-.ct-hobodot{display:none;position:absolute;top:5px;left:5px;width:7px;height:7px;border-radius:50%;background:#ff9900;box-shadow:0 0 6px #ff9900;z-index:3;animation:mdBlink .5s infinite}
-.ct-hobodot.on{display:block}
-.ct-jeffreydot{display:none;position:absolute;top:5px;left:50%;transform:translateX(-50%);width:7px;height:7px;border-radius:50%;background:#cc3300;box-shadow:0 0 6px #cc3300;z-index:3;animation:jeffreyDotAnim .7s infinite}
-.ct-jeffreydot.on{display:block}
-@keyframes jeffreyDotAnim{0%,100%{opacity:1;box-shadow:0 0 6px #cc3300}50%{opacity:.3;box-shadow:0 0 2px #cc3300}}
-.ct-chapodot{display:none;position:absolute;top:14px;left:5px;width:7px;height:7px;border-radius:50%;background:#ff6600;box-shadow:0 0 6px #ff6600;z-index:3;animation:chapoDotAnim .9s infinite}
-.ct-chapodot.on{display:block}
-@keyframes chapoDotAnim{0%,100%{opacity:1;box-shadow:0 0 6px #ff6600}50%{opacity:.3;box-shadow:0 0 2px #ff6600}}
-.ct-tomdot{display:none;position:absolute;top:5px;left:50%;transform:translateX(-50%);width:7px;height:7px;border-radius:50%;background:#ddcc00;box-shadow:0 0 6px #ddcc00;z-index:3}
-.ct-tomdot.on{display:block;animation:tomDotAnim 1s infinite}
-@keyframes tomDotAnim{0%,100%{opacity:1;box-shadow:0 0 6px #ddcc00}50%{opacity:.3;box-shadow:0 0 2px #ddcc00}}
-.ct-madurodot{display:none;position:absolute;top:5px;right:14px;width:7px;height:7px;border-radius:50%;background:#ff00cc;box-shadow:0 0 6px #ff00cc;z-index:3}
-.ct-madurodot.on{display:block;animation:maduroDotAnim .4s infinite}
-@keyframes maduroDotAnim{0%,100%{opacity:1;box-shadow:0 0 8px #ff00cc}50%{opacity:.2;box-shadow:0 0 2px #ff00cc}}
-.ct-diddydot{display:none;position:absolute;bottom:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#ff00ff;box-shadow:0 0 6px #ff00ff;z-index:3}
-.ct-diddydot.on{display:block;animation:diddyDotAnim .5s infinite}
-@keyframes diddyDotAnim{0%,100%{opacity:1;box-shadow:0 0 8px #ff00ff}50%{opacity:.2;box-shadow:0 0 2px #ff00ff}}
-@keyframes mdBlink{0%,100%{opacity:1}50%{opacity:0}}
-.cam-thumb.cam-maduro-warn{border-color:#ff00cc!important;box-shadow:0 0 10px rgba(255,0,204,.5)!important;animation:maduroThumbWarn .3s infinite}
-@keyframes maduroThumbWarn{0%,100%{border-color:#ff00cc}50%{border-color:#880088}}
-.cam-thumb.cam-diddy-warn{border-color:#ff00ff!important;box-shadow:0 0 10px rgba(255,0,255,.5)!important;animation:diddyThumbWarn .4s infinite}
-@keyframes diddyThumbWarn{0%,100%{border-color:#ff00ff}50%{border-color:#880088}}
-.ct-disabled-overlay{position:absolute;inset:0;z-index:10;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;font-family:'VT323',monospace;font-size:clamp(.6rem,1.2vw,.9rem);color:#440000;letter-spacing:4px;flex-direction:column;gap:4px}
-.ct-disabled-overlay.active{display:flex}
-.ct-music-warn{border-color:#ff8800!important;box-shadow:0 0 8px rgba(255,100,0,.4)!important;animation:musicWarnBorder .4s infinite}
-@keyframes musicWarnBorder{0%,100%{border-color:#ff8800}50%{border-color:#ff3300}}
-
-/* ══ MUZIEKDOOS PANEL ══ */
-#musicBoxPanel{position:absolute;bottom:0;left:0;right:0;z-index:8;background:linear-gradient(0deg,rgba(0,0,0,.95) 0%,rgba(0,0,0,.7) 100%);padding:10px 16px 14px;display:none;flex-direction:column;gap:8px;border-top:1px solid #2a1a00}
-.mb-header{display:flex;justify-content:space-between;align-items:center}
-.mb-label{font-size:clamp(.5rem,.9vw,.65rem);color:#887744;letter-spacing:4px;text-transform:uppercase}
-.mb-pct{font-family:'VT323',monospace;font-size:clamp(.9rem,1.8vw,1.2rem);letter-spacing:2px;color:#aa9944}
-.mb-track{height:12px;background:#0a0800;border:1px solid #2a1a00;border-radius:2px;overflow:hidden;position:relative}
-.mb-track::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 10px,rgba(0,0,0,.2) 10px,rgba(0,0,0,.2) 11px)}
-.mb-fill{height:100%;border-radius:2px;transition:width .4s linear,background .6s;background:linear-gradient(90deg,#886600,#ddcc00)}
-.mb-fill.warn{background:linear-gradient(90deg,#883300,#ff8800)}
-.mb-fill.crit{background:linear-gradient(90deg,#660000,#ff2200);animation:mbCrit .3s infinite}
-@keyframes mbCrit{0%,100%{opacity:1}50%{opacity:.4}}
-.mb-status{font-size:clamp(.4rem,.7vw,.55rem);color:#443322;letter-spacing:2px}
-.mb-windup-btn{width:100%;padding:10px;background:rgba(50,38,0,.7);border:1px solid #5a4400;border-top:2px solid #887700;color:#bbaa33;font-family:'Share Tech Mono',monospace;font-size:clamp(.57rem,1.05vw,.72rem);letter-spacing:4px;text-transform:uppercase;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;box-shadow:0 0 8px rgba(140,110,0,.15);text-shadow:0 0 6px rgba(180,150,0,.2)}
-.mb-windup-btn:active,.mb-windup-btn.winding{background:rgba(100,78,0,.9);border-color:#ccaa00;border-top-color:#ffdd00;color:#ffee44;box-shadow:0 0 24px rgba(200,160,0,.5);text-shadow:0 0 10px rgba(255,220,0,.4)}
-.mb-windup-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,220,0,.1),transparent);transform:translateX(-100%);transition:transform .3s}
-.mb-windup-btn.winding::after{transform:translateX(100%);transition:transform .6s}
-#tomDangerOverlay{position:absolute;inset:0;pointer-events:none;z-index:7;opacity:0;transition:opacity .8s;background:radial-gradient(ellipse at center,transparent 30%,rgba(180,0,0,.35) 100%);}
-
-/* ══ CAM STRIP ══ */
-.cam-strip{display:flex;gap:8px;height:min(80px,12vh)}
-.cam-thumb{flex:1;background:#010601;border:1px solid #0a140a;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s}
-.cam-thumb:hover{border-color:#226622}
-.cam-thumb.ct-on{border-color:#33bb55;box-shadow:0 0 8px rgba(51,187,85,.2)}
-.ct-canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55}
-.ct-label{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:clamp(.4rem,.65vw,.55rem);color:rgba(51,187,85,.5);letter-spacing:2px;z-index:2}
-.cam-lure-in-feed{position:absolute;bottom:12px;right:12px;z-index:7}
-.cam-lure-in-feed .lure-btn{margin-bottom:0;font-size:clamp(.45rem,.8vw,.6rem)}
-
-/* ══ GLITCH ══ */
-@keyframes glitchTear{0%{transform:none}15%{transform:translateX(-6px) skewX(-1.5deg)}30%{transform:translateX(10px) scaleY(1.005)}45%{transform:translateX(-4px) skewX(1deg)}60%{transform:translateX(7px)}75%{transform:translateX(-2px) skewX(-.5deg)}100%{transform:none}}
-@keyframes glitchRgb{0%{filter:none}20%{filter:hue-rotate(80deg) saturate(4) brightness(1.3)}40%{filter:hue-rotate(190deg) saturate(5) brightness(.8) contrast(1.5)}60%{filter:hue-rotate(280deg) saturate(3) brightness(1.1)}80%{filter:hue-rotate(40deg) saturate(6) brightness(1.4)}100%{filter:none}}
-@keyframes glitchShake{0%,100%{transform:none}10%{transform:translate(3px,1px)}20%{transform:translate(-5px,-2px)}30%{transform:translate(2px,3px)}40%{transform:translate(-3px,-1px)}50%{transform:translate(4px,2px)}60%{transform:translate(-2px,3px)}70%{transform:translate(5px,-1px)}80%{transform:translate(-4px,2px)}90%{transform:translate(1px,-3px)}}
-@keyframes glitchSlice{0%{clip-path:inset(0 0 100% 0)}10%{clip-path:inset(20% 0 60% 0);transform:translateX(-12px)}25%{clip-path:inset(55% 0 10% 0);transform:translateX(8px)}40%{clip-path:inset(10% 0 70% 0);transform:translateX(-5px) skewX(2deg)}55%{clip-path:inset(70% 0 5% 0);transform:translateX(15px)}70%{clip-path:inset(35% 0 40% 0);transform:translateX(-8px)}85%{clip-path:inset(0% 0 80% 0);transform:translateX(4px)}100%{clip-path:inset(0 0 0 0);transform:none}}
-@keyframes glitchInvert{0%,100%{filter:none}15%{filter:invert(1) hue-rotate(90deg) brightness(1.5)}30%{filter:none}45%{filter:invert(.8) saturate(8) hue-rotate(200deg)}60%{filter:none}75%{filter:invert(.6) brightness(2) contrast(3)}90%{filter:none}}
-@keyframes glitchBleed{0%,100%{filter:none;transform:none}20%{filter:drop-shadow(8px 0 0 rgba(255,0,0,.9)) drop-shadow(-8px 0 0 rgba(0,255,255,.9))}40%{filter:drop-shadow(-12px 0 0 rgba(255,0,0,.7)) drop-shadow(12px 0 0 rgba(0,255,200,.7));transform:scaleX(1.01)}60%{filter:drop-shadow(5px 0 0 rgba(255,0,180,.8)) drop-shadow(-5px 0 0 rgba(0,220,255,.8))}80%{filter:none}}
-@keyframes glitchStutter{0%,100%{opacity:1;transform:none}12%{opacity:0}13%{opacity:1;transform:translateX(6px)}25%{opacity:0}26%{opacity:1;transform:translateX(-4px)}38%{opacity:0}39%{opacity:1;transform:none}50%{opacity:0;transform:translateX(10px)}51%{opacity:1}63%{opacity:0}64%{opacity:1;transform:translateX(-7px)}75%{opacity:0}76%,100%{opacity:1;transform:none}}
-@keyframes glitchZap{0%,100%{filter:none;transform:none}8%{filter:brightness(4) saturate(0);transform:scaleY(1.02)}9%{filter:none}16%{filter:brightness(3) hue-rotate(120deg)}17%{filter:none}33%{filter:brightness(5) saturate(0) contrast(3);transform:scaleY(.99) skewX(1deg)}34%{filter:none}50%{filter:brightness(3) hue-rotate(300deg) saturate(6)}51%{filter:none}}
-
-.cam-canvas.glitch-tear{animation:glitchTear .18s steps(1) forwards}
-.cam-canvas.glitch-rgb{animation:glitchRgb .22s steps(2) forwards}
-.cam-canvas.glitch-shake{animation:glitchShake .15s steps(1) forwards}
-.cam-canvas.glitch-slice{animation:glitchSlice .25s steps(3) forwards}
-.cam-canvas.glitch-invert{animation:glitchInvert .2s steps(2) forwards}
-.cam-canvas.glitch-bleed{animation:glitchBleed .3s steps(2) forwards}
-.cam-canvas.glitch-stutter{animation:glitchStutter .28s steps(1) forwards}
-.cam-canvas.glitch-zap{animation:glitchZap .18s steps(1) forwards}
-
-.glitch-overlay{position:absolute;inset:0;z-index:9;pointer-events:none;opacity:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 2px,rgba(0,255,0,.04) 2px,rgba(0,255,0,.04) 3px)}
-.cam-main.has-glitch .glitch-overlay{opacity:1}
-#glitchTearBand{position:absolute;left:0;right:0;height:12px;z-index:10;pointer-events:none;background:rgba(0,0,0,.5);display:none;mix-blend-mode:difference}
-
-.glitch-band{position:absolute;left:0;right:0;z-index:11;pointer-events:none;display:none;mix-blend-mode:difference}
-.glitch-band.red{background:rgba(255,0,0,.35);height:3px}
-.glitch-band.cyan{background:rgba(0,255,255,.25);height:2px}
-.glitch-band.white{background:rgba(255,255,255,.6);height:1px}
-
-@keyframes thumbGlitch{0%,100%{filter:none;transform:none}30%{filter:hue-rotate(120deg) saturate(5);transform:translateX(2px) scaleY(1.01)}60%{filter:hue-rotate(240deg) brightness(1.5);transform:translateX(-3px)}80%{filter:saturate(8) brightness(.7);transform:none}}
-.cam-thumb.glitching{animation:thumbGlitch .2s steps(2) forwards}
-
-@keyframes hudGlitch{0%,100%{filter:none;transform:none;opacity:1}10%{filter:hue-rotate(90deg) brightness(1.8);transform:translateX(3px)}11%{filter:none;transform:none}40%{opacity:.6;transform:translateX(-2px) skewX(.5deg)}41%{opacity:1;transform:none}70%{filter:brightness(2) saturate(0);transform:translateX(4px)}71%{filter:none;transform:none}}
-@keyframes titleScramble{0%,100%{filter:none;transform:none}5%{filter:hue-rotate(180deg) saturate(8);transform:skewX(-2deg) translateX(4px)}6%{filter:none;transform:none}22%{filter:brightness(3) saturate(0);transform:skewX(1.5deg) translateX(-3px) scaleY(1.01)}23%{filter:none;transform:none}55%{filter:hue-rotate(90deg) contrast(4);transform:translateX(6px)}56%{filter:none;transform:none}78%{filter:invert(.4) hue-rotate(270deg);transform:skewX(-1deg)}79%{filter:none;transform:none}}
-@keyframes screenTear{0%,100%{clip-path:none;transform:none}15%{clip-path:inset(30% 0 40% 0);transform:translateX(-8px)}16%{clip-path:none;transform:none}42%{clip-path:inset(60% 0 10% 0);transform:translateX(12px)}43%{clip-path:none;transform:none}68%{clip-path:inset(5% 0 75% 0);transform:translateX(-5px) skewX(.5deg)}69%{clip-path:none;transform:none}}
-@keyframes borderFlicker{0%,100%{border-color:rgba(200,0,0,.3);box-shadow:none}20%{border-color:rgba(255,0,80,.9);box-shadow:0 0 12px rgba(255,0,80,.5)}21%{border-color:rgba(200,0,0,.3)}50%{border-color:rgba(0,255,200,.6);box-shadow:0 0 8px rgba(0,255,200,.3)}51%{border-color:rgba(200,0,0,.3)}75%{border-color:rgba(255,255,0,.5);box-shadow:0 0 6px rgba(255,255,0,.2)}76%{border-color:rgba(200,0,0,.3)}}
-@keyframes noiseFlicker{0%,100%{opacity:.04}25%{opacity:.08}50%{opacity:.22}75%{opacity:.06}}
-@keyframes scanlineShift{0%{transform:translateY(0)}100%{transform:translateY(6px)}}
-
-.hud-glitching{animation:hudGlitch .22s steps(1) forwards!important}
-.title-glitching{animation:titleScramble .35s steps(2) forwards!important}
-.screen-tearing{animation:screenTear .2s steps(1) forwards!important}
-.border-glitch{animation:borderFlicker .4s steps(1) infinite!important}
-
-#gameScreen::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:8;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity:.03;animation:noiseFlicker .08s steps(1) infinite}
-
-#scanArtifact{position:absolute;left:0;right:0;height:2px;z-index:19;pointer-events:none;
-  background:linear-gradient(90deg,transparent,rgba(255,0,80,.7),rgba(0,255,200,.5),transparent);
-  display:none;animation:scanlineShift .05s linear infinite}
-
-/* ══ FLASH / VUUR ══ */
-#flashEl{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:70;transition:opacity .06s}
-#fireCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:15;display:none}
-
-/* ══ JUMPSCARE ══ */
-#jsScreen{position:absolute;inset:0;background:#000;z-index:150;display:none;align-items:center;justify-content:center}
-#jsImg{width:100%;height:100%;object-fit:cover;animation:jsIn .08s ease-out}
-@keyframes jsIn{from{transform:scale(1.2)}to{transform:scale(1)}}
-
-/* ══ DOOD SCHERM ══ */
-#deathScreen{display:none;position:absolute;inset:0;z-index:140;background:radial-gradient(ellipse at center,#0c0000,#000);flex-direction:column;align-items:center;justify-content:center}
-.death-title{font-family:'Creepster',cursive;font-size:clamp(2.5rem,7vw,5rem);color:#880000;text-shadow:0 0 40px #ff0000;letter-spacing:4px;margin-bottom:10px;animation:deathPulse 1.5s infinite}
-@keyframes deathPulse{0%,100%{text-shadow:0 0 30px #ff000066}50%{text-shadow:0 0 60px #ff0000aa}}
-.death-cause{color:#4a3030;font-size:clamp(.7rem,1.3vw,.88rem);max-width:440px;text-align:center;line-height:1.8;margin-bottom:32px}
-.death-cause em{color:#774444;font-style:italic}
-.retry-btn{background:transparent;border:1px solid #440000;color:#660000;padding:12px 44px;font-family:'Share Tech Mono',monospace;font-size:clamp(.65rem,1.1vw,.8rem);letter-spacing:5px;text-transform:uppercase;cursor:pointer;transition:all .2s}
-.retry-btn:hover{background:rgba(88,0,0,.3);border-color:#aa0000;color:#aa0000;box-shadow:0 0 20px rgba(88,0,0,.4)}
-
-/* ══ WIN SCHERM ══ */
-#winScreen{display:none;position:absolute;inset:0;z-index:130;background:radial-gradient(ellipse at center,#001a05,#000);flex-direction:column;align-items:center;justify-content:center}
-.win-rays{position:absolute;inset:0;background:conic-gradient(from 0deg at 50% 50%,transparent 0%,rgba(0,180,40,.025) 8%,transparent 16%,rgba(0,180,40,.015) 24%,transparent 32%);animation:rayRot 10s linear infinite;pointer-events:none}
-@keyframes rayRot{to{transform:rotate(360deg)}}
-.win-time{font-family:'Creepster',cursive;font-size:clamp(3rem,9vw,7rem);color:#22dd55;text-shadow:0 0 60px #00ff44;letter-spacing:5px;animation:winPulse 2s infinite}
-@keyframes winPulse{0%,100%{text-shadow:0 0 40px #00ff44}50%{text-shadow:0 0 90px #00ff44,0 0 120px #44ff8844}}
-.win-sunrise{font-size:clamp(.6rem,1.3vw,.9rem);color:#226633;letter-spacing:8px;text-transform:uppercase;margin-bottom:28px}
-.win-card{max-width:min(560px,88vw);background:rgba(0,12,3,.85);border:1px solid #0a2a0a;border-top:2px solid #1a4a1a;padding:24px 28px;color:#6a9a6a;font-size:clamp(.65rem,1.1vw,.78rem);line-height:1.8;text-align:center;margin-bottom:28px}
-.win-card strong{color:#44ff66}
-.win-card em{color:#3a6a3a;font-style:italic}
-.win-grade{font-size:clamp(1.4rem,3vw,2.2rem);color:#ffcc22;text-shadow:0 0 20px #ffaa00;margin:10px 0}
-
-/* ══ VENTILATIE ══ */
-#ventZone{position:absolute;top:7%;left:50%;transform:translateX(-50%);z-index:13;display:flex;flex-direction:column;align-items:center;gap:8px}
-#ventGrate{width:min(180px,18vw);height:min(130px,13vw);background:linear-gradient(135deg,#1a1208 0%,#100e08 50%,#1a1208 100%);border:3px solid #6a4a18;border-radius:5px;box-shadow:inset 0 0 16px rgba(0,0,0,.95),0 0 20px rgba(0,0,0,.7),0 0 10px rgba(204,51,0,.15),0 6px 30px rgba(0,0,0,.9);position:relative;overflow:hidden;transition:all .35s;cursor:pointer;}
-#ventGrate:hover{border-color:#8a6a30;box-shadow:inset 0 0 16px rgba(0,0,0,.95),0 0 24px rgba(0,0,0,.7),0 0 14px rgba(255,160,0,.15)}
-#ventGrate.shut{background:repeating-linear-gradient(0deg,#1a1410 0,#1a1410 7px,#0a0806 7px,#0a0806 16px),repeating-linear-gradient(90deg,#1a1410 0,#1a1410 6px,transparent 6px,transparent 16px);border-color:#2a2010;box-shadow:inset 0 0 24px rgba(0,0,0,.85),0 0 16px rgba(0,0,0,.65),0 6px 30px rgba(0,0,0,.9),inset 2px 2px 4px rgba(255,255,255,.04)}
-#ventGrate::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(0,0,0,.12) 0,rgba(0,0,0,.12) 3px,transparent 3px,transparent 10px);z-index:1}
-#ventGrate::before{content:'';position:absolute;inset:0;z-index:2;background:radial-gradient(circle 5px at 10px 10px, #2a2010 55%,transparent 55%),radial-gradient(circle 5px at calc(100% - 10px) 10px, #2a2010 55%,transparent 55%),radial-gradient(circle 5px at 10px calc(100% - 10px), #2a2010 55%,transparent 55%),radial-gradient(circle 5px at calc(100% - 10px) calc(100% - 10px), #2a2010 55%,transparent 55%)}
-.vent-light{width:10px;height:10px;border-radius:50%;background:#111;border:1px solid #222;box-shadow:inset 0 1px 2px rgba(0,0,0,.9);transition:background .15s,box-shadow .15s;position:absolute;top:7px;right:7px;z-index:4}
-.vent-light.active{background:#ff4400;box-shadow:0 0 14px #ff4400,0 0 5px #ff4400}
-#ventBtn{background:#16120a;border:1px solid #4a3820;border-top:2px solid #6a5430;color:#887755;padding:8px 20px;font-family:'Share Tech Mono',monospace;font-size:clamp(7px,.95vw,11px);letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .15s;border-radius:2px;white-space:nowrap;box-shadow:0 0 8px rgba(100,70,0,.15);text-shadow:0 0 4px rgba(140,110,40,.2)}
-#ventBtn:hover{background:#201a0e;border-color:#886640;border-top-color:#bbaa66;color:#ccaa55;box-shadow:0 0 14px rgba(140,100,0,.25)}
-#ventBtn.shut{background:#0e0a06;border-color:#2a2010;border-top-color:#3a3020;color:#554430}
-#ventBtn .vent-label{display:block;text-align:center}
-#ventOxygenWarning{font-size:clamp(.4rem,.65vw,.55rem);color:#663300;letter-spacing:2px;text-align:center;opacity:0;transition:opacity .3s;pointer-events:none}
-#ventOxygenWarning.active{opacity:1;animation:ventWarnBlink .7s infinite}
-@keyframes ventWarnBlink{0%,100%{opacity:1}50%{opacity:.3}}
-#markVentImg{position:absolute;top:5%;left:calc(50% - min(90px,9vw));z-index:16;width:min(160px,16vw);pointer-events:none;display:none;filter:brightness(.65) contrast(1.6) saturate(.6);animation:markBreath 1s ease-in-out infinite;transform-origin:bottom center}
-@keyframes markBreath{0%,100%{transform:scale(1) translateY(0)}50%{transform:scale(1.03) translateY(-4px)}}
-#markVentImg.mark-visible{display:block}
-#markVentImg.mark-urgent{filter:brightness(.65) contrast(1.6) saturate(.8);animation:markPanic .4s infinite}
-@keyframes markPanic{0%,100%{transform:scale(1.02)}50%{transform:scale(1.05) translateX(-3px)}}
-
-/* ══ SHADOW GIJS ══ */
-@keyframes shadowGijsFade{from{opacity:0}to{opacity:1}}
-@keyframes shadowGijsPulse{0%,100%{opacity:.85}50%{opacity:1}}
-
-/* ══ CUSTOM NACHT KNOP ══ */
-.night-custom-sel{border-color:#cc8800!important;color:#ffaa00!important;background:rgba(200,120,0,.08)!important;box-shadow:0 0 20px #88440033!important;}
-.night-custom-sel::after{transform:scaleX(1)!important;background:#cc8800!important}
-.night-custom-sel .nb-num,.night-custom-sel .nb-num span{color:#ffaa00!important}
-.start-btn.night-custom-btn{border-color:#cc8800;color:#cc8800;animation:btnAnimCustom 2s ease-in-out infinite}
-.start-btn.night-custom-btn:not(:disabled)::after{background:#cc8800}
-.start-btn.night-custom-btn:not(:disabled):hover{box-shadow:0 0 24px #88440055}
-@keyframes btnAnimCustom{0%,100%{box-shadow:0 0 4px #44220022}50%{box-shadow:0 0 16px #88440066}}
-
-/* ══ CUSTOM NACHT SLIDERS ══ */
-.cn-row{display:flex;flex-direction:column;gap:5px;padding:8px 10px;background:rgba(4,0,0,.6);border:1px solid #1a0a00;position:relative;overflow:hidden;}
-.cn-row:hover{border-color:#330000;background:rgba(8,0,0,.8)}
-.cn-portrait{position:absolute;top:0;right:0;width:44px;height:54px;object-fit:cover;object-position:top center;filter:brightness(0.45) contrast(1.6) saturate(0.4) sepia(0.3);-webkit-mask-image:linear-gradient(to left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);mask-image:linear-gradient(to left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);pointer-events:none;transition:filter .3s;}
-.cn-row:hover .cn-portrait{filter:brightness(0.7) contrast(1.5) saturate(0.6) sepia(0.2)}
-.cn-row.lvl-active .cn-portrait{filter:brightness(0.6) contrast(1.5) saturate(0.5) sepia(0.2)}
-.cn-row.lvl-danger .cn-portrait{filter:brightness(0.75) contrast(1.4) saturate(0.8) sepia(0.1);animation:portraitFlicker 2s infinite}
-.cn-row.lvl-max .cn-portrait{filter:brightness(0.9) contrast(1.3) saturate(1.2);animation:portraitFlicker .6s infinite}
-@keyframes portraitFlicker{0%,100%{opacity:1}50%{opacity:.7}}
-.cn-label{font-size:clamp(.45rem,.75vw,.6rem);color:#cc7700;letter-spacing:3px;text-transform:uppercase;font-family:'Share Tech Mono',monospace;padding-right:46px;}
-.cn-ctrl{display:flex;align-items:center;gap:5px}
-.cn-btn{background:#0a0500;border:1px solid #330000;color:#880000;width:20px;height:20px;font-family:'VT323',monospace;font-size:.9rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .1s;padding:0;line-height:1}
-.cn-btn:hover{background:#220000;border-color:#880000;color:#ff2200}
-.cn-bar-wrap{flex:1;height:8px;background:#0a0500;border:1px solid #1a0a00;border-radius:1px;overflow:hidden}
-.cn-bar-fill{height:100%;width:0%;border-radius:1px;transition:width .15s,background .2s;background:#1a3a0a}
-.cn-input{width:34px;background:#0a0500;border:1px solid #1a0a00;color:#cc7700;font-family:'VT323',monospace;font-size:.9rem;text-align:center;padding:1px 2px;-moz-appearance:textfield}
-.cn-input::-webkit-inner-spin-button,.cn-input::-webkit-outer-spin-button{-webkit-appearance:none}
-.cn-input:focus{outline:none;border-color:#664400}
-.cn-val-row{display:flex;justify-content:space-between;align-items:center}
-.cn-num{font-family:'VT323',monospace;font-size:.95rem;color:#cc7700;letter-spacing:2px}
-.cn-lbl{font-size:.45rem;letter-spacing:2px;font-family:'Share Tech Mono',monospace}
-
-/* ══ BULK KNOPPEN ══ */
-.cn-bulk-btn{
-  background:#0a0500;border:1px solid #330000;
-  font-family:'VT323',monospace;font-size:.95rem;
-  letter-spacing:2px;cursor:pointer;
-  padding:3px 10px;transition:all .15s;line-height:1.4;
-}
-.cn-bulk-pos{color:#3a8a0a;border-color:#1a3a0a}
-.cn-bulk-pos:hover{background:#0f1a05;border-color:#55aa22;color:#88dd44;box-shadow:0 0 8px rgba(100,200,0,.25)}
-.cn-bulk-max{color:#ff4400;border-color:#660000;animation:diffFlash .9s infinite}
-.cn-bulk-max:hover{background:#1a0500;border-color:#ff2200;color:#ff6600;box-shadow:0 0 10px rgba(255,60,0,.35)}
-.cn-bulk-neg{color:#884400;border-color:#441a00}
-.cn-bulk-neg:hover{background:#140800;border-color:#cc6600;color:#ffaa44;box-shadow:0 0 8px rgba(200,100,0,.25)}
-.cn-bulk-reset{color:#330000;border-color:#220000}
-.cn-bulk-reset:hover{background:#0a0000;border-color:#880000;color:#aa2222;box-shadow:0 0 8px rgba(150,0,0,.3)}
-
-/* ══ CUSTOM NACHT STARTKNOP ══ */
-.cn-start-btn{
-  display:block;width:100%;margin-top:18px;
-  background:rgba(140,0,0,.85);
-  border:2px solid #ff2222;border-top:3px solid #ff6666;
-  color:#ffffff;
-  font-family:'VT323',monospace;font-size:clamp(1.3rem,2.6vw,2rem);
-  letter-spacing:6px;text-transform:uppercase;
-  padding:14px 0;cursor:pointer;
-  transition:all .2s;position:relative;overflow:hidden;
-  box-shadow:0 0 28px rgba(255,0,0,.4), inset 0 0 20px rgba(200,0,0,.3);
-  text-shadow:0 0 12px rgba(255,150,150,.6);
-  animation:cnStartPulse 2s ease-in-out infinite;
-}
-@keyframes cnStartPulse{
-  0%,100%{box-shadow:0 0 20px rgba(255,0,0,.35),inset 0 0 20px rgba(200,0,0,.2)}
-  50%{box-shadow:0 0 40px rgba(255,0,0,.65),inset 0 0 30px rgba(220,0,0,.4)}
-}
-.cn-start-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#aa0000,#ff0000,#aa0000);transform:scaleX(0);transform-origin:left;transition:transform .25s;z-index:-1}
-.cn-start-btn:hover{color:#ffffff;letter-spacing:9px;border-color:#ff4444;box-shadow:0 0 50px rgba(255,0,0,.7);text-shadow:0 0 18px rgba(255,200,200,.8)}
-.cn-start-btn:hover::before{transform:scaleX(1)}
+.warn-box2d { max-width:min(560px,90vw); border:2px solid #ff0000; background:#000; padding:32px 36px; }
+.warn-title2d { font-size:1.8rem; color:#ff0000; letter-spacing:5px; text-align:center; margin-bottom:16px; text-shadow:0 0 20px #ff0000; }
+.warn-line2d { color:#cc3333; font-size:.75rem; line-height:2; margin-bottom:6px; letter-spacing:1px; }
 </style>
 </head>
 <body>
 
-<!-- ════ WAARSCHUWINGSSCHERM ════ -->
-<div id="warnScreen">
-  <div class="warn-flicker"></div>
-  <div class="warn-box">
-    <div class="warn-skull">💀</div>
-    <div class="warn-title">WAARSCHUWING<span class="blink">_</span></div>
-    <div class="warn-line accent">Dit spel bevat frequente jumpscares en harde geluiden.</div>
-    <div class="warn-line">Spelen met koptelefoon wordt aanbevolen maar doe dit op eigen risico.</div>
-    <hr class="warn-divider">
-    <div class="warn-line">Dit spel is een satirische horror-parodie gebaseerd op publieke figuren en bekende namen. De personages en situaties zijn volledig fictief en puur bedoeld als humor.</div>
-    <div class="warn-line dim">Als jij of iemand die je kent voorkomt in dit spel en je hier bezwaar tegen hebt, sluit dan dit venster.</div>
-    <hr class="warn-divider">
-    <div class="warn-line fullscreen">🖥 Voor de beste ervaring: speel dit spel in <strong>volledig scherm</strong> (druk op F11 of gebruik de browseropties).</div>
-    <hr class="warn-divider">
-    <div class="warn-line dim">Door verder te gaan bevestig je dat je minimaal 13 jaar oud bent en akkoord gaat met de bovenstaande voorwaarden.</div>
-    <button class="warn-proceed-btn" onclick="proceedToMenu()">IK BEGRIJP HET — DOORGAAN<span class="blink"> ▶</span></button>
-    <div class="warn-err-code">FNAG_WARN_v1.0 · KELDER_DETENTIE_SYS · ERR_PROCEED_REQUIRED</div>
+<!-- Warning -->
+<div id="warnScreen2d">
+  <div class="warn-box2d">
+    <div class="warn-title2d">⚠ WAARSCHUWING</div>
+    <div class="warn-line2d">Dit spel bevat jumpscares en harde geluiden.</div>
+    <div class="warn-line2d">Spelen met koptelefoon op eigen risico.</div>
+    <div class="warn-line2d">Satirische horror-parodie — volledig fictief.</div>
+    <div class="warn-line2d">VR modus: gebruik Enter VR knop onderaan voor immersive ervaring.</div>
+    <button class="menu-btn" style="width:100%;margin-top:20px" onclick="showMenu()">IK BEGRIJP HET — DOORGAAN ▶</button>
   </div>
 </div>
 
-<!-- ════ STARTSCHERM ════ -->
-<div id="startScreen">
-  <!-- Meester Gijs rechts in beeld -->
-  <div id="gijsHero">
-    <img id="gijsHeroImg" src="Images/GijsCamera.png" alt="">
-    <img class="gijs-ghost red" src="Images/GijsCamera.png" alt="">
-    <img class="gijs-ghost cyan" src="Images/GijsCamera.png" alt="">
-    <div class="gijs-scanbar"></div>
+<!-- Main Menu overlay -->
+<div id="overlay" style="display:none">
+  <h1>FIVE NIGHTS AT<br>MEESTER GIJS</h1>
+  <p style="margin-top:6px;color:#333;font-size:.6rem;letter-spacing:5px">VR EDITION</p>
+  <p>Selecteer een nacht om te beginnen</p>
+  <div class="night-grid">
+    <button class="nb" id="nb1" onclick="selectNight(1)">NACHT 1<br><span style="font-size:.6rem;color:#333">Gijs · Hobo</span></button>
+    <button class="nb" id="nb2" onclick="selectNight(2)">NACHT 2<br><span style="font-size:.6rem;color:#333">+Tom · Mark</span></button>
+    <button class="nb" id="nb3" onclick="selectNight(3)">NACHT 3<br><span style="font-size:.6rem;color:#333">+Jeffrey</span></button>
+    <button class="nb" id="nb4" onclick="selectNight(4)">NACHT 4<br><span style="font-size:.6rem;color:#333">+Chapo</span></button>
+    <button class="nb" id="nb5" onclick="selectNight(5)">NACHT 5<br><span style="font-size:.6rem;color:#333">ALLES</span></button>
   </div>
-  <canvas id="dripsCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1"></canvas>
-  <div class="start-inner">
-    <div class="term-bar">
-      <div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div>
-      <div class="term-title-bar">KELDER_DETENTIE.EXE — BEVEILIGINGSSYSTEEM ACTIEF</div>
+  <button class="menu-btn" id="startBtnMenu" disabled onclick="startGame()">SELECTEER EEN NACHT</button>
+  <p style="margin-top:14px;font-size:.55rem;color:#220000;letter-spacing:3px">Druk [C] voor camera's · Deuren: knoppen rechts/links · VR: controller triggers</p>
+</div>
+
+<!-- HUD (2D fallback + VR overlay) -->
+<div id="hud2d">
+  <div class="hud-panel">
+    <div class="hud-time" id="hudTime">12:00 AM</div>
+    <div class="hud-small" id="nightModeLbl">Nacht 1</div>
+    <div class="hud-small" style="margin-top:6px">O₂ NIVEAU</div>
+    <div class="o2-bar-wrap">
+      <div class="bar-track"><div class="bar-fill" id="o2Fill" style="width:100%"></div></div>
+      <div class="hud-small" id="o2Pct">100%</div>
     </div>
-    <div class="term-window">
-      <div class="start-eyebrow">SYSTEEM GEÏNITIALISEERD — NACHT SELECTIE</div>
-      <div class="start-title">FIVE NIGHTS AT<br>MEESTER GIJS</div>
-      <div class="start-sub">Five Nights of Academic Detention<span class="blink">_</span></div>
-
-      <!-- Lore kaart -->
-      <div class="lore-card" id="loreCard">
-        <p id="loreText">> Selecteer een nacht om dossier te laden<span class="blink">_</span></p>
-        <div class="quote" id="loreQuote">"You will stay here until sunrise."</div>
-        <p class="warn" id="loreWarn">⚠ Selecteer een nacht hieronder.</p>
-      </div>
-
-      <!-- Nacht selectie knoppen -->
-      <div style="display:flex;gap:8px;max-width:min(820px,95vw);width:100%;margin-bottom:4px;">
-        <div class="ns-label">NACHT 1</div>
-        <div class="ns-label">NACHT 2</div>
-        <div class="ns-label">NACHT 3</div>
-        <div class="ns-label">NACHT 4</div>
-        <div class="ns-label">NACHT 5</div>
-        <div class="ns-label ns-label-custom">CUSTOM NACHT</div>
-      </div>
-      <div class="night-select" id="nightSelect">
-        <button class="night-btn" id="nb1" onclick="selectNight(1)">
-          <div class="nb-num">N<span>1</span></div>
-          <div class="nb-title">DE KELDER</div>
-          <div class="nb-enemies">Hobo Gijs · Meester Gijs</div>
-          <div class="nb-diff diff-1">●○○○○</div>
-        </button>
-        <button class="night-btn" id="nb2" onclick="selectNight(2)">
-          <div class="nb-num">N<span>2</span></div>
-          <div class="nb-title">DE MUZIEKKAMER</div>
-          <div class="nb-enemies">+ Tumor Tom · Mark Rutte</div>
-          <div class="nb-diff diff-2">●●○○○</div>
-        </button>
-        <button class="night-btn" id="nb3" onclick="selectNight(3)">
-          <div class="nb-num">N<span>3</span></div>
-          <div class="nb-title">DE GANG</div>
-          <div class="nb-enemies">+ Jeffrey</div>
-          <div class="nb-diff diff-3">●●●○○</div>
-        </button>
-        <button class="night-btn" id="nb4" onclick="selectNight(4)">
-          <div class="nb-num">N<span>4</span></div>
-          <div class="nb-title">DE LINKER GANG</div>
-          <div class="nb-enemies">+ Chapo</div>
-          <div class="nb-diff diff-4">●●●●○</div>
-        </button>
-        <button class="night-btn" id="nb5" onclick="selectNight(5)">
-          <div class="nb-num">N<span>5</span></div>
-          <div class="nb-title">HET EINDOORDEEL</div>
-          <div class="nb-enemies">+ Diddy · Alle vijanden</div>
-          <div class="nb-diff diff-5">●●●●●</div>
-        </button>
-        <button class="night-btn" id="nbCustom" onclick="selectCustomNight()">
-          <div class="nb-num">N<span>★</span></div>
-          <div class="nb-title">CUSTOM NACHT</div>
-          <div class="nb-enemies">Stel elk karakter in<br>van 0 tot 20</div>
-          <div class="nb-diff diff-5" style="font-size:.55rem;letter-spacing:1px">CUSTOM</div>
-        </button>
-      </div>
-
-      <!-- Custom nacht configuratie panel -->
-      <div id="customNightPanel" style="display:none;margin-bottom:18px;border:1px solid #1a0000;border-left:3px solid #550000;background:rgba(8,0,0,.9);padding:16px 18px;position:relative;">
-        <div style="position:absolute;top:-9px;left:16px;background:#020000;padding:0 6px;font-size:.5rem;color:#330000;letter-spacing:5px;font-family:'Share Tech Mono',monospace;">CUSTOM CONFIG</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px 16px;">
-
-          <!-- Gijs -->
-          <div class="cn-row">
-            <img class="cn-portrait" src="Images/GijsCamera.png" alt="">
-            <div class="cn-label">Meester Gijs</div>
-            <div class="cn-ctrl">
-              <button class="cn-btn" onclick="setCustomLevel('gijs',customLevels.gijs-1)">−</button>
-              <div class="cn-bar-wrap"><div class="cn-bar-fill" id="cb_gijs"></div></div>
-              <input class="cn-input" id="ci_gijs" type="number" min="0" max="20" value="0" oninput="setCustomLevel('gijs',this.value)">
-              <button class="cn-btn" onclick="setCustomLevel('gijs',customLevels.gijs+1)">+</button>
-            </div>
-            <div class="cn-val-row"><span class="cn-num" id="cv_gijs">0</span><span class="cn-lbl" id="cdl_gijs">INACTIEF</span></div>
-          </div>
-
-          <!-- Hobo Gijs -->
-          <div class="cn-row">
-            <img class="cn-portrait" src="Images/HoboGijsCamera.png" alt="">
-            <div class="cn-label">Hobo Gijs</div>
-            <div class="cn-ctrl">
-              <button class="cn-btn" onclick="setCustomLevel('hobo',customLevels.hobo-1)">−</button>
-              <div class="cn-bar-wrap"><div class="cn-bar-fill" id="cb_hobo"></div></div>
-              <input class="cn-input" id="ci_hobo" type="number" min="0" max="20" value="0" oninput="setCustomLevel('hobo',this.value)">
-              <button class="cn-btn" onclick="setCustomLevel('hobo',customLevels.hobo+1)">+</button>
-            </div>
-            <div class="cn-val-row"><span class="cn-num" id="cv_hobo">0</span><span class="cn-lbl" id="cdl_hobo">INACTIEF</span></div>
-          </div>
-
-          <!-- Tumor Tom -->
-          <div class="cn-row">
-            <img class="cn-portrait" src="Images/TomCamera.png" alt="">
-            <div class="cn-label">Tumor Tom</div>
-            <div class="cn-ctrl">
-              <button class="cn-btn" onclick="setCustomLevel('tom',customLevels.tom-1)">−</button>
-              <div class="cn-bar-wrap"><div class="cn-bar-fill" id="cb_tom"></div></div>
-              <input class="cn-input" id="ci_tom" type="number" min="0" max="20" value="0" oninput="setCustomLevel('tom',this.value)">
-              <button class="cn-btn" onclick="setCustomLevel('tom',customLevels.tom+1)">+</button>
-            </div>
-            <div class="cn-val-row"><span class="cn-num" id="cv_tom">0</span><span class="cn-lbl" id="cdl_tom">INACTIEF</span></div>
-          </div>
-
-          <!-- Mark Rutte -->
-          <div class="cn-row">
-            <img class="cn-portrait" src="Images/MarkVent.png" alt="">
-            <div class="cn-label">Mark Rutte</div>
-            <div class="cn-ctrl">
-              <button class="cn-btn" onclick="setCustomLevel('mark',customLevels.mark-1)">−</button>
-              <div class="cn-bar-wrap"><div class="cn-bar-fill" id="cb_mark"></div></div>
-              <input class="cn-input" id="ci_mark" type="number" min="0" max="20" value="0" oninput="setCustomLevel('mark',this.value)">
-              <button class="cn-btn" onclick="setCustomLevel('mark',customLevels.mark+1)">+</button>
-            </div>
-            <div class="cn-val-row"><span class="cn-num" id="cv_mark">0</span><span class="cn-lbl" id="cdl_mark">INACTIEF</span></div>
-          </div>
-
-          <!-- Maduro -->
-          <div class="cn-row">
-            <img class="cn-portrait" src="Images/MaduroCamera.png" alt="">
-            <div class="cn-label">Maduro</div>
-            <div class="cn-ctrl">
-              <button class="cn-btn" onclick="setCustomLevel('maduro',customLevels.maduro-1)">−</button>
-              <div class="cn-bar-wrap"><div class="cn-bar-fill" id="cb_maduro"></div></div>
-              <input class="cn-input" id="ci_maduro" type="number" min="0" max="20" value="0" oninput="setCustomLevel('maduro',this.value)">
-              <button class="cn-btn" onclick="setCustomLevel('maduro',customLevels.maduro+1)">+</button>
-            </div>
-            <div class="cn-val-row"><span class="cn-num" id="cv_maduro">0</span><span class="cn-lbl" id="cdl_maduro">INACTIEF</span></div>
-          </div>
-
-          <!-- Jeffrey -->
-          <div class="cn-row">
-            <img class="cn-portrait" src="Images/JeffreyCamera.png" alt="">
-            <div class="cn-label">Jeffrey</div>
-            <div class="cn-ctrl">
-              <button class="cn-btn" onclick="setCustomLevel('jeffrey',customLevels.jeffrey-1)">−</button>
-              <div class="cn-bar-wrap"><div class="cn-bar-fill" id="cb_jeffrey"></div></div>
-              <input class="cn-input" id="ci_jeffrey" type="number" min="0" max="20" value="0" oninput="setCustomLevel('jeffrey',this.value)">
-              <button class="cn-btn" onclick="setCustomLevel('jeffrey',customLevels.jeffrey+1)">+</button>
-            </div>
-            <div class="cn-val-row"><span class="cn-num" id="cv_jeffrey">0</span><span class="cn-lbl" id="cdl_jeffrey">INACTIEF</span></div>
-          </div>
-
-          <!-- Chapo -->
-          <div class="cn-row">
-            <img class="cn-portrait" src="Images/ChapoCamera.png" alt="">
-            <div class="cn-label">Chapo</div>
-            <div class="cn-ctrl">
-              <button class="cn-btn" onclick="setCustomLevel('chapo',customLevels.chapo-1)">−</button>
-              <div class="cn-bar-wrap"><div class="cn-bar-fill" id="cb_chapo"></div></div>
-              <input class="cn-input" id="ci_chapo" type="number" min="0" max="20" value="0" oninput="setCustomLevel('chapo',this.value)">
-              <button class="cn-btn" onclick="setCustomLevel('chapo',customLevels.chapo+1)">+</button>
-            </div>
-            <div class="cn-val-row"><span class="cn-num" id="cv_chapo">0</span><span class="cn-lbl" id="cdl_chapo">INACTIEF</span></div>
-          </div>
-
-          <!-- Diddy -->
-          <div class="cn-row">
-            <img class="cn-portrait" src="Images/DiddyCamera.png" alt="">
-            <div class="cn-label">Diddy</div>
-            <div class="cn-ctrl">
-              <button class="cn-btn" onclick="setCustomLevel('diddy',customLevels.diddy-1)">−</button>
-              <div class="cn-bar-wrap"><div class="cn-bar-fill" id="cb_diddy"></div></div>
-              <input class="cn-input" id="ci_diddy" type="number" min="0" max="20" value="0" oninput="setCustomLevel('diddy',this.value)">
-              <button class="cn-btn" onclick="setCustomLevel('diddy',customLevels.diddy+1)">+</button>
-            </div>
-            <div class="cn-val-row"><span class="cn-num" id="cv_diddy">0</span><span class="cn-lbl" id="cdl_diddy">INACTIEF</span></div>
-          </div>
-
-          <!-- Shadow Gijs -->
-          <div class="cn-row">
-            <img class="cn-portrait" src="Images/ShadowGijsOffice.png" alt="">
-            <div class="cn-label">Shadow Gijs</div>
-            <div class="cn-ctrl">
-              <button class="cn-btn" onclick="setCustomLevel('shadow',customLevels.shadow-1)">−</button>
-              <div class="cn-bar-wrap"><div class="cn-bar-fill" id="cb_shadow"></div></div>
-              <input class="cn-input" id="ci_shadow" type="number" min="0" max="20" value="0" oninput="setCustomLevel('shadow',this.value)">
-              <button class="cn-btn" onclick="setCustomLevel('shadow',customLevels.shadow+1)">+</button>
-            </div>
-            <div class="cn-val-row"><span class="cn-num" id="cv_shadow">0</span><span class="cn-lbl" id="cdl_shadow">INACTIEF</span></div>
-          </div>
-
-        </div>
-
-        <!-- Bulk aanpassing knoppen -->
-        <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
-          <span style="font-size:.45rem;color:#330000;letter-spacing:3px;font-family:'Share Tech Mono',monospace;margin-right:4px;">ALLES:</span>
-          <button class="cn-bulk-btn cn-bulk-pos" onclick="adjustAllLevels(5)">+5</button>
-          <button class="cn-bulk-btn cn-bulk-pos" onclick="adjustAllLevels(10)">+10</button>
-          <button class="cn-bulk-btn cn-bulk-max" onclick="adjustAllLevels(20,'set')">+20</button>
-          <span style="width:1px;height:16px;background:#330000;display:inline-block;margin:0 4px;"></span>
-          <button class="cn-bulk-btn cn-bulk-neg" onclick="adjustAllLevels(-5)">−5</button>
-          <button class="cn-bulk-btn cn-bulk-neg" onclick="adjustAllLevels(-10)">−10</button>
-          <button class="cn-bulk-btn cn-bulk-neg" onclick="adjustAllLevels(-20)">−20</button>
-          <span style="width:1px;height:16px;background:#330000;display:inline-block;margin:0 4px;"></span>
-          <button class="cn-bulk-btn cn-bulk-reset" onclick="adjustAllLevels(0,'set')">RESET</button>
-        </div>
-
-        <!-- Custom nacht startknop -->
-        <button class="cn-start-btn" id="cnStartBtn" onclick="startGame()">▶ &nbsp;CUSTOM NACHT STARTEN</button>
-
-        <div style="margin-top:10px;font-size:.48rem;color:#332200;letter-spacing:3px;font-family:'Share Tech Mono',monospace;">// 0 = INACTIEF · 20 = MAX AGGRESIEF · elk karakter op 0 = uitgeschakeld</div>
-      </div>
-
-      <button class="start-btn" id="startBtn" disabled>SELECTEER EEN NACHT</button>
-      <div class="start-hint">koptelefoon aanbevolen · gebruik camera's en deuren om te overleven · F11 voor volledig scherm</div>
+    <div id="mbSection" style="display:none;margin-top:6px">
+      <div class="hud-small">MUZIEKDOOS</div>
+      <div class="bar-track"><div class="bar-fill" id="mbFill" style="width:100%;background:linear-gradient(90deg,#886600,#ddcc00)"></div></div>
+      <div class="hud-small" id="mbPct">100%</div>
     </div>
+  </div>
+  <div class="action-btns">
+    <button class="act-btn" id="camToggleBtn" onclick="toggleCam()">📷 CAMERA'S [C]</button>
+    <button class="act-btn" id="dbL" onclick="toggleDoor('left')">🚪 LINKS DEUR</button>
+    <button class="act-btn" id="dbR" onclick="toggleDoor('right')">🚪 RECHTS DEUR</button>
+    <button class="act-btn" id="ventBtn2d" onclick="toggleVent()">🌬 VENT [V]</button>
+    <button class="act-btn" id="lureBtnHud" disabled onclick="useLure()">🔊 LOKKEN [L]</button>
+    <div class="hud-small" id="lureCd" style="color:#446644;letter-spacing:2px;font-size:.5rem">Laden…</div>
   </div>
 </div>
 
-<!-- ════ SPELSCHERM ════ -->
-<div id="gameScreen">
-  <canvas id="officeCanvas"></canvas>
-  <div class="vignette"></div>
-  <div id="alarmOverlay"></div>
-
-  <!-- Ventilatie — gecentreerd op achtermuur -->
-  <div id="ventZone">
-    <div id="ventGrate" onclick="toggleVent()"><div class="vent-light" id="ventLight"></div></div>
-    <button id="ventBtn" onclick="toggleVent()"><span class="vent-label">SLUIT VENT</span></button>
-    <div id="ventOxygenWarning">⚠ O₂ LEK</div>
-  </div>
-  <img id="markVentImg" src="Images/MarkVent.png" alt="">
-
-  <!-- Linker deur -->
-  <div class="door-zone dz-l" id="dzL">
-    <div class="door-frame">
-      <div class="door-panel" id="dpL"><div class="door-warn-stripe"></div><div class="door-handle"></div></div>
-    </div>
-    <div class="d-light" id="dlL"></div>
-    <button class="door-btn" id="dbL" onclick="toggleDoor('left')">DEUR</button>
-  </div>
-
-  <!-- Rechter deur -->
-  <div class="door-zone dz-r" id="dzR">
-    <div class="door-frame">
-      <div class="door-panel" id="dpR"><div class="door-warn-stripe"></div><div class="door-handle"></div></div>
-    </div>
-    <div class="d-light" id="dlR"></div>
-    <button class="door-btn" id="dbR" onclick="toggleDoor('right')">DEUR</button>
-  </div>
-
-  <!-- HUD -->
-  <div id="hud">
-    <div class="hud-tl">
-      <div class="hud-time-wrap">
-        <div class="hud-time" id="hudTime">12:00 AM</div>
-        <div class="hud-night-lbl" id="nightModeLbl">Nacht 1 · Kelder Detentie</div>
-      </div>
-      <div class="hud-o2-panel">
-        <div class="o2-head"><span class="o2-label">O₂ Niveau</span><span class="o2-pct" id="o2Pct">100%</span></div>
-        <div class="o2-track"><div class="o2-fill" id="o2Fill" style="width:100%"></div></div>
-        <div class="o2-status" id="o2Status">NOMINAAL</div>
-      </div>
-    </div>
-    <div class="hud-tr">
-      <button class="cam-toggle-btn" id="camToggleBtn" onclick="toggleCam()">📷 CAMERA'S &nbsp;[C]</button>
-      <div class="lure-panel">
-        <button class="lure-btn" id="lureBtnHud" disabled onclick="useLure()">🔊 LOKKEN</button>
-        <div class="lure-cd" id="lureCd">Bezig met laden…</div>
-      </div>
-    </div>
-    <div class="hud-bc">
-      <div class="hud-status-bar">
-        <div class="hud-status-dot on" id="dotSec"></div><span>BEVEILIGINGSSYS</span>
-        <div class="hud-status-dot" id="dotMon"></div><span>GIJS</span>
-        <div class="hud-status-dot" id="dotHobo"></div><span>HOBO GIJS-2</span>
-        <div class="hud-status-dot on" id="dotTom"></div><span>MUZIEKDOOS</span>
-        <div class="hud-status-dot warn" id="dotMaduro"></div><span>MADURO</span>
-        <div class="hud-status-dot" id="dotJeffrey" style="display:none"></div><span id="jeffreyLabel" style="display:none">JEFFREY</span>
-        <div class="hud-status-dot" id="dotChapo" style="display:none"></div><span id="chapoLabel" style="display:none">CHAPO</span>
-        <div class="hud-status-dot" id="dotDiddy" style="display:none"></div><span id="diddyLabel" style="display:none">DIDDY</span>
-      </div>
+<!-- Camera overlay 2D -->
+<div id="camUi">
+  <div class="cam-hdr2d">
+    <span style="color:#1a6a2a;font-size:.7rem;letter-spacing:4px">LIVE FEED — <span id="camNameLbl">CAM 1</span> · <span id="camRoomLbl">STOOKKAMER</span></span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="alarm-btn2d" id="alarmCamBtn" onclick="useCameraAlarm()" disabled>🚨 ALARM</button>
+      <span class="hud-small" id="alarmCdLbl" style="white-space:nowrap">CD: --</span>
+      <button class="mb-wind-btn" id="windupBtn" style="display:none"
+        onmousedown="startWindUp()" onmouseup="stopWindUp()" onmouseleave="stopWindUp()"
+        ontouchstart="startWindUp(event)" ontouchend="stopWindUp()">🔧 OPWINDEN</button>
+      <button class="cam-close2d" onclick="toggleCam()">✕ SLUITEN</button>
     </div>
   </div>
-
-  <!-- Camera overlay -->
-  <div id="camOverlay">
-    <div class="cam-hdr">
-      <div>
-        <span class="cam-hdr-title">LIVE FEED — </span>
-        <span class="cam-hdr-title" id="camNameLbl">CAM 1</span>
+  <div class="cam-feed-wrap">
+    <canvas id="camCanvas2d"></canvas>
+    <img id="monsterCamImg" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);max-height:90%;max-width:55%;display:none;filter:brightness(.6) contrast(1.4)">
+    <img id="hoboCamImg" style="position:absolute;bottom:0;right:8%;max-height:80%;max-width:45%;display:none;filter:brightness(.5) contrast(1.5)">
+    <img id="jeffreyCamImg" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);max-height:88%;max-width:50%;display:none;filter:brightness(.55) contrast(1.5)">
+    <img id="chapoCamImg" style="position:absolute;bottom:0;left:2%;max-height:78%;max-width:38%;display:none">
+    <img id="tomCamImg" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);max-height:95%;max-width:60%;display:none">
+    <img id="diddyCamImg" style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);max-height:95%;max-width:60%;display:none;filter:brightness(.55) contrast(1.5)">
+    <img id="maduroCamImg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;filter:brightness(.82) contrast(1.2)">
+    <div id="maduroDisabledOverlay" style="position:absolute;inset:0;background:#000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px">
+      <div style="color:#ff0000;font-size:2rem;font-family:monospace;letter-spacing:6px;animation:bCrit .45s infinite">CAM OFFLINE</div>
+      <div style="color:#660000;font-size:.7rem;letter-spacing:3px">MADURO INTERFERENTIE</div>
+      <div style="width:200px;height:6px;background:#1a0000;border:1px solid #440000">
+        <div id="maduroErrFill" style="height:100%;background:linear-gradient(90deg,#660000,#ff0000);width:0%;transition:width linear"></div>
       </div>
-      <div class="cam-hdr-right">
-        <span class="cam-rec">● REC</span>
-        <button class="alarm-cam-btn" id="alarmCamBtn" onclick="useCameraAlarm()" disabled>🚨 ALARM</button>
-        <span class="alarm-cd-lbl" id="alarmCdLbl">CD: --</span>
-        <button class="cam-close-btn" onclick="toggleCam()">✕ SLUITEN</button>
-      </div>
+      <div style="color:#330000;font-size:.6rem;letter-spacing:2px">HERVERBINDING IN <span id="maduroReconnectSec">20</span>s…</div>
     </div>
-    <div class="cam-main" id="camMain">
-      <canvas class="cam-canvas" id="camCanvas"></canvas>
-      <img class="monster-on-cam"  id="monsterCamImg"  src="" alt="" style="display:none">
-      <img class="hobo-on-cam"     id="hoboCamImg"     src="" alt="" style="display:none">
-      <img class="jeffrey-on-cam"  id="jeffreyCamImg"  src="" alt="" style="display:none">
-      <img class="chapo-on-cam"    id="chapoCamImg"    src="" alt="" style="display:none">
-      <img class="tom-on-cam"      id="tomCamImg"      src="" alt="" style="display:none">
-      <img class="diddy-on-cam"    id="diddyCamImg"    src="" alt="" style="display:none">
-      <img class="maduro-on-cam"   id="maduroCamImg"   src="Images/MaduroCamera.png" alt="">
-      <div class="maduro-disabled-overlay" id="maduroDisabledOverlay">
-        <div class="maduro-err-noise"></div>
-        <div class="maduro-err-title">CAM OFFLINE</div>
-        <div class="maduro-err-code">ERR_SIGNAL_LOST · MADURO_INTERFERENCE</div>
-        <div class="maduro-err-bar"><div class="maduro-err-bar-fill" id="maduroErrFill"></div></div>
-        <div class="maduro-err-sub">HERVERBINDING IN <span id="maduroReconnectSec">20</span>s…</div>
-      </div>
-      <div id="attackFlashOverlay">
-        <img id="attackFlashImg" src="" alt="">
-        <div class="flash-static"></div>
-        <div class="flash-vignette"></div>
-      </div>
-      <div class="cam-scanlines"></div>
-      <div class="cam-noise"></div>
-      <div class="cam-vignette"></div>
-      <div class="glitch-overlay"></div>
-      <div id="glitchTearBand"></div>
-      <div id="tomDangerOverlay"></div>
-      <div id="jeffreyTimerPanel" style="display:none"></div>
-      <div id="chapoTimerPanel" style="display:none"></div>
-      <div class="cam-lbl" id="camRoomLbl">STOOKKAMER</div>
-      <div class="cam-ts" id="camTs">00:00:00</div>
-      <div class="cam-lure-in-feed">
-        <button class="lure-btn" id="lureBtnCam" disabled onclick="useLure()">🔊 LOKKEN</button>
-      </div>
-      <div id="musicBoxPanel">
-        <div class="mb-header">
-          <span class="mb-label">🎵 Muziekdoos</span>
-          <span class="mb-pct" id="mbPct">100%</span>
-        </div>
-        <div class="mb-track"><div class="mb-fill" id="mbFill" style="width:100%"></div></div>
-        <div class="mb-status" id="mbStatus">SPEELT AF — TUMOR TOM SLUIMERT</div>
-        <button class="mb-windup-btn" id="windupBtn"
-          onmousedown="startWindUp()" onmouseup="stopWindUp()" onmouseleave="stopWindUp()"
-          ontouchstart="startWindUp(event)" ontouchend="stopWindUp()">
-          🔧 OPWINDEN — HOUD VAST
-        </button>
-      </div>
+    <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.08) 0px,rgba(0,0,0,.08) 1px,transparent 1px,transparent 3px);pointer-events:none"></div>
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.7) 100%);pointer-events:none"></div>
+    <div id="tomDangerOverlay" style="position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .8s;background:radial-gradient(ellipse at center,transparent 30%,rgba(180,0,0,.35) 100%)"></div>
+    <div id="markVentImgWrap" style="position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:5;pointer-events:none">
+      <img id="markVentImg" src="Images/MarkVent.png" style="width:min(160px,20vw);display:none;filter:brightness(.65) contrast(1.6)">
     </div>
-    <div class="cam-strip" id="camStrip"></div>
+    <div style="position:absolute;top:10px;left:12px;color:rgba(29,185,84,.55);font-size:.65rem;letter-spacing:4px;z-index:6" id="camTs">00:00:00</div>
   </div>
-
-  <canvas id="fireCanvas"></canvas>
-  <div id="flashEl"></div>
-  <div id="scanArtifact"></div>
-  <div class="glitch-band red" id="glitchBandR"></div>
-  <div class="glitch-band cyan" id="glitchBandC"></div>
-  <div class="glitch-band white" id="glitchBandW"></div>
-
-  <img id="shadowGijsOfficeImg" src="Images/ShadowGijsOffice.png" alt=""
-    style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:18;pointer-events:none;
-    filter:brightness(.55) contrast(1.6) saturate(.3);animation:shadowGijsFade 0.4s ease-out forwards">
+  <div class="cam-strip2d" id="camStrip"></div>
 </div>
 
-<!-- ════ JUMPSCARE ════ -->
-<div id="jsScreen" style="display:none"><img id="jsImg" src="" alt=""></div>
-
-<!-- ════ DOODSCHERM ════ -->
-<div id="deathScreen" style="display:none;flex-direction:column;align-items:center;justify-content:center">
-  <div class="death-title">GAME OVER</div>
-  <div class="death-cause" id="deathMsg">Je bent gevonden.</div>
+<!-- Jumpscare -->
+<div id="jsScreen2d"><img id="jsImg2d" src="" alt=""></div>
+<!-- Death -->
+<div id="deathScreen2d">
+  <div class="death-title2d">GAME OVER</div>
+  <div class="death-cause2d" id="deathMsg">Je bent gevonden.</div>
   <button class="retry-btn" onclick="restartGame()">↩ PROBEER OPNIEUW</button>
 </div>
-
-<!-- ════ WINSCHERM ════ -->
-<div id="winScreen" style="display:none;flex-direction:column;align-items:center;justify-content:center">
-  <div class="win-rays"></div>
-  <div class="win-time">6:00 AM</div>
-  <div class="win-sunrise">Zonopgang — Je hebt overleefd</div>
-  <div class="win-card">
-    <strong>De zon is opgekomen.</strong><br><br>
-    Boven je hoofd kraakt een sleutel in het slot. De deur zwaait open.<br><br>
-    <em>"...Most students don't make it past 3 AM. I'm... impressed."</em><br><br>
-    Hij legt een vel papier op de trap.
-    <div class="win-grade">10 / 10</div>
-    <em>"Survival of the most articulate."</em>
+<!-- Win -->
+<div id="winScreen2d">
+  <div class="win-time2d">6:00 AM</div>
+  <div style="color:#226633;font-size:.85rem;letter-spacing:6px;margin-bottom:16px">OVERLEEFD</div>
+  <div style="color:#6a9a6a;font-size:.78rem;max-width:400px;text-align:center;line-height:1.8;margin-bottom:20px">
+    <strong style="color:#44ff66">De zon is opgekomen.</strong><br><br>
+    <em style="color:#3a6a3a">"Most students don't make it past 3 AM. I'm... impressed."</em>
   </div>
   <button class="retry-btn" style="border-color:#1a4a1a;color:#226622" onclick="restartGame()">↩ SPEEL OPNIEUW</button>
 </div>
 
-<!-- ════ GAME SCRIPT ════ -->
-<script src="game.js"></script>
+<div id="alarmFlash"></div>
+<div id="flashEl2d"></div>
 
+<!-- Three.js canvas -->
+<canvas id="threeCanvas"></canvas>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+// ════════════════════════════════════════════
+// THREE.JS VR SETUP
+// ════════════════════════════════════════════
+const canvas = document.getElementById('threeCanvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+
+// Try to enable XR
+let xrSupported = false;
+if (navigator.xr) {
+  navigator.xr.isSessionSupported('immersive-vr').then(supported => {
+    xrSupported = supported;
+    if (supported) {
+      renderer.xr.enabled = true;
+      addVRButton();
+    }
+  });
+}
+
+function addVRButton() {
+  const btn = document.createElement('button');
+  btn.id = 'vrBtn';
+  btn.textContent = '🥽 ENTER VR';
+  btn.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:110;padding:12px 32px;background:rgba(0,0,100,.8);border:1px solid #7777cc;color:#ddddff;font-family:monospace;font-size:.9rem;letter-spacing:4px;cursor:pointer;';
+  btn.onclick = () => {
+    if (renderer.xr.isPresenting) {
+      renderer.xr.getSession().end();
+    } else {
+      navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking'] })
+        .then(session => { renderer.xr.setSession(session); btn.textContent = '✕ EXIT VR'; })
+        .catch(e => console.warn('VR session failed:', e));
+    }
+  };
+  document.body.appendChild(btn);
+}
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x020202);
+scene.fog = new THREE.FogExp2(0x020202, 0.08);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 100);
+camera.position.set(0, 1.6, 2.5);
+
+// ── Controllers ──
+const controllers = [];
+for (let i = 0; i < 2; i++) {
+  const ctrl = renderer.xr.getController(i);
+  ctrl.addEventListener('selectstart', onControllerSelect);
+  scene.add(ctrl);
+  const geom = new THREE.SphereGeometry(0.02, 8, 8);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xaaaaff });
+  ctrl.add(new THREE.Mesh(geom, mat));
+  controllers.push(ctrl);
+  const grip = renderer.xr.getControllerGrip(i);
+  scene.add(grip);
+}
+
+function onControllerSelect(event) {
+  if (!G || !G.running) return;
+  const ctrl = event.target;
+  const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(ctrl.quaternion);
+  const raycaster = new THREE.Raycaster();
+  raycaster.set(ctrl.position, dir);
+  const hits = raycaster.intersectObjects(interactables, false);
+  if (hits.length > 0) {
+    const name = hits[0].object.userData.action;
+    handleAction(name);
+  }
+}
+
+function handleAction(name) {
+  if (!G || !G.running) return;
+  if (name === 'leftDoor') toggleDoor('left');
+  else if (name === 'rightDoor') toggleDoor('right');
+  else if (name === 'camera') toggleCam();
+  else if (name === 'lure') useLure();
+  else if (name === 'vent') toggleVent();
+  else if (name === 'alarm') useCameraAlarm();
+}
+
+// ── Interactable registry ──
+const interactables = [];
+
+// ── Lights ──
+const ambLight = new THREE.AmbientLight(0x110810, 0.6);
+scene.add(ambLight);
+
+const ceilLight = new THREE.PointLight(0x441100, 0.8, 8);
+ceilLight.position.set(0, 2.8, 0);
+ceilLight.castShadow = true;
+scene.add(ceilLight);
+
+const redFill = new THREE.PointLight(0x330000, 0.4, 10);
+redFill.position.set(-3, 1, -2);
+scene.add(redFill);
+
+let flickerTime = 0;
+
+// ── Build 3D Office Room ──
+function buildRoom() {
+  const floorMat = new THREE.MeshLambertMaterial({ color: 0x0c0c14 });
+  const wallMat = new THREE.MeshLambertMaterial({ color: 0x0e0e18 });
+  const ceilMat = new THREE.MeshLambertMaterial({ color: 0x090909 });
+  const darkMat = new THREE.MeshLambertMaterial({ color: 0x060608 });
+
+  // Floor
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  // Ceiling
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), ceilMat);
+  ceil.rotation.x = Math.PI / 2;
+  ceil.position.y = 3.2;
+  scene.add(ceil);
+
+  // Back wall
+  const backWall = new THREE.Mesh(new THREE.PlaneGeometry(10, 3.5), wallMat);
+  backWall.position.set(0, 1.6, -5);
+  scene.add(backWall);
+
+  // Left wall
+  const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(10, 3.5), wallMat);
+  leftWall.rotation.y = Math.PI / 2;
+  leftWall.position.set(-5, 1.6, 0);
+  scene.add(leftWall);
+
+  // Right wall
+  const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(10, 3.5), wallMat);
+  rightWall.rotation.y = -Math.PI / 2;
+  rightWall.position.set(5, 1.6, 0);
+  scene.add(rightWall);
+
+  // Front wall (behind player, partial)
+  const frontL = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 3.5), wallMat);
+  frontL.rotation.y = Math.PI;
+  frontL.position.set(-3.75, 1.6, 5);
+  scene.add(frontL);
+  const frontR = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 3.5), wallMat);
+  frontR.rotation.y = Math.PI;
+  frontR.position.set(3.75, 1.6, 5);
+  scene.add(frontR);
+
+  // Desk
+  const deskMat = new THREE.MeshLambertMaterial({ color: 0x1a0f05 });
+  const desk = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.1, 0.8), deskMat);
+  desk.position.set(0, 0.85, 1.8);
+  desk.castShadow = true;
+  scene.add(desk);
+
+  // Monitor on desk
+  const monMat = new THREE.MeshLambertMaterial({ color: 0x0c0c14 });
+  const monitor = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.4, 0.03), monMat);
+  monitor.position.set(0, 1.15, 1.6);
+  scene.add(monitor);
+
+  // Monitor screen glow texture
+  const monCanvas = document.createElement('canvas');
+  monCanvas.width = 256; monCanvas.height = 160;
+  const mctx = monCanvas.getContext('2d');
+  mctx.fillStyle = '#0a0a14';
+  mctx.fillRect(0, 0, 256, 160);
+  mctx.fillStyle = '#00ff66';
+  mctx.font = 'bold 18px monospace';
+  mctx.fillText('SECURITY ONLINE', 20, 50);
+  mctx.fillStyle = 'rgba(0,255,100,.5)';
+  mctx.font = '14px monospace';
+  mctx.fillText('>>> ACTIVE', 20, 80);
+  mctx.fillText('CAM SYSTEM OK', 20, 100);
+  const monTex = new THREE.CanvasTexture(monCanvas);
+  const monScreen = new THREE.Mesh(new THREE.PlaneGeometry(0.56, 0.36), new THREE.MeshBasicMaterial({ map: monTex }));
+  monScreen.position.set(0, 1.15, 1.585);
+  scene.add(monScreen);
+  window._monTex = monTex;
+
+  // Blackboard
+  const bbMat = new THREE.MeshLambertMaterial({ color: 0x6a3a20 });
+  const bb = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.2, 0.05), bbMat);
+  bb.position.set(-2.5, 2.0, -4.97);
+  scene.add(bb);
+  const bbSurface = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.1), new THREE.MeshBasicMaterial({ color: 0x111a0e }));
+  bbSurface.position.set(-2.5, 2.0, -4.94);
+  scene.add(bbSurface);
+
+  // Blackboard text
+  const bbCanvas = document.createElement('canvas');
+  bbCanvas.width = 512; bbCanvas.height = 256;
+  const bctx = bbCanvas.getContext('2d');
+  bctx.fillStyle = '#111a0e';
+  bctx.fillRect(0, 0, 512, 256);
+  bctx.fillStyle = '#8b0000';
+  bctx.font = 'bold 28px monospace';
+  bctx.textAlign = 'center';
+  bctx.fillText('ENGLISH GRAMMAR', 256, 60);
+  bctx.fillStyle = '#444';
+  bctx.font = '20px monospace';
+  bctx.fillText('Past Simple · Conditional', 256, 100);
+  bctx.fillText('Irregular Verbs', 256, 130);
+  bctx.strokeStyle = '#cc0000';
+  bctx.lineWidth = 2;
+  bctx.beginPath(); bctx.moveTo(30, 155); bctx.lineTo(482, 155); bctx.stroke();
+  bctx.fillStyle = '#cc0000';
+  bctx.font = 'bold 36px monospace';
+  bctx.fillText('★ 1/10 ★', 256, 210);
+  const bbTex = new THREE.CanvasTexture(bbCanvas);
+  const bbImg = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.1), new THREE.MeshBasicMaterial({ map: bbTex, transparent: true }));
+  bbImg.position.set(-2.5, 2.0, -4.93);
+  scene.add(bbImg);
+
+  // Ceiling lamp
+  const lampPole = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.5, 6), new THREE.MeshLambertMaterial({ color: 0x1e1e1e }));
+  lampPole.position.set(0, 3.0, -1);
+  scene.add(lampPole);
+  const lampShade = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.3, 8, 1, true), new THREE.MeshLambertMaterial({ color: 0x1a1a20, side: THREE.BackSide }));
+  lampShade.position.set(0, 2.6, -1);
+  scene.add(lampShade);
+  const lampGlow = new THREE.PointLight(0xffaa44, 0.5, 4);
+  lampGlow.position.set(0, 2.55, -1);
+  scene.add(lampGlow);
+  window._lampGlow = lampGlow;
+
+  // Left door frame
+  buildDoor(-4.5, 'left');
+  // Right door frame
+  buildDoor(4.5, 'right');
+
+  // Vent on ceiling/back wall
+  buildVent();
+
+  // Security camera panel texture (on desk)
+  buildCamPanel();
+
+  // Corridor glimpses (doors)
+  buildCorridors();
+
+  // Pipes on ceiling
+  for (let i = 0; i < 3; i++) {
+    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 9, 8), new THREE.MeshLambertMaterial({ color: 0x1e1e28 }));
+    pipe.rotation.z = Math.PI / 2;
+    pipe.position.set(0, 3.1, -2 + i * 1.5);
+    scene.add(pipe);
+  }
+}
+
+// Door meshes
+const doorMeshes = { left: null, right: null };
+const doorFrames = { left: null, right: null };
+
+function buildDoor(x, side) {
+  const frameMat = new THREE.MeshLambertMaterial({ color: 0x181820 });
+  const doorMat = new THREE.MeshLambertMaterial({ color: 0x080306 });
+
+  const sign = x < 0 ? -1 : 1;
+  const frameGroup = new THREE.Group();
+  frameGroup.position.set(x, 0, 0);
+  scene.add(frameGroup);
+  doorFrames[side] = frameGroup;
+
+  // Frame
+  const topBar = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.1, 0.15), frameMat);
+  topBar.position.set(0, 2.2, 0);
+  frameGroup.add(topBar);
+  const sideBarL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.2, 0.15), frameMat);
+  sideBarL.position.set(-0.45, 1.1, 0);
+  frameGroup.add(sideBarL);
+  const sideBarR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.2, 0.15), frameMat);
+  sideBarR.position.set(0.45, 1.1, 0);
+  frameGroup.add(sideBarR);
+
+  // Door panel
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.2, 0.08), doorMat);
+  door.position.set(0, 1.1, 0);
+  door.visible = false;
+  frameGroup.add(door);
+  doorMeshes[side] = door;
+
+  // Danger light
+  const lightGeom = new THREE.SphereGeometry(0.06, 8, 8);
+  const lightMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+  const dLight = new THREE.Mesh(lightGeom, lightMat);
+  dLight.position.set(sign * 0.4, 2.1, 0.1);
+  scene.add(dLight);
+  window['doorLight_' + side] = dLight;
+
+  // Clickable button
+  const btnGeom = new THREE.BoxGeometry(0.3, 0.12, 0.06);
+  const btnMat = new THREE.MeshLambertMaterial({ color: 0x222244 });
+  const btn = new THREE.Mesh(btnGeom, btnMat);
+  btn.position.set(sign < 0 ? x + 0.6 : x - 0.6, 1.1, 0.2);
+  btn.userData.action = side === 'left' ? 'leftDoor' : 'rightDoor';
+  scene.add(btn);
+  interactables.push(btn);
+}
+
+function buildVent() {
+  const ventMat = new THREE.MeshLambertMaterial({ color: 0x3a2a10 });
+  const vent = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.5, 0.08), ventMat);
+  vent.position.set(0, 2.8, -4.96);
+  scene.add(vent);
+  window._ventMesh = vent;
+
+  // Grate lines
+  for (let i = -2; i <= 2; i++) {
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.02, 0.02), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }));
+    bar.position.set(0, 2.8 + i * 0.08, -4.93);
+    scene.add(bar);
+  }
+
+  // Vent indicator light
+  const vLightGeom = new THREE.SphereGeometry(0.04, 6, 6);
+  const vLightMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+  const vLight = new THREE.Mesh(vLightGeom, vLightMat);
+  vLight.position.set(0.25, 2.97, -4.94);
+  scene.add(vLight);
+  window._ventLight3D = vLight;
+
+  // Vent button
+  const vBtn = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.08, 0.04), new THREE.MeshLambertMaterial({ color: 0x222244 }));
+  vBtn.position.set(0, 2.58, -4.92);
+  vBtn.userData.action = 'vent';
+  scene.add(vBtn);
+  interactables.push(vBtn);
+}
+
+function buildCamPanel() {
+  const panCanvas = document.createElement('canvas');
+  panCanvas.width = 512; panCanvas.height = 300;
+  const pctx = panCanvas.getContext('2d');
+  pctx.fillStyle = '#0a0a14';
+  pctx.fillRect(0, 0, 512, 300);
+  pctx.fillStyle = '#1a6a2a';
+  pctx.font = 'bold 18px monospace';
+  pctx.fillText('SECURITY CAM SYSTEM', 20, 40);
+  pctx.strokeStyle = '#0a2a0a';
+  pctx.lineWidth = 1;
+  for (let i = 0; i < 6; i++) {
+    const x = (i % 3) * 160 + 20, y = Math.floor(i / 3) * 110 + 60;
+    pctx.strokeRect(x, y, 150, 100);
+    pctx.fillStyle = '#060a06';
+    pctx.fillRect(x + 1, y + 1, 148, 98);
+    pctx.fillStyle = '#1a4a1a';
+    pctx.font = '11px monospace';
+    pctx.fillText('CAM ' + (i + 1), x + 5, y + 15);
+  }
+  const panTex = new THREE.CanvasTexture(panCanvas);
+  window._panTex = panTex;
+  window._panCanvas = panCanvas;
+  window._pctx = pctx;
+  const panMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.7), new THREE.MeshBasicMaterial({ map: panTex }));
+  panMesh.position.set(0.8, 1.15, 1.585);
+  scene.add(panMesh);
+  window._panMesh = panMesh;
+
+  // Camera button
+  const camBtn = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.1, 0.05), new THREE.MeshLambertMaterial({ color: 0x222266 }));
+  camBtn.position.set(0.8, 0.95, 1.585);
+  camBtn.userData.action = 'camera';
+  scene.add(camBtn);
+  interactables.push(camBtn);
+
+  // Lure button
+  const lureBtn = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.08, 0.05), new THREE.MeshLambertMaterial({ color: 0x0a220a }));
+  lureBtn.position.set(-0.8, 1.05, 1.585);
+  lureBtn.userData.action = 'lure';
+  scene.add(lureBtn);
+  interactables.push(lureBtn);
+}
+
+function buildCorridors() {
+  // Left corridor glimpse
+  const corrMatL = new THREE.MeshLambertMaterial({ color: 0x050508 });
+  const corrL = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.5, 3), corrMatL);
+  corrL.position.set(-5.5, 1.25, 0);
+  scene.add(corrL);
+
+  // Right corridor glimpse
+  const corrR = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.5, 3), corrMatL);
+  corrR.position.set(5.5, 1.25, 0);
+  scene.add(corrR);
+}
+
+// Monster sprites (billboard quads)
+const sprites = {};
+
+function createSprite(key, imgSrc, scale, offset) {
+  const tex = new THREE.TextureLoader().load(imgSrc, () => { if (tex) tex.needsUpdate = true; });
+  tex.transparent = true;
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.1, side: THREE.DoubleSide });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(scale[0], scale[1]), mat);
+  mesh.visible = false;
+  mesh.userData.billboard = true;
+  scene.add(mesh);
+  sprites[key] = { mesh, offset: offset || [0, 0, 0] };
+  return sprites[key];
+}
+
+function initSprites() {
+  createSprite('gijs',      'Images/GijsCamera.png',    [1.0, 1.6], [-4.2, 1.2, 0]);
+  createSprite('hoboGijs',  'Images/HoboGijsCamera.png',[1.0, 1.6], [4.2, 1.2, 0]);
+  createSprite('jeffrey',   'Images/JeffreyCamera.png', [1.0, 1.6], [-3.5, 1.2, -3]);
+  createSprite('chapo',     'Images/ChapoCamera.png',   [1.0, 1.6], [-3.0, 1.2, -2.5]);
+  createSprite('diddy',     'Images/DiddyCamera.png',   [1.2, 1.8], [0, 1.2, -4.5]);
+  createSprite('tom',       'Images/TomCamera.png',     [1.0, 1.6], [3.0, 1.2, -4.5]);
+  createSprite('maduro',    'Images/MaduroCamera.png',  [0.8, 1.3], [0, 1.0, -2.5]);
+  createSprite('shadowGijs','Images/ShadowGijsOffice.png',[2.0,2.5],[0, 1.4, 1.0]);
+  createSprite('mark',      'Images/MarkVent.png',      [0.6, 0.7], [0, 2.7, -4.7]);
+}
+
+// Position sprites based on game state
+const POS_3D = {
+  0: [-3, 1.2, -4.5],   // C0 stookkamer
+  1: [-3, 1.2, -2.5],   // C1 opslagruimte
+  2: [0, 1.2, -4],      // C2 klaslokaal
+  3: [-4, 1.2, 0],      // C3 linker gang -> left corridor
+  4: [4, 1.2, 0],       // C4 rechter gang -> right corridor
+  5: [-4.2, 1.2, 0.3],  // LD left door inside
+  6: [4.2, 1.2, 0.3],   // RD right door inside
+  7: [3, 1.2, -4.5],    // music room
+};
+
+function updateSprites3D() {
+  if (!G || !G.running) return;
+
+  // Gijs
+  const gijs = sprites['gijs'];
+  if (gijs && G.cfg.gijsActive) {
+    const pos = POS_3D[G.mPos] || POS_3D[0];
+    gijs.mesh.position.set(pos[0], pos[1], pos[2]);
+    gijs.mesh.visible = G.mPos >= 0 && G.mPos !== 7;
+    if (G.mPos === 5) gijs.mesh.position.set(-4.0, 1.2, 0.1);
+    if (G.mPos === 6) gijs.mesh.position.set(4.0, 1.2, 0.1);
+  } else if (gijs) gijs.mesh.visible = false;
+
+  // Hobo Gijs
+  const hobo = sprites['hoboGijs'];
+  if (hobo && G.cfg.hoboActive) {
+    const pos = POS_3D[G.hoboPos] || POS_3D[0];
+    hobo.mesh.position.set(pos[0] + 0.3, pos[1], pos[2]);
+    hobo.mesh.visible = G.hoboPos >= 0 && G.hoboPos !== 7;
+  } else if (hobo) hobo.mesh.visible = false;
+
+  // Jeffrey
+  const jeff = sprites['jeffrey'];
+  if (jeff && G.jeffreyActive) {
+    const pos = POS_3D[G.jeffreyPos] || POS_3D[0];
+    jeff.mesh.position.set(pos[0] - 0.2, pos[1], pos[2]);
+    jeff.mesh.visible = true;
+  } else if (jeff) jeff.mesh.visible = false;
+
+  // Chapo
+  const chapo = sprites['chapo'];
+  if (chapo && G.chapoActive && !G.chapoAlarm) {
+    chapo.mesh.position.set(-3.5, 1.2, -2.5);
+    chapo.mesh.visible = true;
+  } else if (chapo) chapo.mesh.visible = false;
+
+  // Diddy
+  const diddy = sprites['diddy'];
+  if (diddy && G.diddyActive) {
+    const pos = POS_3D[G.diddyPos] || POS_3D[0];
+    diddy.mesh.position.set(pos[0] + 0.1, pos[1], pos[2]);
+    diddy.mesh.visible = G.diddyPos >= 0 && G.diddyPos !== 7;
+  } else if (diddy) diddy.mesh.visible = false;
+
+  // Tom
+  const tom = sprites['tom'];
+  if (tom && G.cfg.tomActive) {
+    tom.mesh.position.set(3, 1.2, -4.7);
+    tom.mesh.visible = true;
+    const danger = 1 - Math.max(0, G.musicBox) / 100;
+    tom.mesh.material.opacity = 0.3 + danger * 0.7;
+  } else if (tom) tom.mesh.visible = false;
+
+  // Shadow Gijs
+  const sg = sprites['shadowGijs'];
+  if (sg) {
+    sg.mesh.visible = G.shadowActive;
+    sg.mesh.position.set(0, 1.4, 1.0);
+  }
+
+  // Mark in vent
+  const mark = sprites['mark'];
+  if (mark) {
+    mark.mesh.visible = G.markInVent && !G.ventClosed;
+    mark.mesh.position.set(0, 2.8, -4.8);
+  }
+
+  // Maduro
+  const maduro = sprites['maduro'];
+  if (maduro) {
+    maduro.mesh.visible = G.maduroPos >= 0;
+    if (G.maduroPos >= 0) {
+      const pos = POS_3D[G.maduroPos] || POS_3D[0];
+      maduro.mesh.position.set(pos[0] + 0.5, pos[1] - 0.1, pos[2]);
+    }
+  }
+
+  // Door lights
+  const dlL = window.doorLight_left;
+  const dlR = window.doorLight_right;
+  if (dlL) {
+    dlL.material.color.setHex(G.lfClosed ? 0x00e050 : (G.mPos === 5 ? 0xff2200 : 0x111111));
+    if (G.lfClosed) dlL.material.emissive = new THREE.Color(0x00e050);
+    else dlL.material.emissive = new THREE.Color(0x000000);
+  }
+  if (dlR) {
+    dlR.material.color.setHex(G.rtClosed ? 0x00e050 : (G.mPos === 6 ? 0xff2200 : 0x111111));
+    if (G.rtClosed) dlR.material.emissive = new THREE.Color(0x00e050);
+    else dlR.material.emissive = new THREE.Color(0x000000);
+  }
+
+  // Door panel visual
+  if (doorMeshes.left) doorMeshes.left.visible = G.lfClosed;
+  if (doorMeshes.right) doorMeshes.right.visible = G.rtClosed;
+
+  // Vent light
+  const vl = window._ventLight3D;
+  if (vl) vl.material.color.setHex(G.markInVent && !G.ventClosed ? 0xff4400 : 0x111111);
+}
+
+// Billboard update
+function updateBillboards() {
+  const camPos = camera.position;
+  Object.values(sprites).forEach(s => {
+    if (s.mesh.visible) {
+      s.mesh.lookAt(camPos);
+    }
+  });
+}
+
+// ── Raycaster for mouse clicks in non-VR ──
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+document.addEventListener('click', e => {
+  if (!G || !G.running) return;
+  if (document.getElementById('camUi').style.display === 'flex') return;
+  const overlay = document.getElementById('overlay');
+  if (overlay.style.display !== 'none') return;
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(interactables, false);
+  if (hits.length > 0) {
+    handleAction(hits[0].object.userData.action);
+  }
+});
+
+// ── Gaze timer (VR look-to-interact) ──
+let gazeTarget = null;
+let gazeTime = 0;
+const GAZE_THRESHOLD = 2.0;
+const gazeGeom = new THREE.RingGeometry(0.015, 0.025, 24);
+const gazeMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+const gazeCursor = new THREE.Mesh(gazeGeom, gazeMat);
+gazeCursor.position.set(0, 0, -1);
+camera.add(gazeCursor);
+scene.add(camera);
+
+// Alarm overlay 3D
+let alarmMat3D = null;
+function createAlarmOverlay3D() {
+  const geom = new THREE.SphereGeometry(50, 8, 8);
+  alarmMat3D = new THREE.MeshBasicMaterial({ color: 0x440000, transparent: true, opacity: 0, side: THREE.BackSide });
+  const mesh = new THREE.Mesh(geom, alarmMat3D);
+  scene.add(mesh);
+  window._alarmMesh3D = mesh;
+}
+createAlarmOverlay3D();
+
+// ── Animation loop ──
+let lastTime = 0;
+renderer.setAnimationLoop((time) => {
+  const dt = (time - lastTime) / 1000;
+  lastTime = time;
+
+  flickerTime += dt;
+  if (window._lampGlow) {
+    window._lampGlow.intensity = 0.5 + Math.sin(flickerTime * 0.8) * 0.05 + (Math.random() < 0.005 ? Math.random() * 0.3 - 0.15 : 0);
+  }
+
+  // Gaze interaction (VR)
+  if (renderer.xr.isPresenting) {
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    const hits = raycaster.intersectObjects(interactables, false);
+    if (hits.length > 0) {
+      if (gazeTarget === hits[0].object) {
+        gazeTime += dt;
+        if (gazeTime > GAZE_THRESHOLD) {
+          handleAction(hits[0].object.userData.action);
+          gazeTime = 0;
+          gazeTarget = null;
+        }
+        gazeCursor.material.color.setHex(0xff9900);
+        const fill = gazeTime / GAZE_THRESHOLD;
+        gazeCursor.geometry = new THREE.RingGeometry(0.015, 0.025, 24, 1, 0, Math.PI * 2 * fill);
+      } else {
+        gazeTarget = hits[0].object;
+        gazeTime = 0;
+      }
+    } else {
+      gazeTarget = null;
+      gazeTime = 0;
+      gazeCursor.material.color.setHex(0xffffff);
+      gazeCursor.geometry = new THREE.RingGeometry(0.015, 0.025, 24);
+    }
+  }
+
+  // Alarm visual
+  if (G && G.chapoAlarm && alarmMat3D) {
+    alarmMat3D.opacity = 0.06 + Math.sin(time * 0.01) * 0.04;
+  } else if (alarmMat3D) {
+    alarmMat3D.opacity = 0;
+  }
+
+  updateBillboards();
+  updateSprites3D();
+  renderer.render(scene, camera);
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ════════════════════════════════════════════
+// BUILD THE 3D ROOM
+// ════════════════════════════════════════════
+buildRoom();
+initSprites();
+
+// ════════════════════════════════════════════
+// GAME LOGIC (adapted from original)
+// ════════════════════════════════════════════
+
+const FILES = {
+  ambience:     'Audio/Ambience.mp3',
+  doorClose:    'Audio/DoorClose.mp3',
+  jumpscare:    'Audio/Jumpscare.mp3',
+  lure:         'Audio/Lure.mp3',
+  oxygenOut:    'Audio/OxygenOutage.mp3',
+  win:          'Audio/Win.mp3',
+  laugh:        'Audio/Laugh.mp3',
+  jeffreyLaugh: 'Audio/JeffreyLaugh.mp3',
+  cameraSwitch: 'Audio/CameraSwitch.mp3',
+  footsteps:    'Audio/Footsteps.mp3',
+  muziek:       'Audio/Muziek.mp3',
+  windUp:       'Audio/WindUp.mp3',
+  alarm:        'Audio/Alarm.mp3',
+  vent:         'Audio/Vent.mp3',
+  markAudio:    'Audio/Mark.mp3',
+  shock:        'Audio/Shock.mp3',
+  cameraAlarm:  'Audio/CameraAlarm.mp3',
+  menuMusic:    'Audio/Menu.mp3',
+  fiveAM:       'Audio/5AM.mp3',
+  gijsCam:      'Images/GijsCamera.png',
+  gijsJS:       'Images/GijsJumpscare.png',
+  patrickJS:    'Images/PatrickJumpscare.png',
+  hoboGijsCam:  'Images/HoboGijsCamera.png',
+  hoboGijsJS:   'Images/HoboGijsJumpscare.png',
+  tomCam:       'Images/TomCamera.png',
+  tomJS:        'Images/TomJumpscare.png',
+  jeffreyCam:   'Images/JeffreyCamera.png',
+  jeffreyJS:    'Images/JeffreyJumpscare.png',
+  chapoCam:     'Images/ChapoCamera.png',
+  chapoJS:      'Images/ChapoJumpscare.png',
+  markVent:     'Images/MarkVent.png',
+  markJS:       'Images/MarkJumpscare.png',
+  maduroCam:    'Images/MaduroCamera.png',
+  maduroJS:     'Images/MaduroJumpscare.png',
+  diddyCam:     'Images/DiddyCamera.png',
+  diddyJS:      'Images/DiddyJumpscare.png',
+  shadowGijsOffice: 'Images/ShadowGijsOffice.png',
+  shadowGijsJS:     'Images/ShadowGijsJumpscare.png',
+  shadowGijsAudio:  'Audio/ShadowGijs.mp3',
+  camBg0: 'Images/StookKamer.png',
+  camBg1: 'Images/VoorraadKamer.png',
+  camBg2: 'Images/KlasLokaal.png',
+  camBg3: 'Images/LinkerGang.png',
+  camBg4: 'Images/RechterGang.png',
+  camBg5: 'Images/MuziekKamer.png',
+};
+
+const NIGHT_MS         = 6 * 60 * 1000;
+const TICK_MS          = 400;
+const O2_DRAIN_BASE    = 0.015;
+const O2_DOOR_PER_TICK = 0.10;
+const O2_CAM_PER_TICK  = 0.04;
+const O2_VENT_PER_TICK = 0.08;
+const LURE_CD_S        = 30;
+const GRACE_MS         = 4200;
+const DOOR_RETREAT_MIN = 14000;
+const DOOR_RETREAT_MAX = 25000;
+const MOVE_IVAL_BASE   = [32000,24000,16000,11000,7500,5000];
+const HOBO_MIN_BASE    = 5000;
+const HOBO_MAX_BASE    = 20000;
+const MB_DRAIN_BASE    = 0.8;
+const MB_DRAIN_SCALE   = 0.3;
+const MB_WIND_RATE     = 8;
+const MUSIC_CAM_ID     = 5;
+const CHAPO_KILL_DELAY_MS = 6000;
+const ALARM_CD_S       = 20;
+const MADURO_APPEAR_INTERVAL = 2000;
+const MADURO_WATCH_LIMIT_MS  = 500;
+const MADURO_DISABLE_MS      = 8000;
+const JEFFREY_START_POS = 0;
+const JEFFREY_PATH      = [0,1,2,3,4];
+const JEFFREY_SWITCH_S  = 55;
+const CHAPO_CAM_ID      = 3;
+const CHAPO_ATTACK_S    = 60;
+const DIDDY_MOVE_IVAL_BASE=[26000,20000,18000,13000,9000,7500];
+
+const POS = {C0:0,C1:1,C2:2,C3:3,C4:4,LD:5,RD:6};
+const GIJS_ALLOWED_CAMS = [0,1,2,3,4];
+const HOBO_ALLOWED_CAMS = [0,1,2,3,4];
+const MADURO_ALLOWED_CAMS=[0,1,2,3,4,5];
+
+const CAMS = [
+  {id:0,name:'CAM 1',room:'STOOKKAMER'},
+  {id:1,name:'CAM 2',room:'OPSLAGRUIMTE'},
+  {id:2,name:'CAM 3',room:'KLASLOKAAL'},
+  {id:3,name:'CAM 4',room:'LINKER GANG'},
+  {id:4,name:'CAM 5',room:'RECHTER GANG'},
+  {id:5,name:'CAM 6',room:'MUZIEKKAMER'},
+];
+
+function diffToMoveIval(basePer10, level){
+  if(level===0) return Infinity;
+  const mult = 3.0 - (level-1)*(2.75/19);
+  return Math.max(800, Math.round(basePer10 * mult));
+}
+function diffToMoveIvals(basePer10arr, level){
+  if(level===0) return basePer10arr.map(()=>Infinity);
+  return basePer10arr.map(b=>diffToMoveIval(b,level));
+}
+function diffToJeffreySwitch(level){ if(level===0) return Infinity; return Math.max(8,Math.round(50*(3.0-(level-1)*(2.75/19)))); }
+function diffToChapoAttack(level){ if(level===0) return Infinity; return Math.max(8,Math.round(60*(3.0-(level-1)*(2.75/19)))); }
+function diffToHoboMs(level){ if(level===0) return {min:Infinity,max:Infinity}; const m=3.0-(level-1)*(2.75/19); return {min:Math.max(1000,Math.round(HOBO_MIN_BASE*m)),max:Math.max(3000,Math.round(HOBO_MAX_BASE*m))}; }
+function diffToMaduroChance(level){ if(level===0) return 0; return 0.005+(level/20)*0.10; }
+function diffToShadowChance(level){ if(level===0) return 0; return 0.001+(level/20)*0.015; }
+function diffToMarkInterval(level){ if(level===0) return Infinity; const b=10000,m=3.0-(level-1)*(2.75/19); return Math.max(1500,Math.round(b*m)); }
+
+const NIGHT_CONFIGS = {
+  1:{ label:'Nacht 1 · De Kelder', gijsActive:true,hoboActive:true,tomActive:false,markRutteActive:false,jeffreyActive:false,chapoActive:false,diddyActive:false, maduroChance:0.02,shadowChance:0.003, moveIval:[38000,28000,20000,14000,9000,6000], hoboMinMs:7000,hoboMaxMs:25000 },
+  2:{ label:'Nacht 2 · De Muziekkamer', gijsActive:true,hoboActive:true,tomActive:true,markRutteActive:true,jeffreyActive:false,chapoActive:false,diddyActive:false, maduroChance:0.03,shadowChance:0.004, moveIval:[30000,22000,15000,10000,7000,4500], hoboMinMs:6000,hoboMaxMs:20000 },
+  3:{ label:'Nacht 3 · De Gang', gijsActive:true,hoboActive:true,tomActive:true,markRutteActive:true,jeffreyActive:true,chapoActive:false,diddyActive:false, maduroChance:0.04,shadowChance:0.005, moveIval:[24000,17000,12000,8500,5500,3500], hoboMinMs:4500,hoboMaxMs:16000 },
+  4:{ label:'Nacht 4 · De Linker Gang', gijsActive:true,hoboActive:true,tomActive:true,markRutteActive:true,jeffreyActive:true,chapoActive:true,diddyActive:false, maduroChance:0.05,shadowChance:0.006, moveIval:[20000,14000,9500,6500,4500,3000], hoboMinMs:3500,hoboMaxMs:13000 },
+  5:{ label:'Nacht 5 · Het Eindoordeel', gijsActive:true,hoboActive:true,tomActive:true,markRutteActive:true,jeffreyActive:true,chapoActive:true,diddyActive:true, maduroChance:0.05,shadowChance:0.006, moveIval:[20000,14000,9500,6500,4500,3000], hoboMinMs:3500,hoboMaxMs:13000 },
+};
+
+const SFX = {};
+let G = null;
+let selectedNight = 0;
+let glitchActive = false;
+
+function initAudio(){
+  const defs = {
+    ambience:[FILES.ambience,true,.28],doorClose:[FILES.doorClose,false,.8],
+    jumpscare:[FILES.jumpscare,false,1],lure:[FILES.lure,false,.75],
+    oxygenOut:[FILES.oxygenOut,false,.85],win:[FILES.win,false,.8],
+    laugh:[FILES.laugh,false,.7],cameraSwitch:[FILES.cameraSwitch,false,.5],
+    footsteps:[FILES.footsteps,false,.7],muziek:[FILES.muziek,true,.45],
+    windUp:[FILES.windUp,true,.7],alarm:[FILES.alarm,true,.9],
+    jeffreyLaugh:[FILES.jeffreyLaugh,false,.8],vent:[FILES.vent,false,.85],
+    markAudio:[FILES.markAudio,false,.75],shock:[FILES.shock,false,.95],
+    cameraAlarm:[FILES.cameraAlarm,false,.9],
+    shadowGijsAudio:[FILES.shadowGijsAudio,false,.9],
+    fiveAM:[FILES.fiveAM,false,1.0],
+  };
+  Object.entries(defs).forEach(([k,[src,loop,vol]])=>{
+    SFX[k]=new Audio(src); SFX[k].loop=loop; SFX[k].volume=vol;
+  });
+}
+function play(k){ try{SFX[k]&&(SFX[k].currentTime=0,SFX[k].play().catch(()=>{}))}catch(e){} }
+function stop(k){ try{SFX[k]&&(SFX[k].pause(),SFX[k].currentTime=0)}catch(e){} }
+function stopAll(){ Object.keys(SFX).forEach(stop); }
+
+function mkState(){
+  const cfg = {...NIGHT_CONFIGS[selectedNight||1]};
+  if(!cfg.jeffreySwitch) cfg.jeffreySwitch=JEFFREY_SWITCH_S;
+  if(!cfg.chapoAttack)   cfg.chapoAttack=CHAPO_ATTACK_S;
+  if(!cfg.diddyMoveIval) cfg.diddyMoveIval=DIDDY_MOVE_IVAL_BASE;
+  if(!cfg.markInterval)  cfg.markInterval=10000;
+  return {
+    running:false,nightStart:0,hour:0,night:selectedNight,cfg,
+    o2:100,o2Dead:false,
+    lfClosed:false,rtClosed:false,ventClosed:false,
+    mPos:cfg.gijsActive?POS.C0:-1,mPath:null,mDoorTimer:null,mMoveTimer:null,mRetreatTimer:null,
+    hoboPos:cfg.hoboActive?HOBO_ALLOWED_CAMS[Math.floor(Math.random()*HOBO_ALLOWED_CAMS.length)]:-1,hoboMoveTimer:null,
+    musicBox:100,isWindingUp:false,
+    maduroPos:-1,maduroWatchMs:0,maduroDisabledCams:{},maduroSpawnTimer:null,maduroReconnectTimers:{},
+    jeffreyStep:0,jeffreyPos:JEFFREY_START_POS,jeffreyTimer:cfg.jeffreySwitch,
+    jeffreyActive:cfg.jeffreyActive,
+    chapoTimer:cfg.chapoAttack,chapoSprite:0,chapoAlarm:false,
+    chapoActive:cfg.chapoActive,chapoKillTimer:null,
+    diddyPos:POS.C0,diddyMoveTimer:null,diddyActive:cfg.diddyActive,diddyPath:null,
+    alarmReady:false,alarmCD:ALARM_CD_S,alarmCDTimer:null,
+    camOpen:false,curCam:0,
+    lureReady:false,lureCD:LURE_CD_S,lureCDTimer:null,
+    dead:false,won:false,
+    markInVent:false,markAppearTimer:null,markKillTimer:null,markLeaveTimer:null,markCheckInterval:null,
+    fireOn:false,fireTimer:null,tickTimer:null,timeTimer:null,
+    shadowActive:false,shadowKillTimer:null,
+    fiveAMDone:false,
+  };
+}
+
+// ── UI helpers ──
+function showMenu(){
+  document.getElementById('warnScreen2d').style.display='none';
+  document.getElementById('overlay').style.display='flex';
+}
+window.showMenu = showMenu;
+
+function selectNight(n){
+  selectedNight=n;
+  for(let i=1;i<=5;i++) document.getElementById('nb'+i).className='nb'+(i===n?' sel':'');
+  const sb=document.getElementById('startBtnMenu');
+  sb.disabled=false; sb.textContent=`▶ NACHT ${n} STARTEN`;
+}
+window.selectNight = selectNight;
+
+function startGame(){
+  if(!selectedNight) return;
+  document.getElementById('overlay').style.display='none';
+  document.getElementById('hud2d').style.display='flex';
+  document.getElementById('alarmFlash').style.display='none';
+  document.getElementById('deathScreen2d').style.display='none';
+  document.getElementById('winScreen2d').style.display='none';
+  document.getElementById('jsScreen2d').style.display='none';
+  document.getElementById('camUi').style.display='none';
+
+  G = mkState();
+  G.nightStart = Date.now();
+  G.running = true;
+
+  initAudio();
+  play('ambience');
+  if(G.cfg.tomActive){ SFX.muziek.volume=0.15; SFX.muziek.play().catch(()=>{}); }
+
+  document.getElementById('nightModeLbl').textContent = G.cfg.label;
+  document.getElementById('mbSection').style.display = G.cfg.tomActive ? 'block' : 'none';
+
+  buildCamStrip2d();
+  updateO2UI();
+  updateMusicBoxUI();
+  updateLureUI();
+  updateVentUI();
+  refreshMonsterDots();
+
+  G.lureCD = LURE_CD_S;
+  G.lureCDTimer = setInterval(()=>{ G.lureCD--; if(G.lureCD<=0){G.lureReady=true;G.lureCD=0;clearInterval(G.lureCDTimer);} updateLureUI(); },1000);
+  G.alarmReady = true; G.alarmCD = 0; updateAlarmUI();
+
+  G.tickTimer = setInterval(gameTick, TICK_MS);
+  G.timeTimer = setInterval(tickTime, 250);
+
+  if(G.cfg.gijsActive) setTimeout(scheduleMoveTimer, 5000);
+  if(G.cfg.hoboActive) scheduleHoboMove();
+  if(G.cfg.markRutteActive) scheduleMarkCheck();
+  scheduleMaduroSpawn();
+  if(G.cfg.jeffreyActive){ G.jeffreyStep=0; G.jeffreyPos=JEFFREY_PATH[0]; G.jeffreyTimer=G.cfg.jeffreySwitch; }
+  if(G.cfg.diddyActive) setTimeout(scheduleDiddyMove, 8000);
+
+  // Hide all sprites initially
+  Object.values(sprites).forEach(s => s.mesh.visible = false);
+  refreshMonsterDots();
+}
+window.startGame = startGame;
+
+function restartGame(){
+  killTimers();
+  stopAll();
+  Object.values(sprites).forEach(s => s.mesh.visible = false);
+  document.getElementById('hud2d').style.display='none';
+  document.getElementById('camUi').style.display='none';
+  document.getElementById('deathScreen2d').style.display='none';
+  document.getElementById('winScreen2d').style.display='none';
+  document.getElementById('jsScreen2d').style.display='none';
+  document.getElementById('alarmFlash').style.display='none';
+  selectedNight=0;
+  for(let i=1;i<=5;i++) document.getElementById('nb'+i).className='nb';
+  const sb=document.getElementById('startBtnMenu'); sb.disabled=true; sb.textContent='SELECTEER EEN NACHT';
+  document.getElementById('overlay').style.display='flex';
+}
+window.restartGame = restartGame;
+
+// ── CAM strip 2D ──
+const CAM_BG_IMGS = {};
+function getCamBgImg(roomId, cb){
+  if(CAM_BG_IMGS[roomId]) return cb(CAM_BG_IMGS[roomId]);
+  const keys=['camBg0','camBg1','camBg2','camBg3','camBg4','camBg5'];
+  const img=new Image();
+  img.onload=()=>{CAM_BG_IMGS[roomId]=img;cb(img);};
+  img.onerror=()=>cb(null);
+  img.src=FILES[keys[roomId]];
+}
+
+function drawCamRoom2d(canvas,roomId){
+  const W=canvas.width=canvas.offsetWidth||800;
+  const H=canvas.height=canvas.offsetHeight||400;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  const img=CAM_BG_IMGS[roomId];
+  if(img){
+    const iR=img.naturalWidth/img.naturalHeight,cR=W/H;
+    let sw,sh,sx=0,sy=0;
+    if(iR>cR){sh=img.naturalHeight;sw=sh*cR;sx=(img.naturalWidth-sw)/2;}
+    else{sw=img.naturalWidth;sh=sw/cR;sy=(img.naturalHeight-sh)/2;}
+    ctx.drawImage(img,sx,sy,sw,sh,0,0,W,H);
+  } else {
+    ctx.fillStyle='#080a06';ctx.fillRect(0,0,W,H);
+    getCamBgImg(roomId,()=>drawCamRoom2d(canvas,roomId));
+  }
+  ctx.fillStyle='rgba(0,18,4,0.35)';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(0,0,0,0.08)';
+  for(let y=0;y<H;y+=3) ctx.fillRect(0,y,W,1);
+}
+
+function buildCamStrip2d(){
+  const strip=document.getElementById('camStrip');
+  strip.innerHTML='';
+  CAMS.forEach(c=>{
+    const el=document.createElement('div');
+    el.className='ct2'+(c.id===0?' on':'');
+    el.id='ct2_'+c.id;
+    el.innerHTML=`<span>${c.name}<br>${c.room}</span>
+      <div class="cdot" id="cdg${c.id}"></div>
+      <div class="cdot" style="top:12px;right:4px" id="cdh${c.id}"></div>
+      <div class="cdot" style="top:20px;right:4px" id="cdj${c.id}"></div>
+      <div class="cdot" style="top:28px;right:4px" id="cdcp${c.id}"></div>
+      <div class="cdot" style="top:36px;right:4px" id="cdd${c.id}"></div>`;
+    el.onclick=()=>switchCam(c.id);
+    strip.appendChild(el);
+    getCamBgImg(c.id,()=>{});
+  });
+}
+
+function isCamDisabled(id){ return !!(G&&G.maduroDisabledCams&&G.maduroDisabledCams[id]>0); }
+
+function switchCam(id){
+  if(!G||G.dead||G.won) return;
+  if(isCamDisabled(id)) return;
+  if(id!==G.curCam) play('cameraSwitch');
+  if(G.maduroPos===G.curCam&&id!==G.curCam) maduroDespawn();
+  G.curCam=id; G.maduroWatchMs=0;
+  document.querySelectorAll('.ct2').forEach(t=>t.classList.remove('on'));
+  document.getElementById('ct2_'+id)?.classList.add('on');
+  document.getElementById('camNameLbl').textContent=CAMS[id].name;
+  document.getElementById('camRoomLbl').textContent=CAMS[id].room;
+  const wbu=document.getElementById('windupBtn');
+  if(wbu) wbu.style.display=(id===MUSIC_CAM_ID&&G.cfg.tomActive)?'block':'none';
+  if(SFX.muziek) SFX.muziek.volume=id===MUSIC_CAM_ID?0.55:0.15;
+  renderCamFeed2d();
+  updateLureUI();
+  updateAlarmUI();
+}
+
+function renderCamFeed2d(){
+  const id=G.curCam;
+  const cv=document.getElementById('camCanvas2d');
+  if(cv){ cv.width=cv.offsetWidth||800; cv.height=cv.offsetHeight||400; drawCamRoom2d(cv,id); }
+
+  const disabled=isCamDisabled(id);
+  document.getElementById('maduroDisabledOverlay').style.display=disabled?'flex':'none';
+
+  const gijsHere  = G.cfg.gijsActive&&G.mPos===id&&id!==MUSIC_CAM_ID;
+  const hoboHere  = G.cfg.hoboActive&&G.hoboPos===id&&id!==MUSIC_CAM_ID;
+  const jeffHere  = G.jeffreyActive&&G.jeffreyPos===id&&id!==MUSIC_CAM_ID;
+  const chapoHere = G.chapoActive&&id===CHAPO_CAM_ID&&!G.chapoAlarm;
+  const tomHere   = G.cfg.tomActive&&id===MUSIC_CAM_ID;
+  const maduroHere= G.maduroPos===id;
+  const diddyHere = G.diddyActive&&G.diddyPos===id&&id!==MUSIC_CAM_ID;
+
+  const show=(el,v,src)=>{ if(el){ el.style.display=v?'block':'none'; if(v&&src) el.src=src; } };
+  show(document.getElementById('monsterCamImg'), gijsHere, FILES.gijsCam);
+  show(document.getElementById('hoboCamImg'), hoboHere, FILES.hoboGijsCam);
+  show(document.getElementById('jeffreyCamImg'), jeffHere, FILES.jeffreyCam);
+  show(document.getElementById('chapoCamImg'), chapoHere, FILES.chapoCam);
+  show(document.getElementById('diddyCamImg'), diddyHere, FILES.diddyCam);
+  show(document.getElementById('maduroCamImg'), maduroHere, null);
+  const tomImg=document.getElementById('tomCamImg');
+  if(tomImg){ tomImg.style.display=tomHere?'block':'none'; if(tomHere) tomImg.src=FILES.tomCam; }
+  const tdov=document.getElementById('tomDangerOverlay');
+  if(tdov&&tomHere){ const d=Math.max(0,(100-G.musicBox)/100); tdov.style.opacity=String(Math.pow(d,1.4)*0.9); }
+  else if(tdov) tdov.style.opacity='0';
+  const markImg=document.getElementById('markVentImg');
+  if(markImg) markImg.style.display=(G.markInVent&&!G.ventClosed)?'block':'none';
+  document.getElementById('camTs').textContent=new Date().toLocaleTimeString('nl-NL');
+}
+
+function refreshMonsterDots(){
+  CAMS.forEach(c=>{
+    const id=c.id;
+    const gd=document.getElementById('cdg'+id); if(gd){ gd.className='cdot'; if(G&&G.cfg.gijsActive&&G.mPos===id&&id!==MUSIC_CAM_ID) gd.classList.add('gd'); }
+    const hd=document.getElementById('cdh'+id); if(hd){ hd.className='cdot'; if(G&&G.cfg.hoboActive&&G.hoboPos===id&&id!==MUSIC_CAM_ID) hd.classList.add('hd'); }
+    const jd=document.getElementById('cdj'+id); if(jd){ jd.className='cdot'; if(G&&G.jeffreyActive&&G.jeffreyPos===id&&id!==MUSIC_CAM_ID) jd.classList.add('jd'); }
+    const cpd=document.getElementById('cdcp'+id); if(cpd){ cpd.className='cdot'; if(G&&G.chapoActive&&id===CHAPO_CAM_ID&&!G.chapoAlarm) cpd.classList.add('cpd'); }
+    const dd=document.getElementById('cdd'+id); if(dd){ dd.className='cdot'; if(G&&G.diddyActive&&G.diddyPos===id&&id!==MUSIC_CAM_ID) dd.classList.add('dd'); }
+  });
+}
+
+// ── O2 UI ──
+function updateO2UI(){
+  const p=Math.max(0,Math.round(G.o2));
+  document.getElementById('o2Pct').textContent=p+'%';
+  const fill=document.getElementById('o2Fill');
+  fill.style.width=p+'%';
+  fill.className='bar-fill';
+  if(p<=10) fill.classList.add('crit');
+  else if(p<=30) fill.classList.add('warn');
+}
+
+// ── Music box UI ──
+function updateMusicBoxUI(){
+  const p=Math.max(0,Math.round(G.musicBox));
+  const pct=document.getElementById('mbPct'); if(pct) pct.textContent=p+'%';
+  const fill=document.getElementById('mbFill'); if(fill){ fill.style.width=p+'%'; }
+  if(SFX.muziek){
+    SFX.muziek.playbackRate = p>50?1:p>25?0.82:p>10?0.62:0.4;
+  }
+}
+
+// ── Lure UI ──
+function updateLureUI(){
+  const ready=G.lureReady, range=inLureRange();
+  const hb=document.getElementById('lureBtnHud');
+  const cd=document.getElementById('lureCd');
+  if(ready){
+    hb.disabled=!range; hb.className='act-btn'+(range?' warn':'');
+    hb.textContent=range?'🔊 LOKKEN — KLAAR!':'🔊 LOKKEN';
+    if(cd){ cd.textContent=range?'⚠ Monster in bereik!':'Buiten bereik'; cd.style.color=range?'#88ff55':'#446644'; }
+  } else {
+    const s=Math.ceil(G.lureCD);
+    hb.disabled=true; hb.className='act-btn';
+    hb.textContent=`🔊 LOKKEN — ${s}s`;
+    if(cd){ cd.textContent=`CD: ${s}s`; cd.style.color='#446644'; }
+  }
+}
+
+// ── Alarm UI ──
+function alarmTargetOnCam(){ if(!G.camOpen||G.dead||G.won) return false; const id=G.curCam; if(G.chapoActive&&id===CHAPO_CAM_ID) return true; if(G.diddyActive&&G.diddyPos===id&&id!==MUSIC_CAM_ID) return true; return false; }
+function updateAlarmUI(){
+  if(!G.camOpen) return;
+  const btn=document.getElementById('alarmCamBtn'); const lbl=document.getElementById('alarmCdLbl');
+  if(!btn||!lbl) return;
+  const hasTarget=alarmTargetOnCam();
+  if(G.alarmReady){ btn.disabled=false; btn.className='alarm-btn2d'+(hasTarget?' target':' ready'); btn.textContent=hasTarget?'🚨 ALARM — VUUR!':'🚨 ALARM'; lbl.textContent='KLAAR'; }
+  else { btn.disabled=true; btn.className='alarm-btn2d'; const s=Math.ceil(G.alarmCD); lbl.textContent=s>0?`CD: ${s}s`:'--'; }
+}
+
+// ── Vent UI ──
+function updateVentUI(){
+  const btn=document.getElementById('ventBtn2d');
+  if(btn){ btn.className='act-btn'+(G.ventClosed?' active':''); btn.textContent=G.ventClosed?'🌬 OPEN VENT':'🌬 SLUIT VENT'; }
+  if(window._ventLight3D) window._ventLight3D.material.color.setHex(G.markInVent&&!G.ventClosed?0xff4400:0x111111);
+}
+
+// ── Door UI ──
+function refreshDoorLights(){
+  const lb=document.getElementById('dbL'); if(lb) lb.className='act-btn'+(G.lfClosed?' active':'');
+  const rb=document.getElementById('dbR'); if(rb) rb.className='act-btn'+(G.rtClosed?' active':'');
+  if(doorMeshes.left) doorMeshes.left.visible=G.lfClosed;
+  if(doorMeshes.right) doorMeshes.right.visible=G.rtClosed;
+  const dlL=window.doorLight_left, dlR=window.doorLight_right;
+  if(dlL) dlL.material.color.setHex(G.lfClosed?0x00e050:(G.mPos===5?0xff2200:0x111111));
+  if(dlR) dlR.material.color.setHex(G.rtClosed?0x00e050:(G.mPos===6?0xff2200:0x111111));
+}
+
+// ── Toggle functions (exposed to window) ──
+function toggleCam(){
+  if(!G||G.dead||G.won) return;
+  G.camOpen=!G.camOpen;
+  document.getElementById('camUi').style.display=G.camOpen?'flex':'none';
+  document.getElementById('camToggleBtn').className='act-btn'+(G.camOpen?' active':'');
+  if(!G.camOpen){ stopWindUp(); if(SFX.muziek) SFX.muziek.volume=0.15; if(G.maduroPos>=0) maduroDespawn(); G.maduroWatchMs=0; }
+  if(G.camOpen){ switchCam(G.curCam); shadowGijsDismiss(); }
+  updateLureUI(); updateAlarmUI();
+}
+window.toggleCam = toggleCam;
+
+function toggleDoor(side){
+  if(!G||G.dead||G.won) return;
+  if(side==='left'){
+    G.lfClosed=!G.lfClosed;
+    if(G.lfClosed) play('doorClose');
+    if(G.lfClosed){ if(G.mPos===POS.LD&&G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;} }
+    else{ if(G.cfg.gijsActive&&G.mPos===POS.LD) armDoorTimer(); }
+  } else {
+    G.rtClosed=!G.rtClosed;
+    if(G.rtClosed) play('doorClose');
+    if(G.rtClosed){ if(G.mPos===POS.RD&&G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;} }
+    else{ if(G.cfg.gijsActive&&G.mPos===POS.RD) armDoorTimer(); }
+  }
+  refreshDoorLights();
+}
+window.toggleDoor = toggleDoor;
+
+function toggleVent(){
+  if(!G||G.dead||G.won) return;
+  G.ventClosed=!G.ventClosed;
+  if(G.ventClosed) play('doorClose');
+  updateVentUI();
+  if(G.ventClosed&&G.markInVent){
+    if(G.markAppearTimer){clearTimeout(G.markAppearTimer);G.markAppearTimer=null;}
+    if(G.markKillTimer){clearTimeout(G.markKillTimer);G.markKillTimer=null;}
+    markLeaveAfterDelay(1000+Math.random()*2000);
+  } else if(!G.ventClosed&&G.markInVent){
+    if(G.markKillTimer) clearTimeout(G.markKillTimer);
+    G.markKillTimer=setTimeout(()=>{if(!G.dead&&!G.won&&G.markInVent&&!G.ventClosed) triggerMarkJS();},1000);
+  }
+}
+window.toggleVent = toggleVent;
+
+function useLure(){
+  if(!G||!G.lureReady||!inLureRange()||G.dead||G.won) return;
+  if(hoboOnCurrentCam()&&G.cfg.hoboActive){triggerHoboJS();return;}
+  play('lure');
+  if(G.diddyActive&&G.diddyPos===G.curCam&&G.curCam!==MUSIC_CAM_ID){
+    const pb={5:3,6:4,3:2,4:2,2:1,1:0,0:0};
+    const np=pb[G.diddyPos];
+    if(np!==undefined){ if(G.diddyMoveTimer){clearTimeout(G.diddyMoveTimer);G.diddyMoveTimer=null;} G.diddyPos=np; G.diddyPath=null; scheduleDiddyMove(); }
+  }
+  const pb={5:3,6:4,3:2,4:2,2:1,1:0,0:0};
+  const np=pb[G.mPos];
+  if(np!==undefined){ G.mPos=np; if(G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;} if(G.mRetreatTimer){clearTimeout(G.mRetreatTimer);G.mRetreatTimer=null;} refreshMonsterDots(); refreshDoorLights(); if(G.camOpen) renderCamFeed2d(); }
+  G.lureReady=false; G.lureCD=LURE_CD_S;
+  clearInterval(G.lureCDTimer);
+  G.lureCDTimer=setInterval(()=>{G.lureCD--;if(G.lureCD<=0){G.lureReady=true;G.lureCD=0;clearInterval(G.lureCDTimer);}updateLureUI();},1000);
+  updateLureUI();
+}
+window.useLure = useLure;
+
+function useCameraAlarm(){
+  if(!G||!G.alarmReady||G.dead||G.won) return;
+  play('cameraAlarm');
+  if(G.chapoActive&&G.curCam===CHAPO_CAM_ID&&!G.chapoAlarm) resetChapo();
+  if(G.chapoActive&&G.chapoAlarm) resetChapo();
+  if(G.diddyActive&&G.diddyPos===G.curCam&&G.curCam!==MUSIC_CAM_ID) resetDiddy();
+  G.alarmReady=false; G.alarmCD=ALARM_CD_S;
+  clearInterval(G.alarmCDTimer);
+  G.alarmCDTimer=setInterval(()=>{ G.alarmCD--; if(G.alarmCD<=0){G.alarmReady=true;G.alarmCD=0;clearInterval(G.alarmCDTimer);} updateAlarmUI(); },1000);
+  updateAlarmUI(); refreshMonsterDots();
+}
+window.useCameraAlarm = useCameraAlarm;
+
+// ── Wind up ──
+function startWindUp(e){ if(e) e.preventDefault(); if(!G||G.dead||G.won) return; if(G.curCam!==MUSIC_CAM_ID) return; G.isWindingUp=true; document.getElementById('windupBtn').className='mb-wind-btn winding'; if(SFX.windUp){SFX.windUp.currentTime=0;SFX.windUp.play().catch(()=>{});} }
+function stopWindUp(){ if(!G) return; G.isWindingUp=false; const wb=document.getElementById('windupBtn'); if(wb) wb.className='mb-wind-btn'; if(SFX.windUp){SFX.windUp.pause();SFX.windUp.currentTime=0;} }
+window.startWindUp = startWindUp;
+window.stopWindUp = stopWindUp;
+
+// ── Lure helpers ──
+function inLureRange(){
+  if(!G.camOpen) return false;
+  const adj={0:[1],1:[0,2],2:[1,3,4],3:[2,5],4:[2,6],5:[3],6:[4]};
+  const gijsInRange=G.cfg.gijsActive&&G.curCam!==MUSIC_CAM_ID&&(G.mPos===G.curCam||(adj[G.mPos]||[]).includes(G.curCam));
+  const hoboInRange=G.cfg.hoboActive&&G.curCam!==MUSIC_CAM_ID&&G.hoboPos===G.curCam;
+  const diddyInRange=G.diddyActive&&G.curCam!==MUSIC_CAM_ID&&G.diddyPos===G.curCam;
+  return gijsInRange||hoboInRange||diddyInRange;
+}
+function hoboOnCurrentCam(){ return G.camOpen&&G.hoboPos===G.curCam&&G.curCam!==MUSIC_CAM_ID; }
+
+// ── Maduro ──
+function scheduleMaduroSpawn(){
+  if(G.maduroSpawnTimer) clearInterval(G.maduroSpawnTimer);
+  G.maduroSpawnTimer=setInterval(()=>{
+    if(G.dead||G.won) return;
+    if(G.maduroPos>=0) return;
+    if(Math.random()<G.cfg.maduroChance){ const av=MADURO_ALLOWED_CAMS.filter(id=>!isCamDisabled(id)); if(av.length) maduroSpawn(av[Math.floor(Math.random()*av.length)]); }
+  },MADURO_APPEAR_INTERVAL);
+}
+function maduroSpawn(id){ G.maduroPos=id; G.maduroWatchMs=0; refreshMonsterDots(); if(G.camOpen&&G.curCam===id) renderCamFeed2d(); }
+function maduroDespawn(){ if(G.maduroPos<0) return; G.maduroPos=-1; G.maduroWatchMs=0; refreshMonsterDots(); if(G.camOpen) renderCamFeed2d(); }
+function tickMaduro(){
+  if(G.dead||G.won) return;
+  let anyChange=false;
+  Object.keys(G.maduroDisabledCams).forEach(cId=>{
+    if(G.maduroDisabledCams[cId]>0){ G.maduroDisabledCams[cId]-=TICK_MS; if(G.maduroDisabledCams[cId]<=0){G.maduroDisabledCams[cId]=0;anyChange=true;updateMaduroReconnectDisplay(parseInt(cId),0);}else{updateMaduroReconnectDisplay(parseInt(cId),Math.ceil(G.maduroDisabledCams[cId]/1000));} }
+  });
+  if(anyChange) refreshMonsterDots();
+  if(G.maduroPos>=0&&G.camOpen&&G.curCam===G.maduroPos&&!isCamDisabled(G.curCam)){
+    G.maduroWatchMs+=TICK_MS; if(G.maduroWatchMs>=MADURO_WATCH_LIMIT_MS) triggerMaduroCamDisable(G.maduroPos);
+  } else if(G.maduroPos>=0&&(!G.camOpen||G.curCam!==G.maduroPos)) G.maduroWatchMs=0;
+}
+function triggerMaduroCamDisable(camId){
+  play('shock'); G.maduroPos=-1; G.maduroWatchMs=0; G.maduroDisabledCams[camId]=MADURO_DISABLE_MS;
+  refreshMonsterDots();
+  if(G.camOpen&&G.curCam===camId){ renderCamFeed2d(); startMaduroReconnectBar(); setTimeout(()=>{if(!G.dead&&!G.won&&G.camOpen&&G.curCam===camId){const other=CAMS.find(c=>c.id!==camId&&!isCamDisabled(c.id));if(other) switchCam(other.id);}},2200); }
+}
+function startMaduroReconnectBar(){ const fill=document.getElementById('maduroErrFill'); if(fill){fill.style.transition='none';fill.style.width='0%';setTimeout(()=>{fill.style.transition=`width ${MADURO_DISABLE_MS/1000}s linear`;fill.style.width='100%';},50);} }
+function updateMaduroReconnectDisplay(camId,secsLeft){ if(G.camOpen&&G.curCam===camId){const el=document.getElementById('maduroReconnectSec');if(el) el.textContent=secsLeft;} }
+
+// ── Jeffrey ──
+function tickJeffrey(){
+  if(!G.jeffreyActive||G.dead||G.won) return;
+  const tickSec=TICK_MS/1000;
+  const watching=G.camOpen&&G.curCam===G.jeffreyPos&&!isCamDisabled(G.curCam);
+  if(watching) return;
+  G.jeffreyTimer-=tickSec;
+  if(G.jeffreyTimer<=0){ G.jeffreyStep++; if(G.jeffreyStep>=JEFFREY_PATH.length){triggerJeffreyJS();return;} G.jeffreyPos=JEFFREY_PATH[G.jeffreyStep]; G.jeffreyTimer=G.cfg.jeffreySwitch||JEFFREY_SWITCH_S; play('jeffreyLaugh'); refreshMonsterDots(); if(G.camOpen) renderCamFeed2d(); }
+}
+
+// ── Chapo ──
+function tickChapo(){
+  if(!G.chapoActive||G.dead||G.won||G.chapoAlarm) return;
+  const tickSec=TICK_MS/1000;
+  const watching=G.camOpen&&G.curCam===CHAPO_CAM_ID&&!isCamDisabled(CHAPO_CAM_ID);
+  if(!watching) G.chapoTimer-=tickSec;
+  const chapoMax=G.cfg.chapoAttack||CHAPO_ATTACK_S;
+  const ratio=G.chapoTimer/chapoMax;
+  let newSprite=ratio>0.6?0:ratio>0.25?1:2;
+  if(newSprite!==G.chapoSprite){G.chapoSprite=newSprite;if(G.camOpen&&G.curCam===CHAPO_CAM_ID) renderCamFeed2d();}
+  if(G.chapoTimer<=0&&!G.chapoAlarm) triggerChapoAlarm();
+}
+function triggerChapoAlarm(){
+  G.chapoAlarm=true; play('alarm');
+  document.getElementById('alarmFlash').style.display='block';
+  refreshMonsterDots(); if(G.camOpen) renderCamFeed2d();
+  G.chapoKillTimer=setTimeout(()=>{if(!G.dead&&!G.won&&G.chapoAlarm) triggerChapoJS();},CHAPO_KILL_DELAY_MS);
+}
+function resetChapo(){
+  if(G.chapoKillTimer){clearTimeout(G.chapoKillTimer);G.chapoKillTimer=null;}
+  if(G.chapoAlarm){stop('alarm');document.getElementById('alarmFlash').style.display='none';G.chapoAlarm=false;}
+  G.chapoTimer=G.cfg.chapoAttack||CHAPO_ATTACK_S; G.chapoSprite=0;
+  refreshMonsterDots(); if(G.camOpen) renderCamFeed2d();
+}
+
+// ── Diddy ──
+function scheduleDiddyMove(){
+  if(G.diddyMoveTimer) clearTimeout(G.diddyMoveTimer);
+  if(G.dead||G.won||!G.diddyActive) return;
+  const intervals=G.cfg.diddyMoveIval||DIDDY_MOVE_IVAL_BASE;
+  const base=intervals[Math.min(G.hour,5)];
+  if(base===Infinity) return;
+  const delay=base+Math.random()*3000-1000;
+  G.diddyMoveTimer=setTimeout(()=>{advanceDiddy();scheduleDiddyMove();},delay);
+}
+function advanceDiddy(){
+  if(G.dead||G.won||!G.diddyActive) return;
+  if(G.diddyPos===POS.LD||G.diddyPos===POS.RD){triggerDiddyJS();return;}
+  let np=G.diddyPos;
+  if(G.diddyPos===POS.C0) np=POS.C1;
+  else if(G.diddyPos===POS.C1) np=POS.C2;
+  else if(G.diddyPos===POS.C2){if(!G.diddyPath) G.diddyPath=Math.random()<.5?'left':'right';np=G.diddyPath==='left'?POS.C3:POS.C4;G.diddyPath=null;}
+  else if(G.diddyPos===POS.C3) np=POS.LD;
+  else if(G.diddyPos===POS.C4) np=POS.RD;
+  G.diddyPos=np; refreshMonsterDots(); if(G.camOpen) renderCamFeed2d(); updateAlarmUI();
+  if(np===POS.LD||np===POS.RD){ G.diddyMoveTimer=setTimeout(()=>{if(!G.dead&&!G.won) triggerDiddyJS();},2500); }
+}
+function resetDiddy(){ if(G.diddyMoveTimer) clearTimeout(G.diddyMoveTimer); G.diddyPos=POS.C0; G.diddyPath=null; refreshMonsterDots(); if(G.camOpen) renderCamFeed2d(); scheduleDiddyMove(); }
+
+// ── Mark ──
+function scheduleMarkCheck(){
+  if(G.markCheckInterval) clearInterval(G.markCheckInterval);
+  const interval=G.cfg.markInterval||10000;
+  if(interval===Infinity) return;
+  G.markCheckInterval=setInterval(()=>{if(G.dead||G.won||G.markInVent) return; if(Math.random()<0.10) markAppear();},interval);
+}
+function markAppear(){
+  if(G.dead||G.won||G.markInVent) return;
+  G.markInVent=true; play('vent');
+  if(Math.random()<0.20) setTimeout(()=>play('markAudio'),400);
+  updateVentUI();
+  if(G.ventClosed){markLeaveAfterDelay(1000+Math.random()*2000);return;}
+  const img=document.getElementById('markVentImg'); if(img) img.style.display='block';
+  G.markKillTimer=setTimeout(()=>{if(!G.dead&&!G.won&&G.markInVent&&!G.ventClosed) triggerMarkJS();},8000);
+}
+function markLeave(){
+  if(!G.markInVent) return; G.markInVent=false;
+  if(G.markAppearTimer){clearTimeout(G.markAppearTimer);G.markAppearTimer=null;}
+  if(G.markKillTimer){clearTimeout(G.markKillTimer);G.markKillTimer=null;}
+  if(G.markLeaveTimer){clearTimeout(G.markLeaveTimer);G.markLeaveTimer=null;}
+  stop('vent');
+  const img=document.getElementById('markVentImg'); if(img) img.style.display='none';
+  updateVentUI();
+}
+function markLeaveAfterDelay(ms){ if(G.markLeaveTimer) clearTimeout(G.markLeaveTimer); G.markLeaveTimer=setTimeout(()=>markLeave(),ms); }
+
+// ── Gijs AI ──
+function scheduleMoveTimer(){
+  if(G.mMoveTimer) clearTimeout(G.mMoveTimer);
+  if(G.dead||G.won||!G.cfg.gijsActive) return;
+  const intervals=G.cfg.moveIval;
+  const base=intervals[Math.min(G.hour,5)];
+  if(base===Infinity) return;
+  const delay=base+Math.random()*4000-1500;
+  G.mMoveTimer=setTimeout(()=>{advanceMonster();scheduleMoveTimer();},delay);
+}
+function advanceMonster(){
+  if(G.dead||G.won||!G.cfg.gijsActive) return;
+  if(G.mPos===POS.LD||G.mPos===POS.RD) return;
+  if(Math.random()<0.2) play('laugh');
+  let np=G.mPos;
+  if(G.mPos===POS.C0) np=POS.C1;
+  else if(G.mPos===POS.C1) np=POS.C2;
+  else if(G.mPos===POS.C2){if(!G.mPath) G.mPath=Math.random()<.5?'left':'right';np=G.mPath==='left'?POS.C3:POS.C4;G.mPath=null;}
+  else if(G.mPos===POS.C3) np=POS.LD;
+  else if(G.mPos===POS.C4) np=POS.RD;
+  G.mPos=np; refreshMonsterDots(); refreshDoorLights(); if(G.camOpen) renderCamFeed2d();
+  if(np===POS.LD||np===POS.RD) handleAtDoor(np);
+}
+function handleAtDoor(pos){
+  refreshDoorLights();
+  const closed=pos===POS.LD?G.lfClosed:G.rtClosed;
+  if(!closed) armDoorTimer();
+  if(G.mRetreatTimer) clearTimeout(G.mRetreatTimer);
+  const rd=DOOR_RETREAT_MIN+Math.random()*(DOOR_RETREAT_MAX-DOOR_RETREAT_MIN);
+  G.mRetreatTimer=setTimeout(()=>retreatGijs(),rd);
+}
+function retreatGijs(){
+  if(G.dead||G.won) return;
+  if(G.mPos!==POS.LD&&G.mPos!==POS.RD) return;
+  if(G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}
+  G.mPos=[POS.C0,POS.C1,POS.C2][Math.floor(Math.random()*3)];
+  play('footsteps'); refreshMonsterDots(); refreshDoorLights(); if(G.camOpen) renderCamFeed2d(); updateLureUI();
+}
+function armDoorTimer(){
+  if(G.mDoorTimer) clearTimeout(G.mDoorTimer);
+  if(G.dead||G.won||!G.cfg.gijsActive) return;
+  G.mDoorTimer=setTimeout(()=>{
+    if(G.dead||G.won||!G.cfg.gijsActive) return;
+    if(G.mPos===POS.LD&&!G.lfClosed) triggerGijsJS();
+    if(G.mPos===POS.RD&&!G.rtClosed) triggerGijsJS();
+  },GRACE_MS);
+}
+
+// ── Hobo Gijs AI ──
+function scheduleHoboMove(){
+  if(G.hoboMoveTimer) clearTimeout(G.hoboMoveTimer);
+  if(G.dead||G.won||!G.cfg.hoboActive) return;
+  const delay=G.cfg.hoboMinMs+Math.random()*(G.cfg.hoboMaxMs-G.cfg.hoboMinMs);
+  if(!isFinite(delay)) return;
+  G.hoboMoveTimer=setTimeout(()=>{moveHobo();scheduleHoboMove();},delay);
+}
+function moveHobo(){
+  if(G.dead||G.won||!G.cfg.hoboActive) return;
+  let np,attempts=0;
+  do{np=HOBO_ALLOWED_CAMS[Math.floor(Math.random()*HOBO_ALLOWED_CAMS.length)];attempts++;}while(np===G.hoboPos&&attempts<20);
+  G.hoboPos=np; refreshMonsterDots(); if(G.camOpen) renderCamFeed2d(); updateLureUI();
+}
+
+// ── Shadow Gijs ──
+function tickShadowGijs(){ if(G.dead||G.won||G.camOpen||G.shadowActive) return; if(G.cfg.shadowChance>0&&Math.random()<G.cfg.shadowChance) shadowGijsAppear(); }
+function shadowGijsAppear(){
+  if(G.shadowActive||G.dead||G.won) return;
+  G.shadowActive=true;
+  if(sprites.shadowGijs) sprites.shadowGijs.mesh.visible=true;
+  play('shadowGijsAudio');
+  G.shadowKillTimer=setTimeout(()=>{if(G.shadowActive&&!G.dead&&!G.won) triggerShadowGijsJS();},3000);
+}
+function shadowGijsDismiss(){
+  if(!G.shadowActive) return; G.shadowActive=false;
+  if(G.shadowKillTimer){clearTimeout(G.shadowKillTimer);G.shadowKillTimer=null;}
+  stop('shadowGijsAudio');
+  if(sprites.shadowGijs) sprites.shadowGijs.mesh.visible=false;
+}
+function triggerShadowGijsJS(){ if(G.dead) return; stop('shadowGijsAudio'); if(sprites.shadowGijs) sprites.shadowGijs.mesh.visible=false; G.shadowActive=false; doJumpscare(FILES.shadowGijsJS,'Shadow Gijs heeft je gevangen.<br><em>"Je had weg moeten kijken..."</em>'); if(SFX.jumpscare){SFX.jumpscare.currentTime=0;SFX.jumpscare.volume=2.0;SFX.jumpscare.play().catch(()=>{});} }
+
+// ── Jumpscare & death ──
+function doJumpscare(src, cause){
+  if(!G||G.dead) return; G.dead=true; killTimers(); stopAll();
+  doFlash(()=>{
+    const js=document.getElementById('jsScreen2d'); js.style.display='flex';
+    const img=document.getElementById('jsImg2d'); img.src=src; play('jumpscare');
+    setTimeout(()=>{
+      js.style.display='none';
+      document.getElementById('hud2d').style.display='none';
+      document.getElementById('camUi').style.display='none';
+      document.getElementById('deathMsg').innerHTML=cause;
+      document.getElementById('deathScreen2d').style.display='flex';
+    },3300);
+  });
+}
+function doFlash(cb){ const el=document.getElementById('flashEl2d'); el.style.opacity='1'; setTimeout(()=>{el.style.opacity='0';setTimeout(cb,60);},80); }
+
+function triggerGijsJS()  { doJumpscare(FILES.gijsJS,  'Meester Gijs heeft je gevonden.<br><em>"That\'s a 1 out of 10. For you."</em>'); }
+function triggerPatrickJS(){ doJumpscare(FILES.patrickJS,'De zuurstof raakte op.<br><em>"You should have studied harder."</em>'); }
+function triggerHoboJS()  { doJumpscare(FILES.hoboGijsJS,'Je lokte het verkeerde monster.<br><em>"...You shouldn\'t have done that."</em>'); }
+function triggerTomJS()   { stopWindUp(); doJumpscare(FILES.tomJS,'De muziek stopte.<br><em>"...I\'ve been waiting so long to come out."</em>'); }
+function triggerJeffreyJS(){ doJumpscare(FILES.jeffreyJS,'Jeffrey heeft je gevonden.<br><em>"De deuren houden mij niet tegen."</em>'); }
+function triggerMarkJS()  { if(!G||G.dead) return; markLeave(); doJumpscare(FILES.markJS,'Mark kwam uit de ventilatie.<br><em>"Je had de schacht moeten sluiten."</em>'); }
+function triggerChapoJS() { if(!G||G.dead) return; stop('alarm'); doJumpscare(FILES.chapoJS,'Chapo heeft aangevallen.<br><em>"Deuren? Dat is niets voor mij."</em>'); }
+function triggerDiddyJS() { if(!G||G.dead) return; doJumpscare(FILES.diddyJS,'Diddy heeft je gevonden.<br><em>"Je had het alarm moeten gebruiken."</em>'); }
+
+function triggerWin(){
+  if(!G||G.won||G.dead) return; G.won=true; killTimers(); stopAll(); play('win');
+  document.getElementById('hud2d').style.display='none';
+  document.getElementById('camUi').style.display='none';
+  document.getElementById('winScreen2d').style.display='flex';
+}
+
+// ── Main game tick ──
+function gameTick(){
+  if(!G||G.dead||G.won) return;
+  let drain=O2_DRAIN_BASE;
+  if(G.lfClosed) drain+=O2_DOOR_PER_TICK;
+  if(G.rtClosed) drain+=O2_DOOR_PER_TICK;
+  if(G.camOpen)  drain+=O2_CAM_PER_TICK;
+  if(G.ventClosed) drain+=O2_VENT_PER_TICK;
+  G.o2=Math.max(0,G.o2-drain);
+  updateO2UI();
+  if(G.o2<=0&&!G.o2Dead) oxygenDepleted();
+  tickMusicBox(); tickJeffrey(); tickChapo(); tickMaduro(); tickShadowGijs();
+  updateAlarmUI();
+}
+
+function oxygenDepleted(){ G.o2Dead=true; stop('ambience'); play('oxygenOut'); setTimeout(triggerPatrickJS,8000); }
+
+function tickMusicBox(){
+  if(!G||G.dead||G.won||!G.cfg.tomActive) return;
+  if(G.isWindingUp&&G.camOpen&&G.curCam===MUSIC_CAM_ID){
+    G.musicBox=Math.min(100,G.musicBox+MB_WIND_RATE);
+  } else {
+    const drain=MB_DRAIN_BASE+MB_DRAIN_SCALE*Math.min(G.hour,5);
+    G.musicBox=Math.max(0,G.musicBox-drain);
+    if(G.musicBox<=0) triggerTomJS();
+  }
+  updateMusicBoxUI();
+}
+
+function tickTime(){
+  if(!G||G.dead||G.won) return;
+  const progress=Math.min(1,(Date.now()-G.nightStart)/NIGHT_MS);
+  if(progress>=1){triggerWin();return;}
+  const totalMins=progress*360;
+  G.hour=Math.floor(totalMins/60);
+  const h=G.hour===0?12:G.hour,m=String(Math.floor(totalMins%60)).padStart(2,'0');
+  document.getElementById('hudTime').textContent=`${h}:${m} AM`;
+  if(G.hour>=5&&!G.fiveAMDone){G.fiveAMDone=true;stop('ambience');play('fiveAM');}
+}
+
+function killTimers(){
+  if(!G) return;
+  [G.tickTimer,G.timeTimer,G.mMoveTimer,G.mDoorTimer,G.mRetreatTimer,
+   G.fireTimer,G.lureCDTimer,G.hoboMoveTimer,G.chapoKillTimer,
+   G.markAppearTimer,G.markKillTimer,G.markLeaveTimer,G.markCheckInterval,
+   G.maduroSpawnTimer,G.diddyMoveTimer,G.alarmCDTimer,G.shadowKillTimer
+  ].forEach(t=>{if(t)try{clearInterval(t);clearTimeout(t);}catch(e){}});
+}
+
+// ── Keyboard shortcuts ──
+window.addEventListener('keydown', e=>{
+  if(!G||!G.running) return;
+  const k=e.key.toLowerCase();
+  if(k==='c') toggleCam();
+  if(k==='v') toggleVent();
+  if(k==='l') useLure();
+  if(k==='a'&&G.camOpen) useCameraAlarm();
+  if(k==='arrowleft'||k==='z') toggleDoor('left');
+  if(k==='arrowright'||k==='x') toggleDoor('right');
+});
+
+// Preload images
+Object.values(FILES).forEach(src=>{ if(src.endsWith('.png')||src.endsWith('.jpg')){const i=new Image();i.src=src;} });
+CAMS.forEach(c=>getCamBgImg(c.id,()=>{}));
+
+</script>
 </body>
 </html>
