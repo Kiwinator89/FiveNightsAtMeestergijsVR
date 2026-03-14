@@ -154,9 +154,7 @@ function onTriggerPress(idx) {
     handleVRAction(a);
     return;
   }
-  // Default fallback: left trigger = left door, right trigger = right door
-  if (idx === 0) toggleDoor('left');
-  else toggleDoor('right');
+  // No fallback — trigger only acts when pointing at an interactable
 }
 
 function onTriggerRelease(idx) {
@@ -383,7 +381,7 @@ function buildVent3D() {
 
   // Status light
   ventStatusLight = new THREE.Mesh(new THREE.SphereGeometry(0.14,10,10), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
-  ventStatusLight.position.set(0, 2.45, 5.89);
+  ventStatusLight.position.set(0.38, 2.88, 5.90);
   scene.add(ventStatusLight);
 
   // Interactive button below the vent, facing into room
@@ -1066,6 +1064,10 @@ renderer.setAnimationLoop(time => {
     updateDoorAnimations(dt);
     bigScreenTimer += dt;
     if (bigScreenTimer >= BIG_SCREEN_IV) { bigScreenTimer=0; drawBigScreen(); }
+  }
+  // Always update vent indicator so it shows correct colour even outside game
+  if (ventStatusLight) {
+    ventStatusLight.material.color.setHex(G&&G.ventClosed ? 0x00ff00 : 0xff0000);
   }
 
   updateJsPlane(dt);
