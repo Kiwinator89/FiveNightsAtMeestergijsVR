@@ -273,6 +273,7 @@ const doorMeshes   = { left: null, right: null };
 const doorLights   = { left: null, right: null };
 const doorAnim     = { left:  { open: 1, target: 1, speed: 3.0 }, right: { open: 1, target: 1, speed: 3.0 } };
 let ventStatusLight = null;
+let markBehindMesh = null;
 
 function addMesh(geo, mat, x=0,y=0,z=0,rx=0,ry=0,rz=0) {
   const m = new THREE.Mesh(geo, mat);
@@ -317,6 +318,7 @@ function buildRoom() {
   buildDoor3D(-4.5, 'left');
   buildDoor3D( 4.5, 'right');
   buildVent3D();
+  buildMarkSprite();
   buildBigCameraScreen();
   buildAnalogClock();
 }
@@ -536,6 +538,21 @@ function drawAnalogClock() {
   ctx.fillText('AM', W-22, 200);
 
   clockTex.needsUpdate = true;
+}
+
+// ══════════════════════════════════════════════════════
+//  MARK RUTTE — 3D billboard at front-wall vent (behind player)
+// ══════════════════════════════════════════════════════
+function buildMarkSprite() {
+  const tex = new THREE.TextureLoader().load(FILES.markVent, t => { t.needsUpdate = true; });
+  markBehindMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.64, 0.50),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.05, side: THREE.DoubleSide })
+  );
+  // Sit right inside the vent opening on the front wall
+  markBehindMesh.position.set(0, 2.85, 5.94);
+  markBehindMesh.visible = false;
+  scene.add(markBehindMesh);
 }
 
 // ══════════════════════════════════════════════════════
@@ -863,37 +880,35 @@ function drawAnimatronicsOnFeed(ctx, camId, fx, fy, fw, fh) {
   loadCamOverlayImg('mark',    FILES.markVent);
 
   // Build list of enemies present on this camera
+  // bottomPin:true = anchor strictly to bottom edge (partial/non-fullbody shots)
   const present = [];
-  if (G.cfg.gijsActive  && G.mPos===camId      && camId!==MUSIC_CAM_ID) present.push({ key:'gijs',    scale:0.82 });
-  if (G.cfg.hoboActive  && G.hoboPos===camId    && camId!==MUSIC_CAM_ID) present.push({ key:'hobo',   scale:0.74 });
+  if (G.cfg.gijsActive  && G.mPos===camId      && camId!==MUSIC_CAM_ID) present.push({ key:'gijs',    scale:0.55, bottomPin:true });
+  if (G.cfg.hoboActive  && G.hoboPos===camId    && camId!==MUSIC_CAM_ID) present.push({ key:'hobo',   scale:0.50, bottomPin:true });
   if (G.jeffreyActive   && G.jeffreyPos===camId && camId!==MUSIC_CAM_ID) present.push({ key:'jeffrey', scale:0.78 });
   if (G.chapoActive     && camId===CHAPO_CAM_ID && !G.chapoAlarm)        present.push({ key:'chapo',  scale:0.72 });
-  if (G.diddyActive     && G.diddyPos===camId   && camId!==MUSIC_CAM_ID) present.push({ key:'diddy',  scale:0.80 });
+  if (G.diddyActive     && G.diddyPos===camId   && camId!==MUSIC_CAM_ID) present.push({ key:'diddy',  scale:0.52, bottomPin:true });
   if (G.maduroPos===camId)                                                present.push({ key:'maduro', scale:0.55, alpha:0.7 });
 
   const n = present.length;
 
   if (n > 0) {
-    // Divide feed width into equal slots, one per enemy
-    // Each enemy is centred in its slot and slightly varied in vertical position for realism
     const slotW = fw / n;
-    // Vertical offsets cycle through a few values to prevent uniform baseline
+    // Small vertical offsets for non-pinned enemies only
     const vOffsets = [0, -0.06, 0.04, -0.03, 0.07, -0.05];
 
     present.forEach((e, i) => {
       const img = camAnimOverlays[e.key];
       if (!img || !img.complete || img.naturalWidth === 0) return;
 
-      // Scale down further when sharing the frame so nobody clips edges
-      const sharedScale = n === 1 ? e.scale : e.scale * (0.62 + 0.18 / n);
+      const sharedScale = n === 1 ? e.scale : e.scale * (0.72 + 0.12 / n);
       const h = fh * sharedScale;
       const w = img.naturalWidth * (h / img.naturalHeight);
 
-      // Centre of this enemy's slot
       const slotCx = fx + slotW * i + slotW / 2;
       const x = slotCx - w / 2;
-      // Vertical: bottom-aligned with a small per-slot offset for naturalness
-      const vOff = vOffsets[i % vOffsets.length];
+
+      // bottomPin: always flush to the bottom edge, no offset
+      const vOff = e.bottomPin ? 0 : vOffsets[i % vOffsets.length];
       const y = fy + fh - h + fh * vOff;
 
       ctx.globalAlpha = e.alpha !== undefined ? e.alpha : 1.0;
@@ -918,13 +933,7 @@ function drawAnimatronicsOnFeed(ctx, camId, fx, fy, fw, fh) {
     }
   }
 
-  // Mark (vent) — shown in upper-centre of feed
-  if (G.markInVent && !G.ventClosed) {
-    if (camAnimOverlays['mark'] && camAnimOverlays['mark'].complete) {
-      const mh = fh * 0.46, mw = camAnimOverlays['mark'].naturalWidth * (mh/camAnimOverlays['mark'].naturalHeight);
-      ctx.drawImage(camAnimOverlays['mark'], fx+fw/2-mw/2, fy, mw, mh);
-    }
-  }
+  // Mark is shown as a 3D billboard at the vent, not on the camera feed
 
   // Maduro cam-offline overlay
   if (G.maduroDisabled && G.maduroDisabled[camId] > 0) {
@@ -1611,6 +1620,7 @@ function markAppear(){
   if(G.dead||G.won||G.markInVent)return;
   G.markInVent=true; play('vent');
   if(Math.random()<0.2)setTimeout(()=>play('markAudio'),400);
+  if(markBehindMesh) markBehindMesh.visible=true;
   if(G.ventClosed){markLeaveAfter(1000+Math.random()*2000);return;}
   if(G.markKillTimer)clearTimeout(G.markKillTimer);
   G.markKillTimer=setTimeout(()=>{if(!G.dead&&!G.won&&G.markInVent&&!G.ventClosed)triggerMarkJS();},8000);
@@ -1619,6 +1629,7 @@ function markLeave(){
   if(!G.markInVent)return;G.markInVent=false;
   if(G.markKillTimer){clearTimeout(G.markKillTimer);G.markKillTimer=null;}
   if(G.markLeaveTimer){clearTimeout(G.markLeaveTimer);G.markLeaveTimer=null;}
+  if(markBehindMesh) markBehindMesh.visible=false;
   stop('vent');
 }
 function markLeaveAfter(ms){if(G.markLeaveTimer)clearTimeout(G.markLeaveTimer);G.markLeaveTimer=setTimeout(markLeave,ms);}
@@ -1727,6 +1738,7 @@ function startGame(){
   if(!selectedNight)return;
   hideVRMenu();
   if(vrDeathMesh)vrDeathMesh.visible=false;
+  if(markBehindMesh)markBehindMesh.visible=false;
   if(vrRestartBtn){
     vrRestartBtn.visible=false;
     const idx=interactables.indexOf(vrRestartBtn);
@@ -1779,6 +1791,7 @@ function restartGame(){
   if(doorMeshes.left)  doorMeshes.left.position.y  = -0.5;
   if(doorMeshes.right) doorMeshes.right.position.y = -0.5;
   if(vrDeathMesh)vrDeathMesh.visible=false;
+  if(markBehindMesh)markBehindMesh.visible=false;
   if(vrRestartBtn){
     vrRestartBtn.visible=false;
     const idx=interactables.indexOf(vrRestartBtn);
