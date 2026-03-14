@@ -7,45 +7,22 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
-
-/* ── Warning Screen ── */
-#warnScreen{
-  position:fixed;inset:0;z-index:500;background:#000;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px
-}
+#warnScreen{position:fixed;inset:0;z-index:500;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
 .warn-box{max-width:min(580px,92vw);border:2px solid #ff0000;padding:36px 40px;background:#000}
 .warn-title{font-size:1.9rem;color:#ff0000;letter-spacing:5px;text-align:center;margin-bottom:18px;text-shadow:0 0 22px #ff000099}
 .warn-line{color:#cc3333;font-size:.78rem;line-height:2.2;margin-bottom:4px;letter-spacing:1px}
-.menu-btn{
-  padding:12px 40px;background:transparent;border:1px solid #660000;color:#880000;
-  font-family:monospace;font-size:1rem;letter-spacing:4px;cursor:pointer;transition:all .2s;
-  display:inline-block;margin-top:6px
-}
+.menu-btn{padding:12px 40px;background:transparent;border:1px solid #660000;color:#880000;font-family:monospace;font-size:1rem;letter-spacing:4px;cursor:pointer;transition:all .2s;display:inline-block;margin-top:6px}
 .menu-btn:hover{border-color:#cc0000;color:#ff2200;box-shadow:0 0 20px #66000055}
 .menu-btn:disabled{opacity:.4;cursor:not-allowed}
-
-/* ── Main Menu ── */
-#menuScreen{
-  position:fixed;inset:0;z-index:400;
-  background:radial-gradient(ellipse at center,#0c0000,#000);
-  display:none;flex-direction:column;align-items:center;justify-content:center;color:#cc0000
-}
+#menuScreen{position:fixed;inset:0;z-index:400;background:radial-gradient(ellipse at center,#0c0000,#000);display:none;flex-direction:column;align-items:center;justify-content:center;color:#cc0000}
 #menuScreen h1{font-size:clamp(1.8rem,5vw,3.5rem);letter-spacing:4px;text-shadow:0 0 30px #ff000088;margin-bottom:6px;text-align:center}
 .sub-label{color:#333;font-size:.6rem;letter-spacing:5px;margin-bottom:18px}
 .night-grid{display:flex;gap:10px;margin:14px 0;flex-wrap:wrap;justify-content:center}
-.nb{
-  padding:10px 16px;border:1px solid #1a0000;color:#330000;background:#000;
-  cursor:pointer;font-family:monospace;font-size:.75rem;letter-spacing:2px;transition:all .15s
-}
+.nb{padding:10px 16px;border:1px solid #1a0000;color:#330000;background:#000;cursor:pointer;font-family:monospace;font-size:.75rem;letter-spacing:2px;transition:all .15s}
 .nb:hover{border-color:#440000;color:#770000}
 .nb.sel{border-color:#880000;color:#cc0000;background:rgba(180,0,0,.06)}
 .hint-text{margin-top:14px;font-size:.55rem;color:#220000;letter-spacing:3px;text-align:center;max-width:520px}
-
-/* ── HUD ── */
-#hud{
-  position:fixed;top:0;left:0;right:0;z-index:50;
-  padding:10px 16px;display:none;justify-content:space-between;align-items:flex-start;pointer-events:none
-}
+#hud{position:fixed;top:0;left:0;right:0;z-index:50;padding:10px 16px;display:none;justify-content:space-between;align-items:flex-start;pointer-events:none}
 .hud-panel{background:rgba(4,4,10,.95);border:1px solid #2a2a44;padding:8px 14px;pointer-events:all}
 .hud-time{font-size:1.8rem;color:#e8920a;font-family:monospace;letter-spacing:2px}
 .hud-small{font-size:.55rem;color:#5555aa;letter-spacing:3px}
@@ -56,32 +33,20 @@ body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
 @keyframes bCrit{50%{opacity:.3}}
 .o2-wrap{width:160px}
 .action-btns{display:flex;flex-direction:column;gap:6px}
-.act-btn{
-  padding:8px 16px;background:rgba(8,8,26,.95);border:1px solid #7777cc;color:#ddddff;
-  font-family:monospace;font-size:.65rem;letter-spacing:3px;cursor:pointer;transition:all .15s;pointer-events:all
-}
+.act-btn{padding:8px 16px;background:rgba(8,8,26,.95);border:1px solid #7777cc;color:#ddddff;font-family:monospace;font-size:.65rem;letter-spacing:3px;cursor:pointer;transition:all .15s;pointer-events:all}
 .act-btn:hover{border-color:#aaaaee;color:#fff}
 .act-btn.active{border-color:#33ff77;color:#55ff99;background:rgba(20,160,70,.14)}
 .act-btn.warn{border-color:#ff6600;color:#ff9900;animation:btnWarn .6s infinite}
 @keyframes btnWarn{50%{opacity:.5}}
 .act-btn:disabled{opacity:.4;cursor:not-allowed}
 .lure-cd{color:#446644;letter-spacing:2px;font-size:.5rem;pointer-events:none}
-
-/* ── Camera UI ── */
-#camUi{
-  position:fixed;inset:0;z-index:60;background:rgba(2,3,2,.97);
-  display:none;flex-direction:column;padding:10px;gap:8px
-}
+#camUi{position:fixed;inset:0;z-index:60;background:rgba(2,3,2,.97);display:none;flex-direction:column;padding:10px;gap:8px}
 .cam-hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #0c140c;padding-bottom:8px}
 .cam-feed-wrap{flex:1;position:relative;background:#020602;border:1px solid #0a140a;min-height:0;overflow:hidden}
 #camCanvas{position:absolute;inset:0;width:100%;height:100%}
 .cam-overlay-img{position:absolute;display:none}
 .cam-strip{display:flex;gap:6px;height:70px}
-.ct{
-  flex:1;background:#010601;border:1px solid #0a140a;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;font-family:monospace;
-  font-size:.55rem;color:#226622;letter-spacing:2px;transition:border-color .15s;position:relative
-}
+.ct{flex:1;background:#010601;border:1px solid #0a140a;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:.55rem;color:#226622;letter-spacing:2px;transition:border-color .15s;position:relative}
 .ct:hover,.ct.on{border-color:#33bb55}
 .cdot{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;display:none}
 .cdot.gd{background:#ff2200;display:block;animation:dp .6s infinite}
@@ -92,15 +57,9 @@ body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
 @keyframes dp{50%{opacity:0}}
 .cam-close-btn{background:transparent;border:1px solid #222;color:#444;padding:5px 14px;font-family:monospace;font-size:.6rem;cursor:pointer}
 .cam-close-btn:hover{border-color:#666;color:#888}
-.wind-btn{
-  padding:8px;background:rgba(50,38,0,.7);border:1px solid #5a4400;color:#bbaa33;
-  font-family:monospace;font-size:.65rem;letter-spacing:3px;cursor:pointer
-}
+.wind-btn{padding:8px;background:rgba(50,38,0,.7);border:1px solid #5a4400;color:#bbaa33;font-family:monospace;font-size:.65rem;letter-spacing:3px;cursor:pointer}
 .wind-btn.winding{background:rgba(100,78,0,.9);border-color:#ccaa00;color:#ffee44}
-.alarm-btn{
-  padding:6px 14px;background:rgba(18,6,0,.9);border:1px solid #442200;color:#885533;
-  font-family:monospace;font-size:.6rem;letter-spacing:2px;cursor:pointer
-}
+.alarm-btn{padding:6px 14px;background:rgba(18,6,0,.9);border:1px solid #442200;color:#885533;font-family:monospace;font-size:.6rem;letter-spacing:2px;cursor:pointer}
 .alarm-btn:disabled{border-color:#1a0800;color:#331a0a;cursor:not-allowed}
 .alarm-btn.ready{border-color:#ff4400;color:#ff6600;animation:alGl 1s infinite}
 .alarm-btn.target{border-color:#ff0000;color:#ff2200;animation:alTgt .5s infinite}
@@ -111,8 +70,6 @@ body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
 #camTs{position:absolute;top:10px;left:12px;color:rgba(29,185,84,.55);font-size:.65rem;letter-spacing:4px;z-index:6}
 .scanlines{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.08) 0px,rgba(0,0,0,.08) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:5}
 .vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.7) 100%);pointer-events:none;z-index:6}
-
-/* ── Death / Win / Jumpscare ── */
 #jsScreen{position:fixed;inset:0;z-index:200;background:#000;display:none;align-items:center;justify-content:center}
 #jsImg{width:100%;height:100%;object-fit:cover}
 #deathScreen{position:fixed;inset:0;z-index:190;background:radial-gradient(ellipse at center,#0c0000,#000);display:none;flex-direction:column;align-items:center;justify-content:center}
@@ -122,38 +79,25 @@ body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
 .win-time{font-size:4rem;color:#22dd55;letter-spacing:5px;text-shadow:0 0 60px #00ff44;margin-bottom:10px}
 .retry-btn{padding:12px 44px;background:transparent;border:1px solid #440000;color:#660000;font-family:monospace;font-size:.8rem;letter-spacing:4px;cursor:pointer;transition:all .2s;margin-top:10px}
 .retry-btn:hover{border-color:#aa0000;color:#aa0000}
-
-/* ── Alarm flash / screen flash ── */
 #alarmFlash{position:fixed;inset:0;z-index:80;pointer-events:none;display:none;background:radial-gradient(ellipse at center,transparent 35%,rgba(180,0,0,.22) 100%);animation:alPulse .6s ease-in-out infinite}
 @keyframes alPulse{50%{opacity:.4}}
 #flashEl{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:170;transition:opacity .06s}
-
-/* ── Three.js canvas ── */
 #threeCanvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0;z-index:1}
-
-/* ── VR Button ── */
-#vrBtn{
-  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:600;
-  padding:12px 32px;background:rgba(0,0,100,.8);border:1px solid #7777cc;color:#ddddff;
-  font-family:monospace;font-size:.9rem;letter-spacing:4px;cursor:pointer;display:none
-}
+#vrBtn{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:600;padding:12px 32px;background:rgba(0,0,100,.8);border:1px solid #7777cc;color:#ddddff;font-family:monospace;font-size:.9rem;letter-spacing:4px;cursor:pointer;display:none}
 </style>
 </head>
 <body>
-
-<!-- Warning -->
 <div id="warnScreen">
   <div class="warn-box">
     <div class="warn-title">⚠ WAARSCHUWING</div>
     <div class="warn-line">Dit spel bevat jumpscares en harde geluiden.</div>
     <div class="warn-line">Spelen met koptelefoon op eigen risico.</div>
     <div class="warn-line">Satirische horror-parodie — volledig fictief.</div>
-    <div class="warn-line">VR modus: druk op Enter VR knop of het spel start automatisch in VR.</div>
+    <div class="warn-line">VR modus: het spel start automatisch in VR bij het selecteren van een nacht.</div>
     <button class="menu-btn" style="width:100%;margin-top:20px" id="warnBtn">IK BEGRIJP HET — DOORGAAN ▶</button>
   </div>
 </div>
 
-<!-- Main Menu -->
 <div id="menuScreen">
   <h1>FIVE NIGHTS AT<br>MEESTER GIJS</h1>
   <div class="sub-label">VR EDITION</div>
@@ -169,7 +113,6 @@ body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
   <p class="hint-text">[C] Camera's · [Z/X] Deuren · [V] Vent · [L] Lokken · VR: Controller triggers</p>
 </div>
 
-<!-- HUD -->
 <div id="hud">
   <div class="hud-panel">
     <div class="hud-time" id="hudTime">12:00 AM</div>
@@ -195,7 +138,6 @@ body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
   </div>
 </div>
 
-<!-- Camera UI -->
 <div id="camUi">
   <div class="cam-hdr">
     <span style="color:#1a6a2a;font-size:.7rem;letter-spacing:4px">LIVE FEED — <span id="camNameLbl">CAM 1</span> · <span id="camRoomLbl">STOOKKAMER</span></span>
@@ -234,17 +176,12 @@ body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
   <div class="cam-strip" id="camStrip"></div>
 </div>
 
-<!-- Jumpscare -->
 <div id="jsScreen"><img id="jsImg" src="" alt=""></div>
-
-<!-- Death -->
 <div id="deathScreen">
   <div class="death-title">GAME OVER</div>
   <div class="death-cause" id="deathMsg">Je bent gevonden.</div>
   <button class="retry-btn" onclick="restartGame()">↩ PROBEER OPNIEUW</button>
 </div>
-
-<!-- Win -->
 <div id="winScreen">
   <div class="win-time">6:00 AM</div>
   <div style="color:#226633;font-size:.85rem;letter-spacing:6px;margin-bottom:16px">OVERLEEFD</div>
@@ -254,24 +191,20 @@ body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
   </div>
   <button class="retry-btn" style="border-color:#1a4a1a;color:#226622" onclick="restartGame()">↩ SPEEL OPNIEUW</button>
 </div>
-
 <div id="alarmFlash"></div>
 <div id="flashEl"></div>
 <button id="vrBtn">🥽 ENTER VR</button>
-
 <canvas id="threeCanvas"></canvas>
 
-<script type="importmap">
-{"imports":{"three":"https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js"}}
-</script>
+<script type="importmap">{"imports":{"three":"https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js"}}</script>
 <script type="module">
 import * as THREE from 'three';
 
 // ════════════════════════════════════════════════════
 //  SECTION 1 — THREE.JS / WEBXR SETUP
 // ════════════════════════════════════════════════════
-const canvas = document.getElementById('threeCanvas');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+const canvas3d = document.getElementById('threeCanvas');
+const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: true, alpha: false });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
@@ -279,7 +212,6 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.setClearColor(0x020202);
 
-// XR support detection
 let xrSupported = false;
 if (navigator.xr) {
   navigator.xr.isSessionSupported('immersive-vr').then(supported => {
@@ -291,6 +223,7 @@ if (navigator.xr) {
   }).catch(() => {});
 }
 
+// Manual VR button fallback
 const vrBtn = document.getElementById('vrBtn');
 vrBtn.addEventListener('click', () => {
   if (!renderer.xr.enabled) return;
@@ -298,20 +231,25 @@ vrBtn.addEventListener('click', () => {
     renderer.xr.getSession().end();
     vrBtn.textContent = '🥽 ENTER VR';
   } else {
-    navigator.xr.requestSession('immersive-vr', {
-      optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
-    }).then(session => {
-      renderer.xr.setSession(session);
-      vrBtn.textContent = '✕ EXIT VR';
-      session.addEventListener('end', () => { vrBtn.textContent = '🥽 ENTER VR'; });
-    }).catch(e => console.warn('VR session failed:', e));
+    requestVRSession();
   }
 });
 
-// Scene + camera
+// Auto-enter VR when game starts
+function requestVRSession() {
+  if (!xrSupported) return;
+  navigator.xr.requestSession('immersive-vr', {
+    optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
+  }).then(session => {
+    renderer.xr.setSession(session);
+    vrBtn.textContent = '✕ EXIT VR';
+    session.addEventListener('end', () => { vrBtn.textContent = '🥽 ENTER VR'; });
+  }).catch(e => console.warn('VR session failed:', e));
+}
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x020202);
-scene.fog = new THREE.FogExp2(0x020202, 0.07);
+scene.fog = new THREE.FogExp2(0x020202, 0.06);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 100);
 camera.position.set(0, 1.6, 2.5);
@@ -324,1907 +262,1541 @@ window.addEventListener('resize', () => {
 });
 
 // ════════════════════════════════════════════════════
-//  SECTION 2 — VR CONTROLLER INPUT
+//  SECTION 2 — CONTROLLER INPUT
 // ════════════════════════════════════════════════════
 const controllers = [];
-const controllerGrips = [];
 
-// Controller raycaster line
-function makeControllerLine() {
-  const pts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -8)];
+function makeRayLine() {
+  const pts = [new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-6)];
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  const mat = new THREE.LineBasicMaterial({ color: 0x88aaff, transparent: true, opacity: 0.5 });
-  return new THREE.Line(geo, mat);
+  return new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x88aaff, transparent: true, opacity: 0.5 }));
 }
 
 for (let i = 0; i < 2; i++) {
   const ctrl = renderer.xr.getController(i);
   ctrl.userData.index = i;
-  scene.add(ctrl);
-
-  const line = makeControllerLine();
-  ctrl.add(line);
-
-  // Controller dot
-  const dot = new THREE.Mesh(
-    new THREE.SphereGeometry(0.015, 8, 8),
-    new THREE.MeshBasicMaterial({ color: 0xaaaaff })
-  );
-  ctrl.add(dot);
-
-  // Trigger pressed
+  ctrl.add(makeRayLine());
+  ctrl.add(new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 6), new THREE.MeshBasicMaterial({ color: 0xaaaaff })));
   ctrl.addEventListener('selectstart', () => onTrigger(i, true));
   ctrl.addEventListener('selectend',   () => onTrigger(i, false));
-  // Grip pressed
   ctrl.addEventListener('squeezestart', () => onGrip(i, true));
   ctrl.addEventListener('squeezeend',   () => onGrip(i, false));
-
+  scene.add(ctrl);
+  scene.add(renderer.xr.getControllerGrip(i));
   controllers.push(ctrl);
-
-  const grip = renderer.xr.getControllerGrip(i);
-  scene.add(grip);
-  controllerGrips.push(grip);
 }
 
-// LEFT trigger (index 0) → open/close camera monitor
-// RIGHT trigger (index 1) → close right door
-// LEFT grip (index 0) → close vent
-// RIGHT grip (index 1) → close left door
+// RIGHT trigger (1) = interact with pointed object OR toggle right door
+// LEFT trigger (0) = toggle cam
+// RIGHT grip (1) = left door
+// LEFT grip (0) = vent
 function onTrigger(idx, pressed) {
   if (!pressed) return;
-  if (!G || !G.running) return;
-  if (idx === 0) { toggleCam(); }
-  else { toggleDoor('right'); }
+  if (!G || !G.running) {
+    // VR menu interaction
+    if (vrMenuActive) {
+      const hit = castFromController(idx);
+      if (hit && hit.userData.vrMenuAction) { handleVRMenuClick(hit.userData.vrMenuAction); return; }
+    }
+    return;
+  }
+  // Check if pointing at an interactable
+  const hit = castFromController(idx);
+  if (hit && hit.userData.action) {
+    handleVRAction(hit.userData.action, idx, pressed);
+    return;
+  }
+  // Default: left=cam, right=right door
+  if (idx === 0) toggleCam();
+  else toggleDoor('right');
 }
 
 function onGrip(idx, pressed) {
-  if (!pressed) return;
-  if (!G || !G.running) return;
-  if (idx === 0) { toggleVent(); }
-  else { toggleDoor('left'); }
+  if (!pressed || !G || !G.running) return;
+  if (idx === 0) toggleVent();
+  else toggleDoor('left');
 }
 
-// Thumbstick click — check via gamepad polling
-// We poll gamepads each frame for thumbstick press & axis navigation
-let prevThumbPress = [false, false];
+// Right trigger hold for music box
+let rightTriggerHeld = false;
+controllers[1] && controllers[1].addEventListener('selectstart', () => { rightTriggerHeld = true; });
+controllers[1] && controllers[1].addEventListener('selectend',   () => { rightTriggerHeld = false; stopWindUp(); });
 
+let prevThumbPress = [false, false];
 function pollGamepads() {
   const session = renderer.xr.getSession();
   if (!session) return;
-  const sources = session.inputSources;
-  for (let i = 0; i < sources.length; i++) {
-    const src = sources[i];
+  for (const src of session.inputSources) {
     if (!src.gamepad) continue;
-    const gp = src.gamepad;
-    const handIdx = src.handedness === 'left' ? 0 : 1;
-
-    // Thumbstick click (button index 3 on most controllers)
-    const thumbBtn = gp.buttons[3];
-    if (thumbBtn) {
-      const pressed = thumbBtn.pressed;
-      if (pressed && !prevThumbPress[handIdx]) {
-        if (handIdx === 0) toggleCam(); // left thumbstick → toggle cameras
-      }
-      prevThumbPress[handIdx] = pressed;
+    const hi = src.handedness === 'left' ? 0 : 1;
+    const tb = src.gamepad.buttons[3];
+    if (tb) {
+      if (tb.pressed && !prevThumbPress[hi]) { if (hi === 0) toggleCam(); }
+      prevThumbPress[hi] = tb.pressed;
     }
-
-    // Camera navigation with right thumbstick when cam is open
-    if (G && G.running && G.camOpen && handIdx === 1 && gp.axes.length >= 3) {
-      const ax = gp.axes[2]; // right thumbstick X
-      if (Math.abs(ax) > 0.7 && !src._axisDebounce) {
-        src._axisDebounce = true;
-        const newCam = G.curCam + (ax > 0 ? 1 : -1);
-        if (newCam >= 0 && newCam < CAMS.length) switchCam(newCam);
-        setTimeout(() => { src._axisDebounce = false; }, 400);
+    if (G && G.running && G.camOpen && hi === 1 && src.gamepad.axes.length >= 3) {
+      const ax = src.gamepad.axes[2];
+      if (Math.abs(ax) > 0.7 && !src._axDeb) {
+        src._axDeb = true;
+        const nc = G.curCam + (ax > 0 ? 1 : -1);
+        if (nc >= 0 && nc < CAMS.length) switchCam(nc);
+        setTimeout(() => { src._axDeb = false; }, 400);
       }
     }
   }
 }
 
 // ════════════════════════════════════════════════════
-//  SECTION 3 — GAZE / RAYCASTER (VR interaction)
+//  SECTION 3 — RAYCAST INTERACTION SYSTEM
 // ════════════════════════════════════════════════════
-const ctrlRaycaster = new THREE.Raycaster();
-const interactables = []; // 3D meshes with userData.action
+const interactables = [];
+const ctrlRay = new THREE.Raycaster();
 
-// Gaze cursor (shown when VR active)
-const gazeCursorGeo = new THREE.RingGeometry(0.015, 0.025, 24);
+function castFromController(idx) {
+  const ctrl = controllers[idx];
+  if (!ctrl) return null;
+  const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(ctrl.quaternion);
+  ctrlRay.set(ctrl.position, dir);
+  const hits = ctrlRay.intersectObjects(interactables, false);
+  return hits.length > 0 ? hits[0].object : null;
+}
+
+// Gaze cursor attached to camera
 const gazeCursorMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
-const gazeCursor = new THREE.Mesh(gazeCursorGeo, gazeCursorMat);
-gazeCursor.position.set(0, 0, -1.5);
+const gazeCursor = new THREE.Mesh(new THREE.RingGeometry(0.012, 0.02, 24), gazeCursorMat);
+gazeCursor.position.set(0, 0, -1.4);
 camera.add(gazeCursor);
-
-let gazeTarget = null;
-let gazeTimer  = 0;
-const GAZE_SECS = 2.0;
+let gazeTarget = null, gazeTimer = 0;
+const GAZE_SECS = 1.8;
 
 function updateGaze(dt) {
-  if (!renderer.xr.isPresenting) { gazeCursor.visible = false; return; }
-  gazeCursor.visible = true;
-  const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-  ctrlRaycaster.set(camera.position, forward);
-  const hits = ctrlRaycaster.intersectObjects(interactables, false);
+  gazeCursor.visible = renderer.xr.isPresenting;
+  if (!renderer.xr.isPresenting) return;
+  const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+  ctrlRay.set(camera.position, fwd);
+  const hits = ctrlRay.intersectObjects(interactables, false);
   if (hits.length > 0) {
     const obj = hits[0].object;
     if (gazeTarget === obj) {
       gazeTimer += dt;
-      gazeCursorMat.color.setHex(0xff9900);
+      gazeCursorMat.color.setHex(gazeTimer / GAZE_SECS > 0.5 ? 0xff9900 : 0xffff00);
       if (gazeTimer >= GAZE_SECS) {
-        handleVRAction(obj.userData.action);
+        if (obj.userData.vrMenuAction) handleVRMenuClick(obj.userData.vrMenuAction);
+        else if (obj.userData.action) handleVRAction(obj.userData.action, -1, true);
         gazeTarget = null; gazeTimer = 0;
       }
-    } else {
-      gazeTarget = obj; gazeTimer = 0; gazeCursorMat.color.setHex(0xffffff);
-    }
-  } else {
-    gazeTarget = null; gazeTimer = 0; gazeCursorMat.color.setHex(0xffffff);
-  }
+    } else { gazeTarget = obj; gazeTimer = 0; }
+  } else { gazeTarget = null; gazeTimer = 0; gazeCursorMat.color.setHex(0xffffff); }
 }
 
-function handleVRAction(action) {
+function handleVRAction(action, ctrlIdx, pressed) {
   if (!G || !G.running) return;
-  switch(action) {
+  switch (action) {
     case 'leftDoor':  toggleDoor('left'); break;
     case 'rightDoor': toggleDoor('right'); break;
+    case 'vent':      toggleVent(); break;
     case 'camera':    toggleCam(); break;
     case 'lure':      useLure(); break;
-    case 'vent':      toggleVent(); break;
     case 'alarm':     useCameraAlarm(); break;
+    case 'windUp':
+      if (pressed) startWindUp(); else stopWindUp();
+      break;
+    default:
+      if (action.startsWith('cam:')) {
+        const id = parseInt(action.split(':')[1]);
+        if (!G.camOpen) { G.camOpen = true; document.getElementById('camUi').style.display='flex'; }
+        switchCam(id);
+      }
+      break;
   }
 }
 
-// Controller-direction raycasting against interactables
-function castControllerRays() {
-  if (!renderer.xr.isPresenting) return;
-  for (const ctrl of controllers) {
-    const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(ctrl.quaternion);
-    ctrlRaycaster.set(ctrl.position, dir);
-    ctrlRaycaster.intersectObjects(interactables, false); // for future haptics
-  }
-}
-
-// ════════════════════════════════════════════════════
-//  SECTION 4 — LIGHTS
-// ════════════════════════════════════════════════════
-const ambLight = new THREE.AmbientLight(0x110810, 0.6);
-scene.add(ambLight);
-
-const ceilLight = new THREE.PointLight(0x441100, 0.8, 8);
-ceilLight.position.set(0, 2.8, 0);
-ceilLight.castShadow = true;
-scene.add(ceilLight);
-
-const redFill = new THREE.PointLight(0x330000, 0.4, 10);
-redFill.position.set(-3, 1, -2);
-scene.add(redFill);
-
-const lampGlow = new THREE.PointLight(0xffaa44, 0.5, 4);
-lampGlow.position.set(0, 2.55, -1);
-scene.add(lampGlow);
-
-// Alarm overlay mesh (sphere inside-out, red)
-const alarmSphereMat = new THREE.MeshBasicMaterial({ color: 0x440000, transparent: true, opacity: 0, side: THREE.BackSide });
-const alarmSphere = new THREE.Mesh(new THREE.SphereGeometry(50, 8, 8), alarmSphereMat);
-scene.add(alarmSphere);
-
-// ════════════════════════════════════════════════════
-//  SECTION 5 — 3D ROOM CONSTRUCTION
-// ════════════════════════════════════════════════════
-const doorMeshes = { left: null, right: null };
-
-function buildRoom() {
-  const floorMat = new THREE.MeshLambertMaterial({ color: 0x0c0c14 });
-  const wallMat  = new THREE.MeshLambertMaterial({ color: 0x0e0e18 });
-  const ceilMat  = new THREE.MeshLambertMaterial({ color: 0x090909 });
-
-  // Floor
-  addMesh(new THREE.PlaneGeometry(10,10), floorMat, 0, 0, 0, -Math.PI/2, 0, 0);
-  // Ceiling
-  addMesh(new THREE.PlaneGeometry(10,10), ceilMat, 0, 3.2, 0, Math.PI/2, 0, 0);
-  // Walls
-  addMesh(new THREE.PlaneGeometry(10,3.5), wallMat, 0, 1.6, -5,  0, 0, 0);           // back
-  addMesh(new THREE.PlaneGeometry(10,3.5), wallMat, -5, 1.6, 0,  0, Math.PI/2, 0);   // left
-  addMesh(new THREE.PlaneGeometry(10,3.5), wallMat, 5, 1.6, 0,   0, -Math.PI/2, 0);  // right
-  addMesh(new THREE.PlaneGeometry(2.5,3.5), wallMat, -3.75, 1.6, 5, 0, Math.PI, 0);  // front-L
-  addMesh(new THREE.PlaneGeometry(2.5,3.5), wallMat, 3.75, 1.6, 5, 0, Math.PI, 0);   // front-R
-
-  // Desk
-  const deskMat = new THREE.MeshLambertMaterial({ color: 0x1a0f05 });
-  addMesh(new THREE.BoxGeometry(2.5,0.1,0.8), deskMat, 0, 0.85, 1.8);
-  // Monitor body
-  addMesh(new THREE.BoxGeometry(0.6,0.4,0.03), new THREE.MeshLambertMaterial({ color: 0x0c0c14 }), 0, 1.15, 1.6);
-  // Monitor screen
-  buildMonitorScreen();
-
-  // Blackboard
-  buildBlackboard();
-
-  // Ceiling lamp
-  const poleMat = new THREE.MeshLambertMaterial({ color: 0x1e1e1e });
-  addMesh(new THREE.CylinderGeometry(0.01,0.01,0.5,6), poleMat, 0, 3.0, -1);
-  addMesh(new THREE.ConeGeometry(0.25,0.3,8,1,true), new THREE.MeshLambertMaterial({ color: 0x1a1a20, side: THREE.BackSide }), 0, 2.6, -1);
-
-  // Pipes on ceiling
-  for (let i = 0; i < 3; i++) {
-    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,9,8), new THREE.MeshLambertMaterial({ color: 0x1e1e28 }));
-    pipe.rotation.z = Math.PI/2;
-    pipe.position.set(0, 3.1, -2 + i*1.5);
-    scene.add(pipe);
-  }
-
-  // Chair
-  const chairMat = new THREE.MeshLambertMaterial({ color: 0x0d0d0d });
-  addMesh(new THREE.BoxGeometry(0.5,0.05,0.5), chairMat, 0, 0.55, 2.3);
-  addMesh(new THREE.BoxGeometry(0.5,0.6,0.05), chairMat, 0, 0.85, 2.55);
-
-  // Bookshelves on back wall
-  addMesh(new THREE.BoxGeometry(1.0,1.8,0.2), new THREE.MeshLambertMaterial({ color: 0x0d0808 }), 2.2, 0.9, -4.9);
-  for (let r = 0; r < 4; r++) {
-    for (let b = 0; b < 4; b++) {
-      const bk = new THREE.Mesh(new THREE.BoxGeometry(0.18,0.28,0.14), new THREE.MeshLambertMaterial({ color: [0x1a0808,0x081808,0x08081a,0x181808][b%4] }));
-      bk.position.set(2.2 - 0.3 + b*0.18 - 0.08, 0.2 + r*0.35, -4.82);
-      scene.add(bk);
-    }
-  }
-
-  // Doors (left and right)
-  buildDoor3D(-4.5, 'left');
-  buildDoor3D(4.5, 'right');
-
-  // Vent
-  buildVent3D();
-
-  // Camera security panel on desk (clickable)
-  buildSecurityPanel();
-
-  // Corridor "glimpse" boxes
-  addMesh(new THREE.BoxGeometry(1.5,2.5,3), new THREE.MeshLambertMaterial({ color: 0x050508 }), -5.5, 1.25, 0);
-  addMesh(new THREE.BoxGeometry(1.5,2.5,3), new THREE.MeshLambertMaterial({ color: 0x050508 }), 5.5, 1.25, 0);
-}
-
-function addMesh(geo, mat, x=0, y=0, z=0, rx=0, ry=0, rz=0) {
-  const m = new THREE.Mesh(geo, mat);
-  m.position.set(x, y, z);
-  m.rotation.set(rx, ry, rz);
-  m.receiveShadow = true;
-  scene.add(m);
-  return m;
-}
-
-function buildMonitorScreen() {
-  const mc = document.createElement('canvas');
-  mc.width = 256; mc.height = 160;
-  const ctx = mc.getContext('2d');
-  ctx.fillStyle = '#0a0a14'; ctx.fillRect(0,0,256,160);
-  ctx.fillStyle = '#00ff66'; ctx.font = 'bold 18px monospace'; ctx.fillText('SECURITY ONLINE', 14, 50);
-  ctx.fillStyle = 'rgba(0,255,100,.5)'; ctx.font = '14px monospace';
-  ctx.fillText('>>> ACTIVE', 14, 78); ctx.fillText('CAM SYSTEM OK', 14, 98);
-  const tex = new THREE.CanvasTexture(mc);
-  const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.56,0.36), new THREE.MeshBasicMaterial({ map: tex }));
-  screen.position.set(0, 1.15, 1.585);
-  scene.add(screen);
-  window._monTex = tex; window._monCanvas = mc;
-}
-
-function buildBlackboard() {
-  addMesh(new THREE.BoxGeometry(2.0,1.2,0.05), new THREE.MeshLambertMaterial({ color: 0x6a3a20 }), -2.5, 2.0, -4.97);
-  const bc = document.createElement('canvas');
-  bc.width = 512; bc.height = 256;
-  const ctx = bc.getContext('2d');
-  ctx.fillStyle = '#111a0e'; ctx.fillRect(0,0,512,256);
-  ctx.fillStyle = '#8b0000'; ctx.font = 'bold 28px monospace'; ctx.textAlign = 'center';
-  ctx.fillText('ENGLISH GRAMMAR', 256, 60);
-  ctx.fillStyle = '#444'; ctx.font = '20px monospace';
-  ctx.fillText('Past Simple · Conditional', 256, 98);
-  ctx.fillText('Irregular Verbs', 256, 128);
-  ctx.strokeStyle = '#cc0000'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(30,152); ctx.lineTo(482,152); ctx.stroke();
-  ctx.fillStyle = '#cc0000'; ctx.font = 'bold 36px monospace';
-  ctx.fillText('★ 1/10 ★', 256, 210);
-  const tex = new THREE.CanvasTexture(bc);
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(1.9,1.1), new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
-  m.position.set(-2.5, 2.0, -4.93);
-  scene.add(m);
-}
-
-// Door light indicators
-const doorLights = { left: null, right: null };
-
-function buildDoor3D(x, side) {
-  const frameMat = new THREE.MeshLambertMaterial({ color: 0x181820 });
-  const sign = x < 0 ? 1 : -1;
-
-  // Frame
-  addMesh(new THREE.BoxGeometry(1.0,0.1,0.15), frameMat, x, 2.2, 0);
-  addMesh(new THREE.BoxGeometry(0.1,2.2,0.15), frameMat, x - 0.45, 1.1, 0);
-  addMesh(new THREE.BoxGeometry(0.1,2.2,0.15), frameMat, x + 0.45, 1.1, 0);
-
-  // Door panel
-  const door = new THREE.Mesh(new THREE.BoxGeometry(0.9,2.2,0.08), new THREE.MeshLambertMaterial({ color: 0x080306 }));
-  door.position.set(x, 1.1, 0);
-  door.visible = false;
-  scene.add(door);
-  doorMeshes[side] = door;
-
-  // Status light
-  const dlMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
-  const dl = new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8), dlMat);
-  dl.position.set(x + sign*0.38, 2.1, 0.1);
-  scene.add(dl);
-  doorLights[side] = dl;
-
-  // Clickable button on wall
-  const btnMat = new THREE.MeshLambertMaterial({ color: 0x222244 });
-  const btn = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.12,0.06), btnMat);
-  btn.position.set(x + sign*0.65, 1.1, 0.2);
-  btn.userData.action = side === 'left' ? 'leftDoor' : 'rightDoor';
-  scene.add(btn);
-  interactables.push(btn);
-}
-
-const ventLight3D = new THREE.Mesh(
-  new THREE.SphereGeometry(0.04,6,6),
-  new THREE.MeshBasicMaterial({ color: 0x111111 })
-);
-
-function buildVent3D() {
-  const ventMat = new THREE.MeshLambertMaterial({ color: 0x3a2a10 });
-  addMesh(new THREE.BoxGeometry(0.6,0.5,0.08), ventMat, 0, 2.8, -4.96);
-  for (let i = -2; i <= 2; i++) {
-    addMesh(new THREE.BoxGeometry(0.55,0.02,0.02), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }), 0, 2.8 + i*0.08, -4.93);
-  }
-  ventLight3D.position.set(0.25, 2.97, -4.94);
-  scene.add(ventLight3D);
-
-  // Vent button
-  const vBtn = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.08,0.04), new THREE.MeshLambertMaterial({ color: 0x222244 }));
-  vBtn.position.set(0, 2.58, -4.92);
-  vBtn.userData.action = 'vent';
-  scene.add(vBtn);
-  interactables.push(vBtn);
-}
-
-function buildSecurityPanel() {
-  const pc = document.createElement('canvas');
-  pc.width = 512; pc.height = 300;
-  const ctx = pc.getContext('2d');
-  ctx.fillStyle = '#0a0a14'; ctx.fillRect(0,0,512,300);
-  ctx.fillStyle = '#1a6a2a'; ctx.font = 'bold 16px monospace';
-  ctx.fillText('SECURITY CAM SYSTEM', 16, 36);
-  ctx.strokeStyle = '#0a2a0a'; ctx.lineWidth = 1;
-  for (let i = 0; i < 6; i++) {
-    const bx = (i%3)*160+16, by = Math.floor(i/3)*110+52;
-    ctx.strokeRect(bx, by, 148, 98);
-    ctx.fillStyle = '#060a06'; ctx.fillRect(bx+1,by+1,146,96);
-    ctx.fillStyle = '#1a4a1a'; ctx.font = '11px monospace';
-    ctx.fillText('CAM '+(i+1), bx+5, by+15);
-  }
-  const tex = new THREE.CanvasTexture(pc);
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(1.2,0.7), new THREE.MeshBasicMaterial({ map: tex }));
-  m.position.set(0.8, 1.15, 1.585);
-  scene.add(m);
-
-  // Camera toggle button (3D)
-  const camBtn = new THREE.Mesh(new THREE.BoxGeometry(0.25,0.1,0.05), new THREE.MeshLambertMaterial({ color: 0x222266 }));
-  camBtn.position.set(0.8, 0.95, 1.585);
-  camBtn.userData.action = 'camera';
-  scene.add(camBtn);
-  interactables.push(camBtn);
-
-  // Lure button (3D)
-  const lureBtn = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.08,0.05), new THREE.MeshLambertMaterial({ color: 0x0a220a }));
-  lureBtn.position.set(-0.8, 1.05, 1.585);
-  lureBtn.userData.action = 'lure';
-  scene.add(lureBtn);
-  interactables.push(lureBtn);
-}
-
-// ════════════════════════════════════════════════════
-//  SECTION 6 — VR JUMPSCARE (3D plane in world space)
-// ════════════════════════════════════════════════════
-let jsPlane = null;
-let jsPlaneTex = null;
-let jsPlaneActive = false;
-let jsPlaneTimer = 0;
-let jsPlaneStartZ = -3;
-
-function initJsPlane() {
-  const geo = new THREE.PlaneGeometry(3.2, 2.4);
-  const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, side: THREE.DoubleSide });
-  jsPlane = new THREE.Mesh(geo, mat);
-  jsPlane.visible = false;
-  camera.add(jsPlane); // attach to camera so it moves with player in VR
-}
-initJsPlane();
-
-function triggerVRJumpscare(imgSrc, onDone) {
-  if (!jsPlane) return;
-  // Load texture
-  const loader = new THREE.TextureLoader();
-  loader.load(imgSrc, tex => {
-    jsPlane.material.map = tex;
-    jsPlane.material.opacity = 0;
-    jsPlane.material.needsUpdate = true;
-    jsPlane.position.set(0, 0, -4); // start far
-    jsPlane.visible = true;
-    jsPlaneActive = true;
-    jsPlaneTimer = 0;
-    // Also flash scene red
-    alarmSphereMat.opacity = 0.3;
-    setTimeout(() => { alarmSphereMat.opacity = 0; }, 1000);
-  }, undefined, () => {
-    // fallback if image fails
-    jsPlane.visible = false;
-    if (onDone) onDone();
-  });
-  jsPlane.userData.onDone = onDone;
-}
-
-function updateJsPlane(dt) {
-  if (!jsPlaneActive || !jsPlane) return;
-  jsPlaneTimer += dt;
-  // Animate plane rushing toward camera (z goes from -4 to -0.5)
-  const t = Math.min(jsPlaneTimer / 1.2, 1.0);
-  const z = -4 + t * 3.5;
-  jsPlane.position.set(0, 0, z);
-  jsPlane.material.opacity = Math.min(t * 2, 1.0);
-  if (jsPlaneTimer >= 3.0) {
-    jsPlaneActive = false;
-    jsPlane.visible = false;
-    jsPlane.material.opacity = 0;
-    if (jsPlane.userData.onDone) jsPlane.userData.onDone();
-    jsPlane.userData.onDone = null;
-  }
-}
-
-// ════════════════════════════════════════════════════
-//  SECTION 7 — 3D MONSTER SPRITES
-// ════════════════════════════════════════════════════
-const sprites = {};
-
-function createSprite(key, src, w, h) {
-  const tex = new THREE.TextureLoader().load(src, t => { t.needsUpdate = true; });
-  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.08, side: THREE.DoubleSide });
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
-  mesh.visible = false;
-  mesh.userData.billboard = true;
-  scene.add(mesh);
-  sprites[key] = mesh;
-  return mesh;
-}
-
-function initSprites() {
-  createSprite('gijs',       'Images/GijsCamera.png',       1.0, 1.6);
-  createSprite('hobo',       'Images/HoboGijsCamera.png',   1.0, 1.6);
-  createSprite('jeffrey',    'Images/JeffreyCamera.png',    1.0, 1.6);
-  createSprite('chapo',      'Images/ChapoCamera.png',      1.0, 1.6);
-  createSprite('diddy',      'Images/DiddyCamera.png',      1.2, 1.8);
-  createSprite('tom',        'Images/TomCamera.png',        1.0, 1.6);
-  createSprite('maduro',     'Images/MaduroCamera.png',     0.8, 1.3);
-  createSprite('shadowGijs', 'Images/ShadowGijsOffice.png', 2.0, 2.5);
-  createSprite('mark',       'Images/MarkVent.png',         0.6, 0.7);
-}
-
-// 3D world positions per logical camera position
-const POS3D = {
-  0: [-3.0, 1.2, -4.5],  // C0 stookkamer
-  1: [-3.0, 1.2, -2.5],  // C1 opslagruimte
-  2: [ 0.0, 1.2, -4.0],  // C2 klaslokaal
-  3: [-4.0, 1.2,  0.0],  // C3 linker gang
-  4: [ 4.0, 1.2,  0.0],  // C4 rechter gang
-  5: [-4.2, 1.2,  0.3],  // LD left door
-  6: [ 4.2, 1.2,  0.3],  // RD right door
-  7: [ 3.0, 1.2, -4.5],  // music room
-};
-
-function setSprite(key, visible, pos) {
-  const m = sprites[key];
-  if (!m) return;
-  m.visible = visible;
-  if (visible && pos) m.position.set(pos[0], pos[1], pos[2]);
-}
-
-function updateSprites3D() {
-  if (!G || !G.running) return;
-
-  // Gijs
-  const gp = (G.cfg.gijsActive && G.mPos >= 0) ? (POS3D[G.mPos] || POS3D[0]) : null;
-  setSprite('gijs', !!(G.cfg.gijsActive && gp && G.mPos !== 7), gp);
-
-  // Hobo
-  const hp = (G.cfg.hoboActive && G.hoboPos >= 0) ? (POS3D[G.hoboPos] || POS3D[0]) : null;
-  setSprite('hobo', !!(G.cfg.hoboActive && hp && G.hoboPos !== 7), hp);
-
-  // Jeffrey
-  const jp = G.jeffreyActive ? (POS3D[G.jeffreyPos] || POS3D[0]) : null;
-  if (jp && jp[0]) jp[0] -= 0.2;
-  setSprite('jeffrey', !!(G.jeffreyActive && jp), jp);
-
-  // Chapo
-  setSprite('chapo', !!(G.chapoActive && !G.chapoAlarm), [-3.5, 1.2, -2.5]);
-
-  // Diddy
-  const dp = G.diddyActive ? (POS3D[G.diddyPos] || POS3D[0]) : null;
-  setSprite('diddy', !!(G.diddyActive && dp && G.diddyPos !== 7), dp);
-
-  // Tom (music room)
-  if (sprites.tom) {
-    sprites.tom.visible = G.cfg.tomActive;
-    sprites.tom.position.set(3, 1.2, -4.7);
-    if (G.cfg.tomActive) {
-      const danger = Math.max(0, (100 - G.musicBox) / 100);
-      sprites.tom.material.opacity = 0.3 + danger * 0.7;
-    }
-  }
-
-  // Shadow Gijs (office)
-  setSprite('shadowGijs', G.shadowActive, [0, 1.4, 1.0]);
-
-  // Mark (vent)
-  setSprite('mark', !!(G.markInVent && !G.ventClosed), [0, 2.8, -4.8]);
-
-  // Maduro
-  const mp = G.maduroPos >= 0 ? (POS3D[G.maduroPos] || POS3D[0]) : null;
-  setSprite('maduro', !!(mp), mp ? [mp[0]+0.5, mp[1]-0.1, mp[2]] : null);
-
-  // Door lights
-  if (doorLights.left)  doorLights.left.material.color.setHex(G.lfClosed ? 0x00e050 : (G.mPos===5 ? 0xff2200 : 0x111111));
-  if (doorLights.right) doorLights.right.material.color.setHex(G.rtClosed ? 0x00e050 : (G.mPos===6 ? 0xff2200 : 0x111111));
-
-  // Door panels
-  if (doorMeshes.left)  doorMeshes.left.visible  = G.lfClosed;
-  if (doorMeshes.right) doorMeshes.right.visible = G.rtClosed;
-
-  // Vent light
-  ventLight3D.material.color.setHex(G.markInVent && !G.ventClosed ? 0xff4400 : 0x111111);
-}
-
-function updateBillboards() {
-  const camPos = camera.position;
-  Object.values(sprites).forEach(m => { if (m.visible) m.lookAt(camPos); });
-}
-
-// ════════════════════════════════════════════════════
-//  SECTION 8 — VR MENU (3D menu panels in world space)
-// ════════════════════════════════════════════════════
-const vrMenuGroup = new THREE.Group();
-scene.add(vrMenuGroup);
-let vrMenuActive = false;
-
-// We draw the VR menu on a canvas texture on a world-space plane
-const vrMenuCanvas = document.createElement('canvas');
-vrMenuCanvas.width = 1024; vrMenuCanvas.height = 768;
-const vrMenuCtx = vrMenuCanvas.getContext('2d');
-const vrMenuTex = new THREE.CanvasTexture(vrMenuCanvas);
-const vrMenuMat = new THREE.MeshBasicMaterial({ map: vrMenuTex, transparent: true });
-const vrMenuMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 1.8), vrMenuMat);
-vrMenuMesh.position.set(0, 1.6, -2.5);
-vrMenuGroup.add(vrMenuMesh);
-vrMenuGroup.visible = false;
-
-// VR menu button hit-zones
-const vrMenuBtns = []; // {mesh, action, label}
-
-function buildVRMenuButtons() {
-  const labels = [
-    { label: 'NACHT 1', night: 1, y: 0.5 },
-    { label: 'NACHT 2', night: 2, y: 0.25 },
-    { label: 'NACHT 3', night: 3, y: 0.0 },
-    { label: 'NACHT 4', night: 4, y: -0.25 },
-    { label: 'NACHT 5', night: 5, y: -0.5 },
-    { label: '▶ START',  night: 0, y: -0.85 },
-  ];
-  labels.forEach(b => {
-    const btnMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(1.8, 0.18, 0.04),
-      new THREE.MeshLambertMaterial({ color: b.night === 0 ? 0x002200 : 0x1a0000 })
-    );
-    btnMesh.position.set(0, b.y, 0.05);
-    btnMesh.userData.vrMenuAction = b.night === 0 ? 'start' : 'night:' + b.night;
-    btnMesh.userData.label = b.label;
-    vrMenuGroup.add(btnMesh);
-    vrMenuBtns.push(btnMesh);
-    interactables.push(btnMesh);
-  });
-}
-buildVRMenuButtons();
-
-function redrawVRMenu() {
-  const ctx = vrMenuCtx;
-  ctx.clearRect(0, 0, 1024, 768);
-  ctx.fillStyle = 'rgba(2,0,0,0.95)';
-  ctx.fillRect(0, 0, 1024, 768);
-  ctx.strokeStyle = '#660000';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(6, 6, 1012, 756);
-
-  ctx.fillStyle = '#cc0000';
-  ctx.font = 'bold 52px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText('FIVE NIGHTS AT', 512, 80);
-  ctx.fillText('MEESTER GIJS', 512, 140);
-  ctx.fillStyle = '#333';
-  ctx.font = '20px monospace';
-  ctx.fillText('VR EDITION — SELECTEER EEN NACHT', 512, 185);
-
-  const nights = [
-    { n:1, label:'NACHT 1', sub:'Gijs · Hobo', y:240 },
-    { n:2, label:'NACHT 2', sub:'+Tom · Mark', y:310 },
-    { n:3, label:'NACHT 3', sub:'+Jeffrey',    y:380 },
-    { n:4, label:'NACHT 4', sub:'+Chapo',      y:450 },
-    { n:5, label:'NACHT 5', sub:'ALLES',        y:520 },
-  ];
-
-  nights.forEach(n => {
-    const sel = G === null ? false : (selectedNight === n.n);
-    ctx.fillStyle = sel ? 'rgba(100,0,0,0.4)' : 'rgba(20,0,0,0.3)';
-    ctx.fillRect(200, n.y - 28, 624, 52);
-    ctx.strokeStyle = sel ? '#880000' : '#330000';
-    ctx.lineWidth = sel ? 2 : 1;
-    ctx.strokeRect(200, n.y - 28, 624, 52);
-    ctx.fillStyle = sel ? '#cc0000' : '#440000';
-    ctx.font = 'bold 24px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText(n.label, 230, n.y + 8);
-    ctx.fillStyle = sel ? '#884444' : '#221111';
-    ctx.font = '18px monospace';
-    ctx.fillText(n.sub, 420, n.y + 8);
-  });
-
-  ctx.fillStyle = selectedNight > 0 ? '#005500' : '#001100';
-  ctx.fillRect(200, 600, 624, 56);
-  ctx.strokeStyle = selectedNight > 0 ? '#00aa00' : '#002200';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(200, 600, 624, 56);
-  ctx.fillStyle = selectedNight > 0 ? '#00ff66' : '#004400';
-  ctx.font = 'bold 28px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText(selectedNight > 0 ? `▶ NACHT ${selectedNight} STARTEN` : 'SELECTEER EEN NACHT', 512, 636);
-
-  vrMenuTex.needsUpdate = true;
-}
-
-// Handle VR menu interactions
-function handleVRMenuClick(action) {
-  if (action.startsWith('night:')) {
-    const n = parseInt(action.split(':')[1]);
-    selectNight(n);
-    redrawVRMenu();
-  } else if (action === 'start' && selectedNight > 0) {
-    hideVRMenu();
-    startGame();
-  }
-}
-
-function showVRMenu() {
-  vrMenuActive = true;
-  vrMenuGroup.visible = true;
-  // Position menu in front of player
-  const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-  vrMenuGroup.position.copy(camera.position).addScaledVector(fwd, 2.5);
-  vrMenuGroup.lookAt(camera.position);
-  redrawVRMenu();
-}
-
-function hideVRMenu() {
-  vrMenuActive = false;
-  vrMenuGroup.visible = false;
-}
-
-// ════════════════════════════════════════════════════
-//  SECTION 9 — MOUSE RAYCASTER (non-VR clicks)
-// ════════════════════════════════════════════════════
+// Mouse raycaster for desktop
 const mouseRay = new THREE.Raycaster();
-const mousePos = new THREE.Vector2();
-
+const mouseVec = new THREE.Vector2();
 document.addEventListener('click', e => {
-  const camUiEl = document.getElementById('camUi');
-  const menuEl  = document.getElementById('menuScreen');
-  if (camUiEl.style.display === 'flex') return;
-  if (menuEl.style.display !== 'none') return;
+  if (document.getElementById('camUi').style.display === 'flex') return;
+  if (document.getElementById('menuScreen').style.display !== 'none') return;
   if (!G || !G.running) return;
-
-  mousePos.x = (e.clientX / window.innerWidth) * 2 - 1;
-  mousePos.y = -(e.clientY / window.innerHeight) * 2 + 1;
-  mouseRay.setFromCamera(mousePos, camera);
+  mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  mouseRay.setFromCamera(mouseVec, camera);
   const hits = mouseRay.intersectObjects(interactables, false);
   if (hits.length > 0) {
     const obj = hits[0].object;
-    if (obj.userData.vrMenuAction) {
-      handleVRMenuClick(obj.userData.vrMenuAction);
-    } else if (obj.userData.action) {
-      handleVRAction(obj.userData.action);
-    }
+    if (obj.userData.vrMenuAction) handleVRMenuClick(obj.userData.vrMenuAction);
+    else if (obj.userData.action) handleVRAction(obj.userData.action, -1, true);
   }
 });
 
 // ════════════════════════════════════════════════════
-//  SECTION 10 — FLICKER + RENDER LOOP
+//  SECTION 4 — LIGHTS
 // ════════════════════════════════════════════════════
-let lastFrameTime = 0;
-let flickerT = 0;
+scene.add(new THREE.AmbientLight(0x110810, 0.6));
+const ceilLight = new THREE.PointLight(0x441100, 0.8, 8);
+ceilLight.position.set(0, 2.8, 0); ceilLight.castShadow = true; scene.add(ceilLight);
+const redFill = new THREE.PointLight(0x330000, 0.4, 10);
+redFill.position.set(-3, 1, -2); scene.add(redFill);
+const lampGlow = new THREE.PointLight(0xffaa44, 0.5, 4);
+lampGlow.position.set(0, 2.55, -1); scene.add(lampGlow);
+const alarmSphereMat = new THREE.MeshBasicMaterial({ color: 0x440000, transparent: true, opacity: 0, side: THREE.BackSide });
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(50, 8, 8), alarmSphereMat));
 
-renderer.setAnimationLoop((time) => {
-  const dt = Math.min((time - lastFrameTime) / 1000, 0.1);
-  lastFrameTime = time;
+// ════════════════════════════════════════════════════
+//  SECTION 5 — 3D ROOM
+// ════════════════════════════════════════════════════
+const doorMeshes = { left: null, right: null };
+const doorLights = { left: null, right: null };
+// Door animation state
+const doorAnim = {
+  left:  { open: 1, target: 1, speed: 3.5 },  // 1=open, 0=closed
+  right: { open: 1, target: 1, speed: 3.5 }
+};
+// Vent animation
+const ventAnim = { open: 1, target: 1, speed: 4.0 };
+let ventPanelMesh = null;
+const ventLight3D = new THREE.Mesh(new THREE.SphereGeometry(0.04,6,6), new THREE.MeshBasicMaterial({ color: 0x111111 }));
 
-  // Lamp flicker
-  flickerT += dt;
-  lampGlow.intensity = 0.5 + Math.sin(flickerT * 0.8) * 0.05 + (Math.random() < 0.005 ? Math.random() * 0.3 - 0.15 : 0);
+function addMesh(geo, mat, x=0,y=0,z=0,rx=0,ry=0,rz=0) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x,y,z); m.rotation.set(rx,ry,rz); m.receiveShadow=true; scene.add(m); return m;
+}
 
-  // Alarm pulse
-  if (G && G.chapoAlarm) {
-    alarmSphereMat.opacity = 0.05 + Math.sin(time * 0.008) * 0.04;
-  } else if (!jsPlaneActive) {
-    alarmSphereMat.opacity = 0;
+function buildRoom() {
+  const wallMat  = new THREE.MeshLambertMaterial({ color: 0x0e0e18 });
+  const floorMat = new THREE.MeshLambertMaterial({ color: 0x0c0c14 });
+  const ceilMat  = new THREE.MeshLambertMaterial({ color: 0x090909 });
+  // Planes
+  addMesh(new THREE.PlaneGeometry(10,10), floorMat, 0,0,0, -Math.PI/2,0,0);
+  addMesh(new THREE.PlaneGeometry(10,10), ceilMat, 0,3.2,0, Math.PI/2,0,0);
+  addMesh(new THREE.PlaneGeometry(10,3.5), wallMat, 0,1.6,-5);
+  addMesh(new THREE.PlaneGeometry(10,3.5), wallMat, -5,1.6,0, 0,Math.PI/2,0);
+  addMesh(new THREE.PlaneGeometry(10,3.5), wallMat, 5,1.6,0,  0,-Math.PI/2,0);
+  addMesh(new THREE.PlaneGeometry(2.5,3.5), wallMat, -3.75,1.6,5, 0,Math.PI,0);
+  addMesh(new THREE.PlaneGeometry(2.5,3.5), wallMat,  3.75,1.6,5, 0,Math.PI,0);
+  // Desk + chair
+  const deskMat = new THREE.MeshLambertMaterial({ color: 0x1a0f05 });
+  addMesh(new THREE.BoxGeometry(2.5,0.08,0.9), deskMat, 0,0.82,1.85);
+  addMesh(new THREE.BoxGeometry(0.5,0.05,0.5), new THREE.MeshLambertMaterial({ color: 0x0d0d0d }), 0,0.55,2.35);
+  addMesh(new THREE.BoxGeometry(0.5,0.6,0.05), new THREE.MeshLambertMaterial({ color: 0x0d0d0d }), 0,0.85,2.58);
+  // Blackboard
+  buildBlackboard();
+  // Ceiling lamp
+  addMesh(new THREE.CylinderGeometry(0.01,0.01,0.5,6), new THREE.MeshLambertMaterial({ color: 0x1e1e1e }), 0,3.0,-1);
+  addMesh(new THREE.ConeGeometry(0.25,0.3,8,1,true), new THREE.MeshLambertMaterial({ color: 0x1a1a20, side: THREE.BackSide }), 0,2.6,-1);
+  // Ceiling pipes
+  for (let i=0;i<3;i++) {
+    const p=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,9,8), new THREE.MeshLambertMaterial({ color: 0x1e1e28 }));
+    p.rotation.z=Math.PI/2; p.position.set(0,3.1,-2+i*1.5); scene.add(p);
+  }
+  // Bookshelf
+  addMesh(new THREE.BoxGeometry(1.0,1.8,0.2), new THREE.MeshLambertMaterial({ color: 0x0d0808 }), 2.5,0.9,-4.9);
+  for (let r=0;r<4;r++) for (let b=0;b<4;b++) {
+    const bk=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.26,0.13), new THREE.MeshLambertMaterial({ color:[0x1a0808,0x081808,0x08081a,0x181808][b%4] }));
+    bk.position.set(2.5-0.28+b*0.18, 0.2+r*0.34, -4.82); scene.add(bk);
+  }
+  // Corridor glimpses
+  addMesh(new THREE.BoxGeometry(1.5,2.5,3), new THREE.MeshLambertMaterial({ color: 0x050508 }), -5.5,1.25,0);
+  addMesh(new THREE.BoxGeometry(1.5,2.5,3), new THREE.MeshLambertMaterial({ color: 0x050508 }),  5.5,1.25,0);
+  // Doors
+  buildDoor3D(-4.5, 'left');
+  buildDoor3D(4.5, 'right');
+  // Vent
+  buildVent3D();
+  // Small monitor on desk (decorative)
+  buildDeskMonitor();
+  // BIG camera screen on back wall
+  buildBigCameraScreen();
+  // Office clock on right wall
+  buildOfficeClock();
+}
+
+function buildBlackboard() {
+  addMesh(new THREE.BoxGeometry(2.0,1.2,0.05), new THREE.MeshLambertMaterial({ color: 0x6a3a20 }), -2.5,2.0,-4.97);
+  const bc=document.createElement('canvas'); bc.width=512; bc.height=256;
+  const ctx=bc.getContext('2d');
+  ctx.fillStyle='#111a0e'; ctx.fillRect(0,0,512,256);
+  ctx.fillStyle='#8b0000'; ctx.font='bold 28px monospace'; ctx.textAlign='center';
+  ctx.fillText('ENGLISH GRAMMAR',256,60);
+  ctx.fillStyle='#444'; ctx.font='20px monospace';
+  ctx.fillText('Past Simple · Conditional',256,98); ctx.fillText('Irregular Verbs',256,128);
+  ctx.strokeStyle='#cc0000'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(30,152); ctx.lineTo(482,152); ctx.stroke();
+  ctx.fillStyle='#cc0000'; ctx.font='bold 36px monospace'; ctx.fillText('★ 1/10 ★',256,210);
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(1.9,1.1), new THREE.MeshBasicMaterial({ map:new THREE.CanvasTexture(bc), transparent:true }));
+  m.position.set(-2.5,2.0,-4.93); scene.add(m);
+}
+
+function buildDeskMonitor() {
+  addMesh(new THREE.BoxGeometry(0.55,0.38,0.03), new THREE.MeshLambertMaterial({ color: 0x0c0c14 }), 0,1.14,1.62);
+  const mc=document.createElement('canvas'); mc.width=256; mc.height=160;
+  const ctx=mc.getContext('2d');
+  ctx.fillStyle='#0a0a14'; ctx.fillRect(0,0,256,160);
+  ctx.fillStyle='#00ff66'; ctx.font='bold 16px monospace'; ctx.fillText('SECURITY ONLINE',14,50);
+  ctx.fillStyle='rgba(0,255,100,.5)'; ctx.font='13px monospace';
+  ctx.fillText('>>> ACTIVE',14,78); ctx.fillText('CAM SYSTEM OK',14,98);
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(0.52,0.34), new THREE.MeshBasicMaterial({ map:new THREE.CanvasTexture(mc) }));
+  m.position.set(0,1.14,1.61); scene.add(m);
+}
+
+function buildDoor3D(x, side) {
+  const sign = x < 0 ? 1 : -1;
+  const frameMat = new THREE.MeshLambertMaterial({ color: 0x181820 });
+  addMesh(new THREE.BoxGeometry(1.0,0.1,0.15), frameMat, x,2.2,0);
+  addMesh(new THREE.BoxGeometry(0.1,2.2,0.15), frameMat, x-0.45,1.1,0);
+  addMesh(new THREE.BoxGeometry(0.1,2.2,0.15), frameMat, x+0.45,1.1,0);
+  // Door panel — stored, animated each frame
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.88,2.18,0.07), new THREE.MeshLambertMaterial({ color: 0x080306 }));
+  // Start open (slid out of frame, below floor)
+  door.position.set(x, -1.5, 0);
+  scene.add(door);
+  doorMeshes[side] = door;
+  // Status light
+  const dl = new THREE.Mesh(new THREE.SphereGeometry(0.055,8,8), new THREE.MeshBasicMaterial({ color: 0x111111 }));
+  dl.position.set(x + sign*0.38, 2.1, 0.1); scene.add(dl);
+  doorLights[side] = dl;
+  // Interactable button
+  const btn = new THREE.Mesh(new THREE.BoxGeometry(0.28,0.11,0.06), new THREE.MeshLambertMaterial({ color: 0x222244 }));
+  btn.position.set(x + sign*0.65, 1.1, 0.22);
+  btn.userData.action = side==='left' ? 'leftDoor' : 'rightDoor';
+  scene.add(btn); interactables.push(btn);
+}
+
+function buildVent3D() {
+  const ventMat = new THREE.MeshLambertMaterial({ color: 0x3a2a10 });
+  addMesh(new THREE.BoxGeometry(0.65,0.52,0.06), ventMat, 0,2.8,-4.96);
+  // Grate bars
+  for (let i=-2;i<=2;i++) addMesh(new THREE.BoxGeometry(0.58,0.018,0.018), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }), 0,2.8+i*0.08,-4.93);
+  // Vent panel (animated when closing)
+  ventPanelMesh = new THREE.Mesh(new THREE.BoxGeometry(0.63,0.50,0.04), new THREE.MeshLambertMaterial({ color: 0x2a2008 }));
+  ventPanelMesh.position.set(0, 2.8, -4.93);
+  ventPanelMesh.visible = false; // hidden when open
+  scene.add(ventPanelMesh);
+  // Status light
+  ventLight3D.position.set(0.27,2.97,-4.93); scene.add(ventLight3D);
+  // Vent button
+  const vb = new THREE.Mesh(new THREE.BoxGeometry(0.19,0.075,0.04), new THREE.MeshLambertMaterial({ color: 0x222244 }));
+  vb.position.set(0,2.58,-4.91); vb.userData.action='vent'; scene.add(vb); interactables.push(vb);
+}
+
+// ── DOOR + VENT ANIMATION (called each frame) ──────
+function updateDoorAnimations(dt) {
+  ['left','right'].forEach(side => {
+    const anim = doorAnim[side];
+    const mesh = doorMeshes[side];
+    if (!mesh) return;
+    // Lerp toward target
+    anim.open += (anim.target - anim.open) * Math.min(1, anim.speed * dt);
+    // 1=open (door slides down below frame), 0=closed (door in frame at y=1.1)
+    const y = anim.open < 0.01 ? 1.1 : -1.5 + (anim.open * (-1.5 - 1.1) * -1); // open→y=-1.5, closed→y=1.1
+    // Actually: open=1 → y below floor, open=0 → y=1.1
+    mesh.position.y = 1.1 - anim.open * 2.6;
+    // Update door light color
+    const dl = doorLights[side];
+    if (dl) {
+      const atDoor = (side==='left') ? G&&G.mPos===5 : G&&G.mPos===6;
+      const closed = anim.open < 0.1;
+      dl.material.color.setHex(closed ? 0x00e050 : (atDoor ? 0xff2200 : 0x111111));
+    }
+  });
+  // Vent panel animation
+  if (ventPanelMesh) {
+    ventAnim.open += (ventAnim.target - ventAnim.open) * Math.min(1, ventAnim.speed * dt);
+    ventPanelMesh.visible = ventAnim.open < 0.92;
+    // Rotate panel down when closing (pivot from top)
+    ventPanelMesh.rotation.x = (1 - ventAnim.open) * (Math.PI / 2);
+    ventPanelMesh.position.y = 2.8 - (1 - ventAnim.open) * 0.25;
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  SECTION 6 — BIG CAMERA SCREEN (back wall, above desk)
+// ════════════════════════════════════════════════════
+// The giant screen is on the back wall above the vent.
+// Below it are 5 camera select buttons + vent cam button.
+// On-screen: live camera feed + O2 meter + clock.
+
+let bigScreenCanvas, bigScreenCtx, bigScreenTex, bigScreenMesh;
+const BIG_W = 1024, BIG_H = 640;
+
+function buildBigCameraScreen() {
+  bigScreenCanvas = document.createElement('canvas');
+  bigScreenCanvas.width = BIG_W; bigScreenCanvas.height = BIG_H;
+  bigScreenCtx = bigScreenCanvas.getContext('2d');
+  bigScreenTex = new THREE.CanvasTexture(bigScreenCanvas);
+  bigScreenTex.minFilter = THREE.LinearFilter;
+
+  // Screen bezel
+  const bezel = new THREE.Mesh(new THREE.BoxGeometry(3.6,2.3,0.06), new THREE.MeshLambertMaterial({ color: 0x0a0a14 }));
+  bezel.position.set(0, 2.2, -4.93); scene.add(bezel);
+
+  // Screen surface
+  bigScreenMesh = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.1), new THREE.MeshBasicMaterial({ map: bigScreenTex }));
+  bigScreenMesh.position.set(0, 2.2, -4.90); scene.add(bigScreenMesh);
+
+  // CAMERA BUTTONS below screen — CAM 1..5, VENT, MUZIEK
+  const camLabels = [
+    { id: 0, label: 'CAM 1' },
+    { id: 1, label: 'CAM 2' },
+    { id: 2, label: 'CAM 3' },
+    { id: 3, label: 'CAM 4' },
+    { id: 4, label: 'CAM 5' },
+    { id: 5, label: 'VENT' },
+  ];
+  const totalBtns = camLabels.length;
+  const btnW = 0.42, btnH = 0.14, gap = 0.06;
+  const totalWidth = totalBtns * btnW + (totalBtns - 1) * gap;
+  const startX = -totalWidth / 2 + btnW / 2;
+
+  camLabels.forEach((c, i) => {
+    const btnMat = new THREE.MeshLambertMaterial({ color: 0x0a1a0a });
+    const btn = new THREE.Mesh(new THREE.BoxGeometry(btnW, btnH, 0.05), btnMat);
+    btn.position.set(startX + i * (btnW + gap), 1.04, -4.90);
+    btn.userData.action = 'cam:' + c.id;
+    btn.userData.camBtnId = c.id;
+    btn.userData.camBtnMat = btnMat;
+    scene.add(btn); interactables.push(btn);
+
+    // Button label
+    const lc = document.createElement('canvas'); lc.width=128; lc.height=48;
+    const lctx = lc.getContext('2d');
+    lctx.fillStyle='#0a1a0a'; lctx.fillRect(0,0,128,48);
+    lctx.fillStyle='#33ff77'; lctx.font='bold 18px monospace'; lctx.textAlign='center';
+    lctx.fillText(c.label, 64, 30);
+    const lt = new THREE.CanvasTexture(lc);
+    const lm = new THREE.Mesh(new THREE.PlaneGeometry(btnW-0.02, btnH-0.02), new THREE.MeshBasicMaterial({ map: lt, transparent: true }));
+    lm.position.set(startX + i * (btnW + gap), 1.04, -4.87);
+    scene.add(lm);
+  });
+
+  // LURE button next to cam buttons
+  const lureBtnMesh = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.14, 0.05), new THREE.MeshLambertMaterial({ color: 0x0a220a }));
+  lureBtnMesh.position.set(1.65, 1.04, -4.90);
+  lureBtnMesh.userData.action = 'lure';
+  scene.add(lureBtnMesh); interactables.push(lureBtnMesh);
+  const lureLc = document.createElement('canvas'); lureLc.width=128; lureLc.height=48;
+  const lureLctx = lureLc.getContext('2d');
+  lureLctx.fillStyle='#0a220a'; lureLctx.fillRect(0,0,128,48);
+  lureLctx.fillStyle='#88dd88'; lureLctx.font='bold 15px monospace'; lureLctx.textAlign='center';
+  lureLctx.fillText('LOKKEN', 64, 30);
+  const lureLabel = new THREE.Mesh(new THREE.PlaneGeometry(0.42,0.12), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(lureLc), transparent:true }));
+  lureLabel.position.set(1.65, 1.04, -4.87); scene.add(lureLabel);
+
+  // ALARM button
+  const alarmBtnMesh = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.14, 0.05), new THREE.MeshLambertMaterial({ color: 0x220a0a }));
+  alarmBtnMesh.position.set(2.12, 1.04, -4.90);
+  alarmBtnMesh.userData.action = 'alarm';
+  scene.add(alarmBtnMesh); interactables.push(alarmBtnMesh);
+  const alarmLc = document.createElement('canvas'); alarmLc.width=128; alarmLc.height=48;
+  const alarmLctx = alarmLc.getContext('2d');
+  alarmLctx.fillStyle='#220a0a'; alarmLctx.fillRect(0,0,128,48);
+  alarmLctx.fillStyle='#ff4444'; alarmLctx.font='bold 15px monospace'; alarmLctx.textAlign='center';
+  alarmLctx.fillText('ALARM', 64, 30);
+  const alarmLabel = new THREE.Mesh(new THREE.PlaneGeometry(0.42,0.12), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(alarmLc), transparent:true }));
+  alarmLabel.position.set(2.12, 1.04, -4.87); scene.add(alarmLabel);
+
+  // Initial draw
+  drawBigScreen();
+}
+
+// Highlight active cam button
+let bigScreenCamBtnMeshes = [];
+function highlightCamBtn(activeId) {
+  interactables.forEach(m => {
+    if (m.userData.camBtnId !== undefined) {
+      m.material.color.setHex(m.userData.camBtnId === activeId ? 0x1a4a1a : 0x0a1a0a);
+    }
+  });
+}
+
+function drawBigScreen() {
+  const ctx = bigScreenCtx;
+  const W = BIG_W, H = BIG_H;
+  ctx.clearRect(0,0,W,H);
+
+  // Background
+  ctx.fillStyle = '#040808';
+  ctx.fillRect(0,0,W,H);
+
+  // Header bar
+  ctx.fillStyle = '#0a1a0a';
+  ctx.fillRect(0,0,W,46);
+  ctx.fillStyle = '#22aa44';
+  ctx.font = 'bold 20px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('SECURITY MONITOR — FNAG SYSTEMS', 14, 30);
+
+  // Live camera feed area (left side)
+  const feedX=10, feedY=52, feedW=620, feedH=390;
+  ctx.strokeStyle='#1a4a1a'; ctx.lineWidth=2;
+  ctx.strokeRect(feedX,feedY,feedW,feedH);
+
+  // Draw current camera background image
+  const camId = (G && G.running) ? G.curCam : 0;
+  const bgImg = camBgImgs[camId];
+  if (bgImg) {
+    const iR=bgImg.naturalWidth/bgImg.naturalHeight, cR=feedW/feedH;
+    let sw,sh,sx=0,sy=0;
+    if(iR>cR){sh=bgImg.naturalHeight;sw=sh*cR;sx=(bgImg.naturalWidth-sw)/2;}
+    else{sw=bgImg.naturalWidth;sh=sw/cR;sy=(bgImg.naturalHeight-sh)/2;}
+    ctx.drawImage(bgImg,sx,sy,sw,sh,feedX,feedY,feedW,feedH);
+  } else {
+    ctx.fillStyle='#050a05'; ctx.fillRect(feedX,feedY,feedW,feedH);
+  }
+  // Camera feed overlay (tint + scanlines)
+  ctx.fillStyle='rgba(0,20,4,0.30)'; ctx.fillRect(feedX,feedY,feedW,feedH);
+  ctx.fillStyle='rgba(0,0,0,0.07)';
+  for(let y=feedY;y<feedY+feedH;y+=3) ctx.fillRect(feedX,y,feedW,1);
+
+  // Cam name label on feed
+  ctx.fillStyle='rgba(0,255,60,0.6)'; ctx.font='bold 15px monospace'; ctx.textAlign='left';
+  const cn = CAMS[camId];
+  ctx.fillText((cn?cn.name+' — '+cn.room:'---'), feedX+10, feedY+22);
+
+  // Timestamp
+  ctx.fillStyle='rgba(0,255,80,0.4)'; ctx.font='12px monospace';
+  ctx.fillText(new Date().toLocaleTimeString('nl-NL'), feedX+10, feedY+feedH-10);
+
+  // Vignette on feed
+  const vg=ctx.createRadialGradient(feedX+feedW/2,feedY+feedH/2,feedH*0.2,feedX+feedW/2,feedY+feedH/2,feedH*0.7);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.55)');
+  ctx.fillStyle=vg; ctx.fillRect(feedX,feedY,feedW,feedH);
+
+  // ── RIGHT PANEL ──────────────────────────────────
+  const rpX = feedX+feedW+16, rpY = feedY, rpW = W-rpX-10, rpH = feedH;
+
+  // Night label
+  ctx.fillStyle='#cc0000'; ctx.font='bold 16px monospace'; ctx.textAlign='left';
+  ctx.fillText(G&&G.cfg?G.cfg.label:'FNAG VR', rpX, rpY+22);
+
+  // ── CLOCK (game time) ──
+  ctx.fillStyle='#0a0a18'; ctx.fillRect(rpX, rpY+30, rpW, 70);
+  ctx.strokeStyle='#222266'; ctx.lineWidth=1; ctx.strokeRect(rpX,rpY+30,rpW,70);
+  ctx.fillStyle='#5555aa'; ctx.font='11px monospace'; ctx.textAlign='center';
+  ctx.fillText('TIJD', rpX+rpW/2, rpY+46);
+  const timeStr = G&&G.running ? document.getElementById('hudTime').textContent : '12:00 AM';
+  ctx.fillStyle='#e8920a'; ctx.font='bold 28px monospace';
+  ctx.fillText(timeStr, rpX+rpW/2, rpY+88);
+
+  // ── O2 METER ──
+  const o2Y = rpY+112;
+  ctx.fillStyle='#0a0a18'; ctx.fillRect(rpX, o2Y, rpW, 80);
+  ctx.strokeStyle='#222244'; ctx.lineWidth=1; ctx.strokeRect(rpX,o2Y,rpW,80);
+  ctx.fillStyle='#5555aa'; ctx.font='11px monospace'; ctx.textAlign='center';
+  ctx.fillText('O₂ NIVEAU', rpX+rpW/2, o2Y+16);
+  const o2pct = G&&G.running ? Math.max(0,G.o2) : 100;
+  const barW = rpW-16, barH = 14;
+  const barX = rpX+8, barY = o2Y+24;
+  ctx.fillStyle='#040810'; ctx.fillRect(barX,barY,barW,barH);
+  ctx.strokeStyle='#0a1828'; ctx.lineWidth=1; ctx.strokeRect(barX,barY,barW,barH);
+  const fillColor = o2pct<=10?'#cc0000':o2pct<=30?'#cc6600':'#0055ee';
+  const fillColor2 = o2pct<=10?'#ff3300':o2pct<=30?'#ffaa00':'#55bbff';
+  const grad=ctx.createLinearGradient(barX,0,barX+barW,0);
+  grad.addColorStop(0,fillColor); grad.addColorStop(1,fillColor2);
+  ctx.fillStyle=grad; ctx.fillRect(barX,barY, barW*(o2pct/100), barH);
+  ctx.fillStyle=o2pct<=10?'#ff4444':o2pct<=30?'#ffaa00':'#88ccff';
+  ctx.font='bold 16px monospace'; ctx.textAlign='center';
+  ctx.fillText(Math.round(o2pct)+'%', rpX+rpW/2, o2Y+58);
+
+  // ── MUSIC BOX ──
+  if (G&&G.cfg&&G.cfg.tomActive) {
+    const mbY = o2Y+92;
+    ctx.fillStyle='#0a0a18'; ctx.fillRect(rpX, mbY, rpW, 70);
+    ctx.strokeStyle='#2a2200'; ctx.lineWidth=1; ctx.strokeRect(rpX,mbY,rpW,70);
+    ctx.fillStyle='#5a4a00'; ctx.font='11px monospace'; ctx.textAlign='center';
+    ctx.fillText('MUZIEKDOOS', rpX+rpW/2, mbY+16);
+    const mbpct = G.musicBox||0;
+    const mbBarX=rpX+8, mbBarY=mbY+24, mbBarW=rpW-16;
+    ctx.fillStyle='#040810'; ctx.fillRect(mbBarX,mbBarY,mbBarW,14);
+    const mbGrad=ctx.createLinearGradient(mbBarX,0,mbBarX+mbBarW,0);
+    mbGrad.addColorStop(0,'#886600'); mbGrad.addColorStop(1,'#ddcc00');
+    ctx.fillStyle=mbGrad; ctx.fillRect(mbBarX,mbBarY,mbBarW*(mbpct/100),14);
+    ctx.fillStyle='#ddcc00'; ctx.font='bold 14px monospace'; ctx.textAlign='center';
+    ctx.fillText(Math.round(mbpct)+'%', rpX+rpW/2, mbY+52);
+  }
+
+  // ── MINI CAM THUMBNAILS (bottom strip) ──
+  const thY = feedY+feedH+10, thH = H-thY-10;
+  ctx.fillStyle='#0a0a0e'; ctx.fillRect(10, thY, W-20, thH);
+  ctx.strokeStyle='#1a1a2a'; ctx.lineWidth=1; ctx.strokeRect(10,thY,W-20,thH);
+  const thW = Math.floor((W-30)/CAMS.length)-4;
+  CAMS.forEach((c,i) => {
+    const tx=14+i*(thW+4), ty=thY+4;
+    const active = G&&G.curCam===c.id;
+    ctx.strokeStyle=active?'#33ff77':'#1a4a1a'; ctx.lineWidth=active?2:1;
+    ctx.strokeRect(tx,ty,thW,thH-8);
+    ctx.fillStyle=active?'rgba(0,60,20,0.5)':'rgba(0,20,6,0.5)'; ctx.fillRect(tx,ty,thW,thH-8);
+    ctx.fillStyle=active?'#33ff77':'#226622'; ctx.font='bold 11px monospace'; ctx.textAlign='center';
+    ctx.fillText(c.name, tx+thW/2, ty+14);
+    ctx.fillStyle='#1a4a1a'; ctx.font='9px monospace';
+    ctx.fillText(c.room, tx+thW/2, ty+26);
+    // Monster dot
+    const hasMon = G&&(
+      (G.cfg.gijsActive&&G.mPos===c.id) ||
+      (G.cfg.hoboActive&&G.hoboPos===c.id) ||
+      (G.jeffreyActive&&G.jeffreyPos===c.id) ||
+      (G.chapoActive&&c.id===CHAPO_CAM_ID&&!G.chapoAlarm) ||
+      (G.diddyActive&&G.diddyPos===c.id)
+    );
+    if(hasMon) { ctx.fillStyle='#ff2200'; ctx.beginPath(); ctx.arc(tx+thW-8,ty+8,4,0,Math.PI*2); ctx.fill(); }
+  });
+
+  bigScreenTex.needsUpdate = true;
+}
+
+// ════════════════════════════════════════════════════
+//  SECTION 7 — OFFICE CLOCK (3D wall clock on right wall)
+// ════════════════════════════════════════════════════
+let officeClockCanvas, officeClockCtx, officeClockTex;
+
+function buildOfficeClock() {
+  officeClockCanvas = document.createElement('canvas');
+  officeClockCanvas.width = 256; officeClockCanvas.height = 256;
+  officeClockCtx = officeClockCanvas.getContext('2d');
+  officeClockTex = new THREE.CanvasTexture(officeClockCanvas);
+  officeClockTex.minFilter = THREE.LinearFilter;
+
+  // Clock frame
+  const clockFrame = new THREE.Mesh(new THREE.CylinderGeometry(0.32,0.32,0.04,32), new THREE.MeshLambertMaterial({ color: 0x1a1008 }));
+  clockFrame.rotation.z = Math.PI/2;
+  clockFrame.position.set(4.96, 2.3, -1.5);
+  scene.add(clockFrame);
+
+  // Clock face
+  const clockFace = new THREE.Mesh(new THREE.PlaneGeometry(0.58,0.58), new THREE.MeshBasicMaterial({ map: officeClockTex }));
+  clockFace.rotation.y = -Math.PI/2;
+  clockFace.position.set(4.93, 2.3, -1.5);
+  scene.add(clockFace);
+
+  drawOfficeClock();
+}
+
+function drawOfficeClock() {
+  const ctx = officeClockCtx;
+  const cx=128, cy=128, r=110;
+  ctx.clearRect(0,0,256,256);
+  // Face
+  ctx.fillStyle='#0a0808'; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#3a2a10'; ctx.lineWidth=6; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+  // Hour markers
+  for(let i=0;i<12;i++){
+    const a=i*Math.PI/6-Math.PI/2;
+    const x1=cx+Math.cos(a)*(r-14), y1=cy+Math.sin(a)*(r-14);
+    const x2=cx+Math.cos(a)*(r-4),  y2=cy+Math.sin(a)*(r-4);
+    ctx.strokeStyle=i%3===0?'#cc0000':'#442222'; ctx.lineWidth=i%3===0?3:2;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  }
+  // Game time from HUD
+  const timeText = (G&&G.running) ? document.getElementById('hudTime').textContent : '12:00 AM';
+  // Parse game time to draw hands
+  const parts = timeText.match(/(\d+):(\d+)/);
+  let gameH=0,gameM=0;
+  if(parts){gameH=parseInt(parts[1])%12;gameM=parseInt(parts[2]);}
+  // Minute hand
+  const mAngle=(gameM/60)*Math.PI*2-Math.PI/2;
+  ctx.strokeStyle='#cc8800'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(cx,cy);
+  ctx.lineTo(cx+Math.cos(mAngle)*(r-22), cy+Math.sin(mAngle)*(r-22));
+  ctx.stroke();
+  // Hour hand
+  const hAngle=((gameH+gameM/60)/12)*Math.PI*2-Math.PI/2;
+  ctx.strokeStyle='#ff4400'; ctx.lineWidth=5;
+  ctx.beginPath(); ctx.moveTo(cx,cy);
+  ctx.lineTo(cx+Math.cos(hAngle)*(r-46), cy+Math.sin(hAngle)*(r-46));
+  ctx.stroke();
+  // Center dot
+  ctx.fillStyle='#ff6600'; ctx.beginPath(); ctx.arc(cx,cy,6,0,Math.PI*2); ctx.fill();
+  // Time text
+  ctx.fillStyle='#884400'; ctx.font='bold 18px monospace'; ctx.textAlign='center';
+  ctx.fillText(timeText, cx, cy+r-26);
+  officeClockTex.needsUpdate = true;
+}
+
+// ════════════════════════════════════════════════════
+//  SECTION 8 — VR JUMPSCARE (3D plane, camera-attached)
+// ════════════════════════════════════════════════════
+let jsPlane=null, jsPlaneActive=false, jsPlaneTimer=0;
+
+function initJsPlane() {
+  jsPlane = new THREE.Mesh(new THREE.PlaneGeometry(3.2,2.4), new THREE.MeshBasicMaterial({ transparent:true, opacity:0, side:THREE.DoubleSide }));
+  jsPlane.visible=false; camera.add(jsPlane);
+}
+initJsPlane();
+
+function triggerVRJumpscare(imgSrc, onDone) {
+  new THREE.TextureLoader().load(imgSrc, tex => {
+    jsPlane.material.map=tex; jsPlane.material.opacity=0; jsPlane.material.needsUpdate=true;
+    jsPlane.position.set(0,0,-4); jsPlane.visible=true;
+    jsPlaneActive=true; jsPlaneTimer=0;
+    alarmSphereMat.opacity=0.35;
+    setTimeout(()=>{alarmSphereMat.opacity=0;},1200);
+    jsPlane.userData.onDone=onDone;
+  }, undefined, ()=>{ jsPlane.visible=false; if(onDone)onDone(); });
+}
+
+function updateJsPlane(dt) {
+  if(!jsPlaneActive||!jsPlane) return;
+  jsPlaneTimer+=dt;
+  const t=Math.min(jsPlaneTimer/1.1,1.0);
+  jsPlane.position.z=-4+t*3.6;
+  jsPlane.material.opacity=Math.min(t*2,1.0);
+  if(jsPlaneTimer>=3.0){
+    jsPlaneActive=false; jsPlane.visible=false; jsPlane.material.opacity=0;
+    if(jsPlane.userData.onDone){jsPlane.userData.onDone();jsPlane.userData.onDone=null;}
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  SECTION 9 — 3D MONSTER SPRITES
+// ════════════════════════════════════════════════════
+const sprites={};
+function createSprite(key,src,w,h){
+  const tex=new THREE.TextureLoader().load(src,t=>{t.needsUpdate=true;});
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({ map:tex, transparent:true, alphaTest:0.08, side:THREE.DoubleSide }));
+  m.visible=false; scene.add(m); sprites[key]=m; return m;
+}
+function initSprites(){
+  createSprite('gijs',   'Images/GijsCamera.png',     1.0,1.6);
+  createSprite('hobo',   'Images/HoboGijsCamera.png', 1.0,1.6);
+  createSprite('jeffrey','Images/JeffreyCamera.png',  1.0,1.6);
+  createSprite('chapo',  'Images/ChapoCamera.png',    1.0,1.6);
+  createSprite('diddy',  'Images/DiddyCamera.png',    1.2,1.8);
+  createSprite('tom',    'Images/TomCamera.png',      1.0,1.6);
+  createSprite('maduro', 'Images/MaduroCamera.png',   0.8,1.3);
+  createSprite('mark',   'Images/MarkVent.png',       0.6,0.7);
+}
+
+// Sprites are ONLY visible in camera rooms — never in office
+// POS3D maps logical position → 3D world coordinate (all in camera zone, back half of room)
+const POS3D={
+  0:[-3.0,1.2,-4.5], 1:[-3.0,1.2,-2.5], 2:[0.0,1.2,-4.0],
+  3:[-4.0,1.2,0.0],  4:[4.0,1.2,0.0],   7:[3.0,1.2,-4.5]
+};
+// Positions 5 (LD) and 6 (RD) = at door = NOT rendered as 3D sprite
+// They only trigger jumpscare logic.
+
+function setSprite(key,visible,pos){
+  const m=sprites[key]; if(!m)return;
+  m.visible=visible;
+  if(visible&&pos) m.position.set(pos[0],pos[1],pos[2]);
+}
+
+function updateSprites3D(){
+  if(!G||!G.running)return;
+  // Gijs — only show in camera rooms (not at door positions 5/6)
+  const gijsInCam = G.cfg.gijsActive && G.mPos>=0 && G.mPos<=4;
+  setSprite('gijs', gijsInCam, POS3D[G.mPos]);
+  // Hobo — only cam rooms
+  const hoboInCam = G.cfg.hoboActive && G.hoboPos>=0 && G.hoboPos<=4;
+  setSprite('hobo', hoboInCam, POS3D[G.hoboPos]);
+  // Jeffrey — only cam rooms
+  const jeffInCam = G.jeffreyActive && G.jeffreyPos>=0 && G.jeffreyPos<=4;
+  const jp = jeffInCam ? [...(POS3D[G.jeffreyPos]||POS3D[0])] : null;
+  if(jp) jp[0]-=0.2;
+  setSprite('jeffrey', jeffInCam, jp);
+  // Chapo — stays at cam 3 area
+  setSprite('chapo', !!(G.chapoActive&&!G.chapoAlarm), POS3D[3]);
+  // Diddy — only cam rooms
+  const diddyInCam = G.diddyActive && G.diddyPos>=0 && G.diddyPos<=4;
+  setSprite('diddy', diddyInCam, POS3D[G.diddyPos]);
+  // Tom — music room (cam 4 area, back right)
+  if(sprites.tom){
+    sprites.tom.visible=G.cfg.tomActive;
+    sprites.tom.position.set(3,1.2,-4.7);
+    if(G.cfg.tomActive){const d=Math.max(0,(100-G.musicBox)/100);sprites.tom.material.opacity=0.3+d*0.7;}
+  }
+  // Mark — only at vent (back wall)
+  setSprite('mark', !!(G.markInVent&&!G.ventClosed), [0,2.8,-4.8]);
+  // Maduro — in camera rooms
+  const madInCam = G.maduroPos>=0;
+  const mp = madInCam ? POS3D[G.maduroPos] : null;
+  setSprite('maduro', madInCam&&!!mp, mp?[mp[0]+0.4,mp[1]-0.1,mp[2]]:null);
+  // Door lights
+  if(doorLights.left)  doorLights.left.material.color.setHex(doorAnim.left.open<0.1?0x00e050:(G.mPos===5?0xff2200:0x111111));
+  if(doorLights.right) doorLights.right.material.color.setHex(doorAnim.right.open<0.1?0x00e050:(G.mPos===6?0xff2200:0x111111));
+  // Vent light
+  ventLight3D.material.color.setHex(G.markInVent&&!G.ventClosed?0xff4400:0x111111);
+}
+
+function updateBillboards(){
+  const cp=camera.position;
+  Object.values(sprites).forEach(m=>{ if(m.visible) m.lookAt(cp); });
+}
+
+// ════════════════════════════════════════════════════
+//  SECTION 10 — VR MENU
+// ════════════════════════════════════════════════════
+const vrMenuGroup=new THREE.Group(); scene.add(vrMenuGroup); vrMenuGroup.visible=false;
+let vrMenuActive=false;
+const vrMenuCanvas=document.createElement('canvas'); vrMenuCanvas.width=1024; vrMenuCanvas.height=768;
+const vrMenuCtx=vrMenuCanvas.getContext('2d');
+const vrMenuTex=new THREE.CanvasTexture(vrMenuCanvas);
+const vrMenuMesh=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.9), new THREE.MeshBasicMaterial({ map:vrMenuTex, transparent:true }));
+vrMenuMesh.position.set(0,1.6,-2.6); vrMenuGroup.add(vrMenuMesh);
+
+function buildVRMenuButtons(){
+  const rows=[{label:'NACHT 1',night:1,y:0.52},{label:'NACHT 2',night:2,y:0.28},{label:'NACHT 3',night:3,y:0.04},{label:'NACHT 4',night:4,y:-0.20},{label:'NACHT 5',night:5,y:-0.44},{label:'▶ START',night:0,y:-0.78}];
+  rows.forEach(b=>{
+    const m=new THREE.Mesh(new THREE.BoxGeometry(2.0,0.19,0.04), new THREE.MeshLambertMaterial({ color:b.night===0?0x002200:0x1a0000 }));
+    m.position.set(0,b.y,0.06); m.userData.vrMenuAction=b.night===0?'start':'night:'+b.night;
+    vrMenuGroup.add(m); interactables.push(m);
+  });
+}
+buildVRMenuButtons();
+
+function redrawVRMenu(){
+  const ctx=vrMenuCtx; ctx.clearRect(0,0,1024,768);
+  ctx.fillStyle='rgba(2,0,0,0.96)'; ctx.fillRect(0,0,1024,768);
+  ctx.strokeStyle='#660000'; ctx.lineWidth=3; ctx.strokeRect(6,6,1012,756);
+  ctx.fillStyle='#cc0000'; ctx.font='bold 50px monospace'; ctx.textAlign='center';
+  ctx.fillText('FIVE NIGHTS AT',512,80); ctx.fillText('MEESTER GIJS',512,140);
+  ctx.fillStyle='#333'; ctx.font='18px monospace'; ctx.fillText('VR EDITION',512,180);
+  [{n:1,l:'NACHT 1',s:'Gijs · Hobo',y:238},{n:2,l:'NACHT 2',s:'+Tom · Mark',y:308},{n:3,l:'NACHT 3',s:'+Jeffrey',y:378},{n:4,l:'NACHT 4',s:'+Chapo',y:448},{n:5,l:'NACHT 5',s:'ALLES',y:518}].forEach(n=>{
+    const sel=selectedNight===n.n;
+    ctx.fillStyle=sel?'rgba(100,0,0,0.4)':'rgba(20,0,0,0.3)'; ctx.fillRect(170,n.y-28,684,52);
+    ctx.strokeStyle=sel?'#880000':'#330000'; ctx.lineWidth=sel?2:1; ctx.strokeRect(170,n.y-28,684,52);
+    ctx.fillStyle=sel?'#cc0000':'#440000'; ctx.font='bold 24px monospace'; ctx.textAlign='left'; ctx.fillText(n.l,200,n.y+8);
+    ctx.fillStyle=sel?'#884444':'#221111'; ctx.font='18px monospace'; ctx.fillText(n.s,420,n.y+8);
+  });
+  ctx.fillStyle=selectedNight>0?'#005500':'#001100'; ctx.fillRect(170,600,684,58);
+  ctx.strokeStyle=selectedNight>0?'#00aa00':'#002200'; ctx.lineWidth=2; ctx.strokeRect(170,600,684,58);
+  ctx.fillStyle=selectedNight>0?'#00ff66':'#004400'; ctx.font='bold 28px monospace'; ctx.textAlign='center';
+  ctx.fillText(selectedNight>0?`▶ NACHT ${selectedNight} STARTEN`:'SELECTEER EEN NACHT',512,638);
+  vrMenuTex.needsUpdate=true;
+}
+
+function handleVRMenuClick(action){
+  if(action.startsWith('night:')){selectNight(parseInt(action.split(':')[1]));redrawVRMenu();}
+  else if(action==='start'&&selectedNight>0){hideVRMenu();startGame();}
+}
+function showVRMenu(){
+  vrMenuActive=true; vrMenuGroup.visible=true;
+  const fwd=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+  vrMenuGroup.position.copy(camera.position).addScaledVector(fwd,2.6);
+  vrMenuGroup.lookAt(camera.position); redrawVRMenu();
+}
+function hideVRMenu(){ vrMenuActive=false; vrMenuGroup.visible=false; }
+
+// ════════════════════════════════════════════════════
+//  SECTION 11 — RENDER LOOP
+// ════════════════════════════════════════════════════
+let lastT=0, flickT=0;
+let bigScreenUpdateTimer=0;
+const BIG_SCREEN_UPDATE_IV = 0.15; // update big screen every 150ms
+
+renderer.setAnimationLoop(time=>{
+  const dt=Math.min((time-lastT)/1000, 0.1); lastT=time;
+  flickT+=dt;
+  lampGlow.intensity=0.5+Math.sin(flickT*0.8)*0.05+(Math.random()<0.004?Math.random()*0.3-0.15:0);
+  if(G&&G.chapoAlarm) alarmSphereMat.opacity=0.05+Math.sin(time*0.008)*0.04;
+  else if(!jsPlaneActive) alarmSphereMat.opacity=0;
+
+  // Animate doors + vent
+  if(G&&G.running) updateDoorAnimations(dt);
+
+  // Update big screen periodically
+  bigScreenUpdateTimer+=dt;
+  if(bigScreenUpdateTimer>=BIG_SCREEN_UPDATE_IV){
+    bigScreenUpdateTimer=0;
+    if(G&&G.running){ drawBigScreen(); drawOfficeClock(); }
   }
 
   updateGaze(dt);
   updateJsPlane(dt);
-  castControllerRays();
   pollGamepads();
   updateBillboards();
   updateSprites3D();
+
+  // Wind up while right trigger held and pointing at windUp button
+  if(G&&G.running&&rightTriggerHeld){
+    const hit=castFromController(1);
+    if(hit&&hit.userData.action==='windUp') {
+      if(!G.isWindingUp) startWindUp();
+    } else if(G.isWindingUp) stopWindUp();
+  }
 
   renderer.render(scene, camera);
 });
 
 // ════════════════════════════════════════════════════
-//  SECTION 11 — GAME CONSTANTS & CONFIGS
+//  SECTION 12 — GAME CONSTANTS & CONFIGS
 // ════════════════════════════════════════════════════
-const FILES = {
-  gijsCam:          'Images/GijsCamera.png',
-  gijsJS:           'Images/GijsJumpscare.png',
-  patrickJS:        'Images/PatrickJumpscare.png',
-  hoboGijsCam:      'Images/HoboGijsCamera.png',
-  hoboGijsJS:       'Images/HoboGijsJumpscare.png',
-  tomCam:           'Images/TomCamera.png',
-  tomJS:            'Images/TomJumpscare.png',
-  jeffreyCam:       'Images/JeffreyCamera.png',
-  jeffreyJS:        'Images/JeffreyJumpscare.png',
-  chapoCam:         'Images/ChapoCamera.png',
-  chapoJS:          'Images/ChapoJumpscare.png',
-  markVent:         'Images/MarkVent.png',
-  markJS:           'Images/MarkJumpscare.png',
-  maduroCam:        'Images/MaduroCamera.png',
-  maduroJS:         'Images/MaduroJumpscare.png',
-  diddyCam:         'Images/DiddyCamera.png',
-  diddyJS:          'Images/DiddyJumpscare.png',
-  shadowGijsOffice: 'Images/ShadowGijsOffice.png',
-  shadowGijsJS:     'Images/ShadowGijsJumpscare.png',
-  shadowGijsAudio:  'Audio/ShadowGijs.mp3',
-  camBg0: 'Images/StookKamer.png',
-  camBg1: 'Images/VoorraadKamer.png',
-  camBg2: 'Images/KlasLokaal.png',
-  camBg3: 'Images/LinkerGang.png',
-  camBg4: 'Images/RechterGang.png',
-  camBg5: 'Images/MuziekKamer.png',
-  ambience:    'Audio/Ambience.mp3',
-  doorClose:   'Audio/DoorClose.mp3',
-  jumpscare:   'Audio/Jumpscare.mp3',
-  lure:        'Audio/Lure.mp3',
-  oxygenOut:   'Audio/OxygenOutage.mp3',
-  win:         'Audio/Win.mp3',
-  laugh:       'Audio/Laugh.mp3',
-  jeffreyLgh:  'Audio/JeffreyLaugh.mp3',
-  camSwitch:   'Audio/CameraSwitch.mp3',
-  footsteps:   'Audio/Footsteps.mp3',
-  muziek:      'Audio/Muziek.mp3',
-  windUp:      'Audio/WindUp.mp3',
-  alarm:       'Audio/Alarm.mp3',
-  vent:        'Audio/Vent.mp3',
-  markAudio:   'Audio/Mark.mp3',
-  shock:       'Audio/Shock.mp3',
-  cameraAlarm: 'Audio/CameraAlarm.mp3',
-  fiveAM:      'Audio/5AM.mp3',
+const FILES={
+  gijsCam:'Images/GijsCamera.png', gijsJS:'Images/GijsJumpscare.png',
+  patrickJS:'Images/PatrickJumpscare.png',
+  hoboGijsCam:'Images/HoboGijsCamera.png', hoboGijsJS:'Images/HoboGijsJumpscare.png',
+  tomCam:'Images/TomCamera.png', tomJS:'Images/TomJumpscare.png',
+  jeffreyCam:'Images/JeffreyCamera.png', jeffreyJS:'Images/JeffreyJumpscare.png',
+  chapoCam:'Images/ChapoCamera.png', chapoJS:'Images/ChapoJumpscare.png',
+  markVent:'Images/MarkVent.png', markJS:'Images/MarkJumpscare.png',
+  maduroCam:'Images/MaduroCamera.png', maduroJS:'Images/MaduroJumpscare.png',
+  diddyCam:'Images/DiddyCamera.png', diddyJS:'Images/DiddyJumpscare.png',
+  camBg0:'Images/StookKamer.png', camBg1:'Images/VoorraadKamer.png',
+  camBg2:'Images/KlasLokaal.png', camBg3:'Images/LinkerGang.png',
+  camBg4:'Images/RechterGang.png', camBg5:'Images/MuziekKamer.png',
+  ambience:'Audio/Ambience.mp3', doorClose:'Audio/DoorClose.mp3',
+  jumpscare:'Audio/Jumpscare.mp3', lure:'Audio/Lure.mp3',
+  oxygenOut:'Audio/OxygenOutage.mp3', win:'Audio/Win.mp3',
+  laugh:'Audio/Laugh.mp3', jeffreyLgh:'Audio/JeffreyLaugh.mp3',
+  camSwitch:'Audio/CameraSwitch.mp3', footsteps:'Audio/Footsteps.mp3',
+  muziek:'Audio/Muziek.mp3', windUp:'Audio/WindUp.mp3',
+  alarm:'Audio/Alarm.mp3', vent:'Audio/Vent.mp3',
+  markAudio:'Audio/Mark.mp3', shock:'Audio/Shock.mp3',
+  cameraAlarm:'Audio/CameraAlarm.mp3', fiveAM:'Audio/5AM.mp3',
 };
 
-const NIGHT_MS          = 6 * 60 * 1000;
-const TICK_MS           = 400;
-const O2_DRAIN_BASE     = 0.015;
-const O2_DOOR_TICK      = 0.10;
-const O2_CAM_TICK       = 0.04;
-const O2_VENT_TICK      = 0.08;
-const LURE_CD_S         = 30;
-const GRACE_MS          = 4200;
-const DOOR_RETREAT_MIN  = 14000;
-const DOOR_RETREAT_MAX  = 25000;
-const MB_DRAIN_BASE     = 0.8;
-const MB_DRAIN_SCALE    = 0.3;
-const MB_WIND_RATE      = 8;
-const MUSIC_CAM_ID      = 5;
-const CHAPO_KILL_DELAY  = 6000;
-const ALARM_CD_S        = 20;
-const MADURO_APPEAR_IV  = 2000;
-const MADURO_WATCH_LIM  = 500;
-const MADURO_DISABLE_MS = 8000;
-const JEFFREY_PATH      = [0,1,2,3,4];
-const JEFFREY_SWITCH_S  = 55;
-const CHAPO_ATTACK_S    = 60;
-const CHAPO_CAM_ID      = 3;
-const DIDDY_MOVE_BASE   = [26000,20000,18000,13000,9000,7500];
-const MADURO_CAMS       = [0,1,2,3,4,5];
+const NIGHT_MS=6*60*1000, TICK_MS=400;
+const O2_DRAIN_BASE=0.015, O2_DOOR_TICK=0.10, O2_CAM_TICK=0.04, O2_VENT_TICK=0.08;
+const LURE_CD_S=30, GRACE_MS=4200;
+const DOOR_RETREAT_MIN=14000, DOOR_RETREAT_MAX=25000;
+const MB_DRAIN_BASE=0.8, MB_DRAIN_SCALE=0.3, MB_WIND_RATE=8;
+const MUSIC_CAM_ID=5, CHAPO_KILL_DELAY=6000, ALARM_CD_S=20;
+const MADURO_APPEAR_IV=2000, MADURO_WATCH_LIM=500, MADURO_DISABLE_MS=8000;
+const JEFFREY_PATH=[0,1,2,3,4], JEFFREY_SWITCH_S=55;
+const CHAPO_ATTACK_S=60, CHAPO_CAM_ID=3;
+const DIDDY_MOVE_BASE=[26000,20000,18000,13000,9000,7500];
+const MADURO_CAMS=[0,1,2,3,4];
 
-const POS = { C0:0, C1:1, C2:2, C3:3, C4:4, LD:5, RD:6 };
+const POS={C0:0,C1:1,C2:2,C3:3,C4:4,LD:5,RD:6};
 
-const CAMS = [
-  {id:0, name:'CAM 1', room:'STOOKKAMER'},
-  {id:1, name:'CAM 2', room:'OPSLAGRUIMTE'},
-  {id:2, name:'CAM 3', room:'KLASLOKAAL'},
-  {id:3, name:'CAM 4', room:'LINKER GANG'},
-  {id:4, name:'CAM 5', room:'RECHTER GANG'},
-  {id:5, name:'CAM 6', room:'MUZIEKKAMER'},
+// 5 cameras: CAM 1-5 + music room (id=5 = vent/music)
+const CAMS=[
+  {id:0,name:'CAM 1',room:'STOOKKAMER'},
+  {id:1,name:'CAM 2',room:'OPSLAGRUIMTE'},
+  {id:2,name:'CAM 3',room:'KLASLOKAAL'},
+  {id:3,name:'CAM 4',room:'LINKER GANG'},
+  {id:4,name:'CAM 5',room:'RECHTER GANG'},
+  {id:5,name:'CAM 6',room:'MUZIEKKAMER'},
 ];
 
-const NIGHT_CFGS = {
-  1:{label:'Nacht 1 · De Kelder',      gijsActive:true, hoboActive:true,  tomActive:false, markRutteActive:false, jeffreyActive:false, chapoActive:false, diddyActive:false, maduroChance:.02, shadowChance:.003, moveIval:[38000,28000,20000,14000,9000,6000], hoboMinMs:7000, hoboMaxMs:25000},
-  2:{label:'Nacht 2 · De Muziekkamer', gijsActive:true, hoboActive:true,  tomActive:true,  markRutteActive:true,  jeffreyActive:false, chapoActive:false, diddyActive:false, maduroChance:.03, shadowChance:.004, moveIval:[30000,22000,15000,10000,7000,4500], hoboMinMs:6000, hoboMaxMs:20000},
-  3:{label:'Nacht 3 · De Gang',        gijsActive:true, hoboActive:true,  tomActive:true,  markRutteActive:true,  jeffreyActive:true,  chapoActive:false, diddyActive:false, maduroChance:.04, shadowChance:.005, moveIval:[24000,17000,12000,8500,5500,3500],  hoboMinMs:4500, hoboMaxMs:16000},
-  4:{label:'Nacht 4 · De Linker Gang', gijsActive:true, hoboActive:true,  tomActive:true,  markRutteActive:true,  jeffreyActive:true,  chapoActive:true,  diddyActive:false, maduroChance:.05, shadowChance:.006, moveIval:[20000,14000,9500,6500,4500,3000],   hoboMinMs:3500, hoboMaxMs:13000},
-  5:{label:'Nacht 5 · Het Eindoordeel',gijsActive:true, hoboActive:true,  tomActive:true,  markRutteActive:true,  jeffreyActive:true,  chapoActive:true,  diddyActive:true,  maduroChance:.05, shadowChance:.006, moveIval:[20000,14000,9500,6500,4500,3000],   hoboMinMs:3500, hoboMaxMs:13000},
+const NIGHT_CFGS={
+  1:{label:'Nacht 1',      gijsActive:true,  hoboActive:true,  tomActive:false, markRutteActive:false, jeffreyActive:false, chapoActive:false, diddyActive:false, maduroChance:.02, moveIval:[38000,28000,20000,14000,9000,6000], hoboMinMs:7000,hoboMaxMs:25000},
+  2:{label:'Nacht 2',      gijsActive:true,  hoboActive:true,  tomActive:true,  markRutteActive:true,  jeffreyActive:false, chapoActive:false, diddyActive:false, maduroChance:.03, moveIval:[30000,22000,15000,10000,7000,4500], hoboMinMs:6000,hoboMaxMs:20000},
+  3:{label:'Nacht 3',      gijsActive:true,  hoboActive:true,  tomActive:true,  markRutteActive:true,  jeffreyActive:true,  chapoActive:false, diddyActive:false, maduroChance:.04, moveIval:[24000,17000,12000,8500,5500,3500],  hoboMinMs:4500,hoboMaxMs:16000},
+  4:{label:'Nacht 4',      gijsActive:true,  hoboActive:true,  tomActive:true,  markRutteActive:true,  jeffreyActive:true,  chapoActive:true,  diddyActive:false, maduroChance:.05, moveIval:[20000,14000,9500,6500,4500,3000],   hoboMinMs:3500,hoboMaxMs:13000},
+  5:{label:'Nacht 5',      gijsActive:true,  hoboActive:true,  tomActive:true,  markRutteActive:true,  jeffreyActive:true,  chapoActive:true,  diddyActive:true,  maduroChance:.05, moveIval:[20000,14000,9500,6500,4500,3000],   hoboMinMs:3500,hoboMaxMs:13000},
 };
 
 // ════════════════════════════════════════════════════
-//  SECTION 12 — AUDIO SYSTEM
+//  SECTION 13 — AUDIO
 // ════════════════════════════════════════════════════
-const SFX = {};
-
-function initAudio() {
-  const defs = [
-    ['ambience',    FILES.ambience,    true,  0.28],
-    ['doorClose',   FILES.doorClose,   false, 0.80],
-    ['jumpscare',   FILES.jumpscare,   false, 1.00],
-    ['lure',        FILES.lure,        false, 0.75],
-    ['oxygenOut',   FILES.oxygenOut,   false, 0.85],
-    ['win',         FILES.win,         false, 0.80],
-    ['laugh',       FILES.laugh,       false, 0.70],
-    ['jeffreyLgh',  FILES.jeffreyLgh,  false, 0.80],
-    ['camSwitch',   FILES.camSwitch,   false, 0.50],
-    ['footsteps',   FILES.footsteps,   false, 0.70],
-    ['muziek',      FILES.muziek,      true,  0.45],
-    ['windUp',      FILES.windUp,      true,  0.70],
-    ['alarm',       FILES.alarm,       true,  0.90],
-    ['vent',        FILES.vent,        false, 0.85],
-    ['markAudio',   FILES.markAudio,   false, 0.75],
-    ['shock',       FILES.shock,       false, 0.95],
-    ['cameraAlarm', FILES.cameraAlarm, false, 0.90],
-    ['shadowGijs',  FILES.shadowGijsAudio, false, 0.90],
-    ['fiveAM',      FILES.fiveAM,      false, 1.00],
-  ];
-  defs.forEach(([k, src, loop, vol]) => {
-    const a = new Audio(src);
-    a.loop = loop; a.volume = vol;
-    SFX[k] = a;
-  });
+const SFX={};
+function initAudio(){
+  [['ambience',FILES.ambience,true,.28],['doorClose',FILES.doorClose,false,.8],
+   ['jumpscare',FILES.jumpscare,false,1],['lure',FILES.lure,false,.75],
+   ['oxygenOut',FILES.oxygenOut,false,.85],['win',FILES.win,false,.8],
+   ['laugh',FILES.laugh,false,.7],['jeffreyLgh',FILES.jeffreyLgh,false,.8],
+   ['camSwitch',FILES.camSwitch,false,.5],['footsteps',FILES.footsteps,false,.7],
+   ['muziek',FILES.muziek,true,.45],['windUp',FILES.windUp,true,.7],
+   ['alarm',FILES.alarm,true,.9],['vent',FILES.vent,false,.85],
+   ['markAudio',FILES.markAudio,false,.75],['shock',FILES.shock,false,.95],
+   ['cameraAlarm',FILES.cameraAlarm,false,.9],['fiveAM',FILES.fiveAM,false,1]
+  ].forEach(([k,src,loop,vol])=>{const a=new Audio(src);a.loop=loop;a.volume=vol;SFX[k]=a;});
 }
-
-function play(k) {
-  try { const a = SFX[k]; if (a) { a.currentTime = 0; a.play().catch(() => {}); } } catch(e) {}
-}
-function stop(k) {
-  try { const a = SFX[k]; if (a) { a.pause(); a.currentTime = 0; } } catch(e) {}
-}
-function stopAll() {
-  Object.keys(SFX).forEach(k => stop(k));
-}
+function play(k){try{const a=SFX[k];if(a){a.currentTime=0;a.play().catch(()=>{});}}catch(e){}}
+function stop(k){try{const a=SFX[k];if(a){a.pause();a.currentTime=0;}}catch(e){}}
+function stopAll(){Object.keys(SFX).forEach(stop);}
 
 // ════════════════════════════════════════════════════
-//  SECTION 13 — GAME STATE
+//  SECTION 14 — GAME STATE
 // ════════════════════════════════════════════════════
-let G = null;
-let selectedNight = 0;
+let G=null, selectedNight=0;
 
-function mkState() {
-  const cfg = { ...NIGHT_CFGS[selectedNight || 1] };
+function mkState(){
+  const cfg={...NIGHT_CFGS[selectedNight||1]};
   return {
-    running:       false,
-    nightStart:    0,
-    hour:          0,
-    night:         selectedNight,
-    cfg,
-
-    // O2
-    o2:            100,
-    o2Dead:        false,
-
-    // Doors & vent
-    lfClosed:      false,
-    rtClosed:      false,
-    ventClosed:    false,
-
-    // Gijs (main monster)
-    mPos:          cfg.gijsActive ? POS.C0 : -1,
-    mPath:         null,
-    mDoorTimer:    null,
-    mMoveTimer:    null,
-    mRetreatTimer: null,
-
-    // Hobo Gijs
-    hoboPos:       cfg.hoboActive ? 0 : -1,
-    hoboMoveTimer: null,
-
-    // Music box (Tom)
-    musicBox:      100,
-    isWindingUp:   false,
-
-    // Maduro
-    maduroPos:     -1,
-    maduroWatchMs: 0,
-    maduroDisabled:{},
-    maduroTimer:   null,
-
-    // Jeffrey
-    jeffreyStep:   0,
-    jeffreyPos:    JEFFREY_PATH[0],
-    jeffreyTimer:  JEFFREY_SWITCH_S,
-    jeffreyActive: cfg.jeffreyActive,
-
-    // Chapo
-    chapoTimer:    CHAPO_ATTACK_S,
-    chapoSprite:   0,
-    chapoAlarm:    false,
-    chapoActive:   cfg.chapoActive,
-    chapoKillTimer:null,
-
-    // Diddy
-    diddyPos:      POS.C0,
-    diddyMoveTimer:null,
-    diddyActive:   cfg.diddyActive,
-    diddyPath:     null,
-
-    // Alarm
-    alarmReady:    true,
-    alarmCD:       0,
-    alarmCDTimer:  null,
-
-    // Camera
-    camOpen:       false,
-    curCam:        0,
-
-    // Lure
-    lureReady:     false,
-    lureCD:        LURE_CD_S,
-    lureCDTimer:   null,
-
-    // Mark (vent)
-    markInVent:    false,
-    markCheckIval: null,
-    markKillTimer: null,
-    markLeaveTimer:null,
-
-    // Shadow Gijs
-    shadowActive:  false,
-    shadowKillTimer:null,
-
-    // Timers
-    tickTimer:     null,
-    timeTimer:     null,
-
-    // Misc
-    dead:          false,
-    won:           false,
-    fiveAMDone:    false,
+    running:false, nightStart:0, hour:0, night:selectedNight, cfg,
+    o2:100, o2Dead:false,
+    lfClosed:false, rtClosed:false, ventClosed:false,
+    mPos:cfg.gijsActive?POS.C0:-1, mPath:null, mDoorTimer:null, mMoveTimer:null, mRetreatTimer:null,
+    hoboPos:cfg.hoboActive?0:-1, hoboMoveTimer:null,
+    musicBox:100, isWindingUp:false,
+    maduroPos:-1, maduroWatchMs:0, maduroDisabled:{}, maduroTimer:null,
+    jeffreyStep:0, jeffreyPos:JEFFREY_PATH[0], jeffreyTimer:JEFFREY_SWITCH_S, jeffreyActive:cfg.jeffreyActive,
+    chapoTimer:CHAPO_ATTACK_S, chapoSprite:0, chapoAlarm:false, chapoActive:cfg.chapoActive, chapoKillTimer:null,
+    diddyPos:POS.C0, diddyMoveTimer:null, diddyActive:cfg.diddyActive, diddyPath:null,
+    alarmReady:true, alarmCD:0, alarmCDTimer:null,
+    camOpen:false, curCam:0,
+    lureReady:false, lureCD:LURE_CD_S, lureCDTimer:null,
+    markInVent:false, markCheckIval:null, markKillTimer:null, markLeaveTimer:null,
+    tickTimer:null, timeTimer:null,
+    dead:false, won:false, fiveAMDone:false,
   };
 }
 
 // ════════════════════════════════════════════════════
-//  SECTION 14 — UI HELPERS
+//  SECTION 15 — UI HELPERS
 // ════════════════════════════════════════════════════
-function selectNight(n) {
-  selectedNight = n;
-  for (let i = 1; i <= 5; i++) {
-    const el = document.getElementById('nb' + i);
-    if (el) el.className = 'nb' + (i === n ? ' sel' : '');
-  }
-  const sb = document.getElementById('startBtnMenu');
-  if (sb) { sb.disabled = false; sb.textContent = `▶ NACHT ${n} STARTEN`; }
+function selectNight(n){
+  selectedNight=n;
+  for(let i=1;i<=5;i++){const el=document.getElementById('nb'+i);if(el)el.className='nb'+(i===n?' sel':'');}
+  const sb=document.getElementById('startBtnMenu');
+  if(sb){sb.disabled=false;sb.textContent=`▶ NACHT ${n} STARTEN`;}
 }
-window.selectNight = selectNight;
+window.selectNight=selectNight;
 
-function showWarn() {
-  document.getElementById('warnScreen').style.display = 'flex';
+function showMenu(){
+  document.getElementById('warnScreen').style.display='none';
+  document.getElementById('menuScreen').style.display='flex';
+  if(xrSupported) showVRMenu();
 }
-
-function showMenu() {
-  document.getElementById('warnScreen').style.display = 'none';
-  document.getElementById('menuScreen').style.display = 'flex';
-  if (xrSupported) showVRMenu();
-}
-
 document.getElementById('warnBtn').addEventListener('click', showMenu);
 
-function showMenu3D() {
-  document.getElementById('menuScreen').style.display = 'flex';
-  if (xrSupported) showVRMenu();
+function updateO2UI(){
+  const p=Math.max(0,Math.round(G.o2));
+  const fill=document.getElementById('o2Fill'),lbl=document.getElementById('o2Pct');
+  if(fill){fill.style.width=p+'%';fill.className='bar-fill'+(p<=10?' crit':p<=30?' warn':'');}
+  if(lbl)lbl.textContent=p+'%';
 }
-
-function updateO2UI() {
-  const p = Math.max(0, Math.round(G.o2));
-  const fill = document.getElementById('o2Fill');
-  const lbl  = document.getElementById('o2Pct');
-  if (fill) { fill.style.width = p + '%'; fill.className = 'bar-fill' + (p <= 10 ? ' crit' : p <= 30 ? ' warn' : ''); }
-  if (lbl)  lbl.textContent = p + '%';
+function updateMusicBoxUI(){
+  if(!G.cfg.tomActive)return;
+  const p=Math.max(0,Math.round(G.musicBox));
+  const fill=document.getElementById('mbFill'),lbl=document.getElementById('mbPct');
+  if(fill)fill.style.width=p+'%'; if(lbl)lbl.textContent=p+'%';
+  if(SFX.muziek)SFX.muziek.playbackRate=p>50?1:p>25?0.82:p>10?0.62:0.4;
 }
-
-function updateMusicBoxUI() {
-  if (!G.cfg.tomActive) return;
-  const p = Math.max(0, Math.round(G.musicBox));
-  const fill = document.getElementById('mbFill');
-  const lbl  = document.getElementById('mbPct');
-  if (fill) fill.style.width = p + '%';
-  if (lbl)  lbl.textContent = p + '%';
-  if (SFX.muziek) SFX.muziek.playbackRate = p > 50 ? 1 : p > 25 ? 0.82 : p > 10 ? 0.62 : 0.4;
+function updateLureUI(){
+  const rng=inLureRange(),hb=document.getElementById('lureBtn'),cd=document.getElementById('lureCdLbl');
+  if(!hb)return;
+  if(G.lureReady){hb.disabled=!rng;hb.className='act-btn'+(rng?' warn':'');hb.textContent=rng?'🔊 LOKKEN — KLAAR!':'🔊 LOKKEN';if(cd){cd.textContent=rng?'⚠ Monster in bereik!':'Buiten bereik';cd.style.color=rng?'#88ff55':'#446644';}}
+  else{const s=Math.ceil(G.lureCD);hb.disabled=true;hb.className='act-btn';hb.textContent=`🔊 LOKKEN — ${s}s`;if(cd){cd.textContent=`CD: ${s}s`;cd.style.color='#446644';}}
 }
-
-function updateLureUI() {
-  const rng = inLureRange();
-  const hb  = document.getElementById('lureBtn');
-  const cd  = document.getElementById('lureCdLbl');
-  if (!hb) return;
-  if (G.lureReady) {
-    hb.disabled = !rng;
-    hb.className = 'act-btn' + (rng ? ' warn' : '');
-    hb.textContent = rng ? '🔊 LOKKEN — KLAAR!' : '🔊 LOKKEN';
-    if (cd) { cd.textContent = rng ? '⚠ Monster in bereik!' : 'Buiten bereik'; cd.style.color = rng ? '#88ff55' : '#446644'; }
-  } else {
-    const s = Math.ceil(G.lureCD);
-    hb.disabled = true; hb.className = 'act-btn';
-    hb.textContent = `🔊 LOKKEN — ${s}s`;
-    if (cd) { cd.textContent = `CD: ${s}s`; cd.style.color = '#446644'; }
-  }
+function updateVentUI(){
+  const btn=document.getElementById('ventBtn');
+  if(btn){btn.className='act-btn'+(G.ventClosed?' active':'');btn.textContent=G.ventClosed?'🌬 OPEN VENT [V]':'🌬 SLUIT VENT [V]';}
+  ventLight3D.material.color.setHex(G.markInVent&&!G.ventClosed?0xff4400:0x111111);
 }
-
-function updateVentUI() {
-  const btn = document.getElementById('ventBtn');
-  if (btn) {
-    btn.className = 'act-btn' + (G.ventClosed ? ' active' : '');
-    btn.textContent = G.ventClosed ? '🌬 OPEN VENT [V]' : '🌬 SLUIT VENT [V]';
-  }
-  ventLight3D.material.color.setHex(G.markInVent && !G.ventClosed ? 0xff4400 : 0x111111);
+function refreshDoorUI(){
+  const lb=document.getElementById('doorL'),rb=document.getElementById('doorR');
+  if(lb)lb.className='act-btn'+(G.lfClosed?' active':'');
+  if(rb)rb.className='act-btn'+(G.rtClosed?' active':'');
 }
-
-function refreshDoorUI() {
-  const lb = document.getElementById('doorL');
-  const rb = document.getElementById('doorR');
-  if (lb) lb.className = 'act-btn' + (G.lfClosed ? ' active' : '');
-  if (rb) rb.className = 'act-btn' + (G.rtClosed ? ' active' : '');
+function alarmTargetVisible(){
+  if(!G.camOpen||G.dead||G.won)return false;
+  return (G.chapoActive&&(G.curCam===CHAPO_CAM_ID||G.chapoAlarm))||(G.diddyActive&&G.diddyPos===G.curCam&&G.curCam!==MUSIC_CAM_ID);
 }
-
-function alarmTargetVisible() {
-  if (!G.camOpen || G.dead || G.won) return false;
-  const id = G.curCam;
-  return (G.chapoActive && (id === CHAPO_CAM_ID || G.chapoAlarm)) ||
-         (G.diddyActive && G.diddyPos === id && id !== MUSIC_CAM_ID);
-}
-
-function updateAlarmUI() {
-  if (!G.camOpen) return;
-  const btn = document.getElementById('alarmBtn');
-  const lbl = document.getElementById('alarmCdLbl');
-  if (!btn || !lbl) return;
-  const tgt = alarmTargetVisible();
-  if (G.alarmReady) {
-    btn.disabled = false;
-    btn.className = 'alarm-btn' + (tgt ? ' target' : ' ready');
-    btn.textContent = tgt ? '🚨 ALARM — VUUR!' : '🚨 ALARM';
-    lbl.textContent = 'KLAAR';
-  } else {
-    btn.disabled = true;
-    btn.className = 'alarm-btn';
-    const s = Math.ceil(G.alarmCD);
-    lbl.textContent = s > 0 ? `CD: ${s}s` : '--';
-  }
+function updateAlarmUI(){
+  if(!G.camOpen)return;
+  const btn=document.getElementById('alarmBtn'),lbl=document.getElementById('alarmCdLbl');
+  if(!btn||!lbl)return;
+  const tgt=alarmTargetVisible();
+  if(G.alarmReady){btn.disabled=false;btn.className='alarm-btn'+(tgt?' target':' ready');btn.textContent=tgt?'🚨 ALARM — VUUR!':'🚨 ALARM';lbl.textContent='KLAAR';}
+  else{btn.disabled=true;btn.className='alarm-btn';const s=Math.ceil(G.alarmCD);lbl.textContent=s>0?`CD: ${s}s`:'--';}
 }
 
 // ════════════════════════════════════════════════════
-//  SECTION 15 — CAMERA UI (2D security monitor)
+//  SECTION 16 — 2D CAMERA UI SYSTEM
 // ════════════════════════════════════════════════════
-const camBgImgs = {};
-
-function loadCamBg(id, cb) {
-  if (camBgImgs[id]) { cb(camBgImgs[id]); return; }
-  const keys = ['camBg0','camBg1','camBg2','camBg3','camBg4','camBg5'];
-  const img = new Image();
-  img.onload = () => { camBgImgs[id] = img; cb(img); };
-  img.onerror = () => cb(null);
-  img.src = FILES[keys[id]];
+const camBgImgs={};
+function loadCamBg(id,cb){
+  if(camBgImgs[id])return cb(camBgImgs[id]);
+  const keys=['camBg0','camBg1','camBg2','camBg3','camBg4','camBg5'];
+  const img=new Image();
+  img.onload=()=>{camBgImgs[id]=img;cb(img);};
+  img.onerror=()=>cb(null);
+  img.src=FILES[keys[id]];
 }
-
-function drawCamRoom(canvas, roomId) {
-  const W = canvas.offsetWidth || 800;
-  const H = canvas.offsetHeight || 400;
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, W, H);
-  const img = camBgImgs[roomId];
-  if (img) {
-    const iR = img.naturalWidth / img.naturalHeight, cR = W / H;
-    let sw, sh, sx = 0, sy = 0;
-    if (iR > cR) { sh = img.naturalHeight; sw = sh * cR; sx = (img.naturalWidth - sw) / 2; }
-    else { sw = img.naturalWidth; sh = sw / cR; sy = (img.naturalHeight - sh) / 2; }
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
-  } else {
-    ctx.fillStyle = '#080a06'; ctx.fillRect(0, 0, W, H);
-    loadCamBg(roomId, () => drawCamRoom(canvas, roomId));
-  }
-  ctx.fillStyle = 'rgba(0,18,4,0.35)'; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = 'rgba(0,0,0,0.06)';
-  for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);
+function drawCamRoom(canvas,roomId){
+  const W=canvas.offsetWidth||800,H=canvas.offsetHeight||400;
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,W,H);
+  const img=camBgImgs[roomId];
+  if(img){const iR=img.naturalWidth/img.naturalHeight,cR=W/H;let sw,sh,sx=0,sy=0;if(iR>cR){sh=img.naturalHeight;sw=sh*cR;sx=(img.naturalWidth-sw)/2;}else{sw=img.naturalWidth;sh=sw/cR;sy=(img.naturalHeight-sh)/2;}ctx.drawImage(img,sx,sy,sw,sh,0,0,W,H);}
+  else{ctx.fillStyle='#080a06';ctx.fillRect(0,0,W,H);loadCamBg(roomId,()=>drawCamRoom(canvas,roomId));}
+  ctx.fillStyle='rgba(0,18,4,0.35)';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(0,0,0,0.06)';for(let y=0;y<H;y+=3)ctx.fillRect(0,y,W,1);
 }
-
-function buildCamStrip() {
-  const strip = document.getElementById('camStrip');
-  if (!strip) return;
-  strip.innerHTML = '';
-  CAMS.forEach(c => {
-    const el = document.createElement('div');
-    el.className = 'ct' + (c.id === 0 ? ' on' : '');
-    el.id = 'ct_' + c.id;
-    el.innerHTML = `<span>${c.name}<br>${c.room}</span>
+function buildCamStrip(){
+  const strip=document.getElementById('camStrip');if(!strip)return;
+  strip.innerHTML='';
+  CAMS.forEach(c=>{
+    const el=document.createElement('div');
+    el.className='ct'+(c.id===0?' on':'');el.id='ct_'+c.id;
+    el.innerHTML=`<span>${c.name}<br>${c.room}</span>
       <div class="cdot" id="cdg${c.id}"></div>
       <div class="cdot" style="top:12px;right:4px" id="cdh${c.id}"></div>
       <div class="cdot" style="top:20px;right:4px" id="cdj${c.id}"></div>
       <div class="cdot" style="top:28px;right:4px" id="cdcp${c.id}"></div>
       <div class="cdot" style="top:36px;right:4px" id="cdd${c.id}"></div>`;
-    el.onclick = () => switchCam(c.id);
-    strip.appendChild(el);
-    loadCamBg(c.id, () => {});
+    el.onclick=()=>switchCam(c.id); strip.appendChild(el);
+    loadCamBg(c.id,()=>{});
   });
 }
-
-function isCamDisabled(id) {
-  return !!(G && G.maduroDisabled && G.maduroDisabled[id] > 0);
+function isCamDisabled(id){return !!(G&&G.maduroDisabled&&G.maduroDisabled[id]>0);}
+function switchCam(id){
+  if(!G||G.dead||G.won)return;
+  if(isCamDisabled(id))return;
+  if(id!==G.curCam)play('camSwitch');
+  if(G.maduroPos===G.curCam&&id!==G.curCam)maduroDespawn();
+  G.curCam=id;G.maduroWatchMs=0;
+  document.querySelectorAll('.ct').forEach(t=>t.classList.remove('on'));
+  const ct=document.getElementById('ct_'+id);if(ct)ct.classList.add('on');
+  document.getElementById('camNameLbl').textContent=CAMS[id].name;
+  document.getElementById('camRoomLbl').textContent=CAMS[id].room;
+  const wb=document.getElementById('windBtn');
+  if(wb)wb.style.display=(id===MUSIC_CAM_ID&&G.cfg.tomActive)?'block':'none';
+  if(SFX.muziek)SFX.muziek.volume=id===MUSIC_CAM_ID?0.55:0.15;
+  renderCamFeed();updateAlarmUI();updateLureUI();
+  highlightCamBtn(id);
 }
-
-function switchCam(id) {
-  if (!G || G.dead || G.won) return;
-  if (isCamDisabled(id)) return;
-  if (id !== G.curCam) play('camSwitch');
-  if (G.maduroPos === G.curCam && id !== G.curCam) maduroDespawn();
-  G.curCam = id; G.maduroWatchMs = 0;
-  document.querySelectorAll('.ct').forEach(t => t.classList.remove('on'));
-  const ct = document.getElementById('ct_' + id);
-  if (ct) ct.classList.add('on');
-  document.getElementById('camNameLbl').textContent = CAMS[id].name;
-  document.getElementById('camRoomLbl').textContent = CAMS[id].room;
-  const wb = document.getElementById('windBtn');
-  if (wb) wb.style.display = (id === MUSIC_CAM_ID && G.cfg.tomActive) ? 'block' : 'none';
-  if (SFX.muziek) SFX.muziek.volume = id === MUSIC_CAM_ID ? 0.55 : 0.15;
-  renderCamFeed();
-  updateAlarmUI();
-  updateLureUI();
+function renderCamFeed(){
+  const id=G.curCam;
+  const cv=document.getElementById('camCanvas');if(cv)drawCamRoom(cv,id);
+  const disabled=isCamDisabled(id);
+  const mo=document.getElementById('maduroOverlay');if(mo)mo.style.display=disabled?'flex':'none';
+  const show=(eid,vis,src)=>{const el=document.getElementById(eid);if(!el)return;el.style.display=vis?'block':'none';if(vis&&src)el.src=src;};
+  show('monsterImg',  G.cfg.gijsActive&&G.mPos===id&&id!==MUSIC_CAM_ID, FILES.gijsCam);
+  show('hoboImg',     G.cfg.hoboActive&&G.hoboPos===id&&id!==MUSIC_CAM_ID, FILES.hoboGijsCam);
+  show('jeffreyImg',  G.jeffreyActive&&G.jeffreyPos===id&&id!==MUSIC_CAM_ID, FILES.jeffreyCam);
+  show('chapoImg',    G.chapoActive&&id===CHAPO_CAM_ID&&!G.chapoAlarm, FILES.chapoCam);
+  show('diddyImg',    G.diddyActive&&G.diddyPos===id&&id!==MUSIC_CAM_ID, FILES.diddyCam);
+  show('tomImg',      G.cfg.tomActive&&id===MUSIC_CAM_ID, FILES.tomCam);
+  show('maduroCamImg',G.maduroPos===id,null);
+  show('markVentImg', G.markInVent&&!G.ventClosed,null);
+  const tdov=document.getElementById('tomDangerOverlay');
+  if(tdov){if(G.cfg.tomActive&&id===MUSIC_CAM_ID){const d=Math.max(0,(100-G.musicBox)/100);tdov.style.opacity=String(Math.pow(d,1.4)*0.9);}else tdov.style.opacity='0';}
+  const ts=document.getElementById('camTs');if(ts)ts.textContent=new Date().toLocaleTimeString('nl-NL');
 }
-
-function renderCamFeed() {
-  const id = G.curCam;
-  const cv = document.getElementById('camCanvas');
-  if (cv) drawCamRoom(cv, id);
-
-  const disabled = isCamDisabled(id);
-  const madOvl = document.getElementById('maduroOverlay');
-  if (madOvl) madOvl.style.display = disabled ? 'flex' : 'none';
-
-  const show = (elId, vis, src) => {
-    const el = document.getElementById(elId);
-    if (!el) return;
-    el.style.display = vis ? 'block' : 'none';
-    if (vis && src) el.src = src;
-  };
-
-  show('monsterImg',   G.cfg.gijsActive && G.mPos === id && id !== MUSIC_CAM_ID, FILES.gijsCam);
-  show('hoboImg',      G.cfg.hoboActive && G.hoboPos === id && id !== MUSIC_CAM_ID, FILES.hoboGijsCam);
-  show('jeffreyImg',   G.jeffreyActive && G.jeffreyPos === id && id !== MUSIC_CAM_ID, FILES.jeffreyCam);
-  show('chapoImg',     G.chapoActive && id === CHAPO_CAM_ID && !G.chapoAlarm, FILES.chapoCam);
-  show('diddyImg',     G.diddyActive && G.diddyPos === id && id !== MUSIC_CAM_ID, FILES.diddyCam);
-  show('tomImg',       G.cfg.tomActive && id === MUSIC_CAM_ID, FILES.tomCam);
-  show('maduroCamImg', G.maduroPos === id, null);
-  show('markVentImg',  G.markInVent && !G.ventClosed, null);
-
-  const tdov = document.getElementById('tomDangerOverlay');
-  if (tdov) {
-    if (G.cfg.tomActive && id === MUSIC_CAM_ID) {
-      const d = Math.max(0, (100 - G.musicBox) / 100);
-      tdov.style.opacity = String(Math.pow(d, 1.4) * 0.9);
-    } else {
-      tdov.style.opacity = '0';
-    }
-  }
-
-  const ts = document.getElementById('camTs');
-  if (ts) ts.textContent = new Date().toLocaleTimeString('nl-NL');
-}
-
-function refreshDots() {
-  CAMS.forEach(c => {
-    const id = c.id;
-    const g  = document.getElementById('cdg'  + id); if (g)  { g.className  = 'cdot'; if (G && G.cfg.gijsActive && G.mPos === id && id !== MUSIC_CAM_ID) g.classList.add('gd'); }
-    const h  = document.getElementById('cdh'  + id); if (h)  { h.className  = 'cdot'; if (G && G.cfg.hoboActive && G.hoboPos === id && id !== MUSIC_CAM_ID) h.classList.add('hd'); }
-    const jd = document.getElementById('cdj'  + id); if (jd) { jd.className = 'cdot'; if (G && G.jeffreyActive && G.jeffreyPos === id && id !== MUSIC_CAM_ID) jd.classList.add('jd'); }
-    const cp = document.getElementById('cdcp' + id); if (cp) { cp.className = 'cdot'; if (G && G.chapoActive && id === CHAPO_CAM_ID && !G.chapoAlarm) cp.classList.add('cpd'); }
-    const dd = document.getElementById('cdd'  + id); if (dd) { dd.className = 'cdot'; if (G && G.diddyActive && G.diddyPos === id && id !== MUSIC_CAM_ID) dd.classList.add('dd'); }
+function refreshDots(){
+  CAMS.forEach(c=>{
+    const id=c.id;
+    const g=document.getElementById('cdg'+id);if(g){g.className='cdot';if(G&&G.cfg.gijsActive&&G.mPos===id&&id!==MUSIC_CAM_ID)g.classList.add('gd');}
+    const h=document.getElementById('cdh'+id);if(h){h.className='cdot';if(G&&G.cfg.hoboActive&&G.hoboPos===id&&id!==MUSIC_CAM_ID)h.classList.add('hd');}
+    const jd=document.getElementById('cdj'+id);if(jd){jd.className='cdot';if(G&&G.jeffreyActive&&G.jeffreyPos===id&&id!==MUSIC_CAM_ID)jd.classList.add('jd');}
+    const cp=document.getElementById('cdcp'+id);if(cp){cp.className='cdot';if(G&&G.chapoActive&&id===CHAPO_CAM_ID&&!G.chapoAlarm)cp.classList.add('cpd');}
+    const dd=document.getElementById('cdd'+id);if(dd){dd.className='cdot';if(G&&G.diddyActive&&G.diddyPos===id&&id!==MUSIC_CAM_ID)dd.classList.add('dd');}
   });
 }
 
 // ════════════════════════════════════════════════════
-//  SECTION 16 — MONSTER AI: GIJS (MAIN)
+//  SECTION 17 — MONSTER AI: GIJS
 // ════════════════════════════════════════════════════
-function scheduleGijsMove() {
-  if (G.mMoveTimer) clearTimeout(G.mMoveTimer);
-  if (G.dead || G.won || !G.cfg.gijsActive) return;
-  const iv = G.cfg.moveIval;
-  const base = iv[Math.min(G.hour, 5)];
-  if (!isFinite(base)) return;
-  const delay = base + Math.random() * 4000 - 1500;
-  G.mMoveTimer = setTimeout(() => { advanceGijs(); scheduleGijsMove(); }, Math.max(500, delay));
+function scheduleGijsMove(){
+  if(G.mMoveTimer)clearTimeout(G.mMoveTimer);
+  if(G.dead||G.won||!G.cfg.gijsActive)return;
+  const base=G.cfg.moveIval[Math.min(G.hour,5)];
+  if(!isFinite(base))return;
+  G.mMoveTimer=setTimeout(()=>{advanceGijs();scheduleGijsMove();},Math.max(500,base+Math.random()*4000-1500));
 }
-
-function advanceGijs() {
-  if (G.dead || G.won || !G.cfg.gijsActive) return;
-  if (G.mPos === POS.LD || G.mPos === POS.RD) return;
-  if (Math.random() < 0.2) play('laugh');
-  let np = G.mPos;
-  if (G.mPos === POS.C0) np = POS.C1;
-  else if (G.mPos === POS.C1) np = POS.C2;
-  else if (G.mPos === POS.C2) { if (!G.mPath) G.mPath = Math.random() < 0.5 ? 'left' : 'right'; np = G.mPath === 'left' ? POS.C3 : POS.C4; G.mPath = null; }
-  else if (G.mPos === POS.C3) np = POS.LD;
-  else if (G.mPos === POS.C4) np = POS.RD;
-  G.mPos = np;
-  refreshDots(); refreshDoorUI();
-  if (G.camOpen) renderCamFeed();
-  if (np === POS.LD || np === POS.RD) gijsAtDoor(np);
+function advanceGijs(){
+  if(G.dead||G.won||!G.cfg.gijsActive)return;
+  if(G.mPos===POS.LD||G.mPos===POS.RD)return;
+  if(Math.random()<0.2)play('laugh');
+  let np=G.mPos;
+  if(G.mPos===POS.C0)np=POS.C1;
+  else if(G.mPos===POS.C1)np=POS.C2;
+  else if(G.mPos===POS.C2){if(!G.mPath)G.mPath=Math.random()<.5?'left':'right';np=G.mPath==='left'?POS.C3:POS.C4;G.mPath=null;}
+  else if(G.mPos===POS.C3)np=POS.LD;
+  else if(G.mPos===POS.C4)np=POS.RD;
+  G.mPos=np; refreshDots(); refreshDoorUI();
+  if(G.camOpen)renderCamFeed();
+  if(np===POS.LD||np===POS.RD)gijsAtDoor(np);
 }
-
-function gijsAtDoor(pos) {
+function gijsAtDoor(pos){
   refreshDoorUI();
-  const closed = pos === POS.LD ? G.lfClosed : G.rtClosed;
-  if (!closed) armDoorTimer();
-  if (G.mRetreatTimer) clearTimeout(G.mRetreatTimer);
-  const rd = DOOR_RETREAT_MIN + Math.random() * (DOOR_RETREAT_MAX - DOOR_RETREAT_MIN);
-  G.mRetreatTimer = setTimeout(retreatGijs, rd);
+  const closed=pos===POS.LD?G.lfClosed:G.rtClosed;
+  if(!closed)armDoorTimer();
+  if(G.mRetreatTimer)clearTimeout(G.mRetreatTimer);
+  G.mRetreatTimer=setTimeout(retreatGijs,DOOR_RETREAT_MIN+Math.random()*(DOOR_RETREAT_MAX-DOOR_RETREAT_MIN));
 }
-
-function retreatGijs() {
-  if (G.dead || G.won) return;
-  if (G.mPos !== POS.LD && G.mPos !== POS.RD) return;
-  if (G.mDoorTimer) { clearTimeout(G.mDoorTimer); G.mDoorTimer = null; }
-  G.mPos = [POS.C0, POS.C1, POS.C2][Math.floor(Math.random() * 3)];
-  play('footsteps');
-  refreshDots(); refreshDoorUI();
-  if (G.camOpen) renderCamFeed();
-  updateLureUI();
+function retreatGijs(){
+  if(G.dead||G.won)return;
+  if(G.mPos!==POS.LD&&G.mPos!==POS.RD)return;
+  if(G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}
+  G.mPos=[POS.C0,POS.C1,POS.C2][Math.floor(Math.random()*3)];
+  play('footsteps'); refreshDots(); refreshDoorUI();
+  if(G.camOpen)renderCamFeed(); updateLureUI();
 }
-
-function armDoorTimer() {
-  if (G.mDoorTimer) clearTimeout(G.mDoorTimer);
-  if (G.dead || G.won || !G.cfg.gijsActive) return;
-  G.mDoorTimer = setTimeout(() => {
-    if (G.dead || G.won) return;
-    if (G.mPos === POS.LD && !G.lfClosed) triggerGijsJS();
-    if (G.mPos === POS.RD && !G.rtClosed) triggerGijsJS();
-  }, GRACE_MS);
+function armDoorTimer(){
+  if(G.mDoorTimer)clearTimeout(G.mDoorTimer);
+  if(G.dead||G.won||!G.cfg.gijsActive)return;
+  G.mDoorTimer=setTimeout(()=>{
+    if(G.dead||G.won)return;
+    if(G.mPos===POS.LD&&!G.lfClosed)triggerGijsJS();
+    if(G.mPos===POS.RD&&!G.rtClosed)triggerGijsJS();
+  },GRACE_MS);
 }
 
 // ════════════════════════════════════════════════════
-//  SECTION 17 — MONSTER AI: HOBO GIJS
+//  SECTION 18 — MONSTER AI: HOBO GIJS
 // ════════════════════════════════════════════════════
-function scheduleHoboMove() {
-  if (G.hoboMoveTimer) clearTimeout(G.hoboMoveTimer);
-  if (G.dead || G.won || !G.cfg.hoboActive) return;
-  const delay = G.cfg.hoboMinMs + Math.random() * (G.cfg.hoboMaxMs - G.cfg.hoboMinMs);
-  if (!isFinite(delay)) return;
-  G.hoboMoveTimer = setTimeout(() => { moveHobo(); scheduleHoboMove(); }, delay);
+function scheduleHoboMove(){
+  if(G.hoboMoveTimer)clearTimeout(G.hoboMoveTimer);
+  if(G.dead||G.won||!G.cfg.hoboActive)return;
+  const delay=G.cfg.hoboMinMs+Math.random()*(G.cfg.hoboMaxMs-G.cfg.hoboMinMs);
+  if(!isFinite(delay))return;
+  G.hoboMoveTimer=setTimeout(()=>{moveHobo();scheduleHoboMove();},delay);
 }
-
-function moveHobo() {
-  if (G.dead || G.won || !G.cfg.hoboActive) return;
-  const cams = [0, 1, 2, 3, 4];
-  let np, attempts = 0;
-  do { np = cams[Math.floor(Math.random() * cams.length)]; attempts++; } while (np === G.hoboPos && attempts < 20);
-  G.hoboPos = np;
-  refreshDots();
-  if (G.camOpen) renderCamFeed();
-  updateLureUI();
+function moveHobo(){
+  if(G.dead||G.won||!G.cfg.hoboActive)return;
+  const cams=[0,1,2,3,4]; let np,att=0;
+  do{np=cams[Math.floor(Math.random()*cams.length)];att++;}while(np===G.hoboPos&&att<20);
+  G.hoboPos=np; refreshDots(); if(G.camOpen)renderCamFeed(); updateLureUI();
 }
 
 // ════════════════════════════════════════════════════
-//  SECTION 18 — MONSTER AI: JEFFREY
+//  SECTION 19 — MONSTER AI: JEFFREY
 // ════════════════════════════════════════════════════
-function tickJeffrey() {
-  if (!G.jeffreyActive || G.dead || G.won) return;
-  const watching = G.camOpen && G.curCam === G.jeffreyPos && !isCamDisabled(G.curCam);
-  if (watching) return;
-  G.jeffreyTimer -= TICK_MS / 1000;
-  if (G.jeffreyTimer <= 0) {
+function tickJeffrey(){
+  if(!G.jeffreyActive||G.dead||G.won)return;
+  if(G.camOpen&&G.curCam===G.jeffreyPos&&!isCamDisabled(G.curCam))return;
+  G.jeffreyTimer-=TICK_MS/1000;
+  if(G.jeffreyTimer<=0){
     G.jeffreyStep++;
-    if (G.jeffreyStep >= JEFFREY_PATH.length) { triggerJeffreyJS(); return; }
-    G.jeffreyPos = JEFFREY_PATH[G.jeffreyStep];
-    G.jeffreyTimer = JEFFREY_SWITCH_S;
-    play('jeffreyLgh');
-    refreshDots();
-    if (G.camOpen) renderCamFeed();
+    if(G.jeffreyStep>=JEFFREY_PATH.length){triggerJeffreyJS();return;}
+    G.jeffreyPos=JEFFREY_PATH[G.jeffreyStep]; G.jeffreyTimer=JEFFREY_SWITCH_S;
+    play('jeffreyLgh'); refreshDots(); if(G.camOpen)renderCamFeed();
   }
 }
 
 // ════════════════════════════════════════════════════
-//  SECTION 19 — MONSTER AI: CHAPO
+//  SECTION 20 — MONSTER AI: CHAPO
 // ════════════════════════════════════════════════════
-function tickChapo() {
-  if (!G.chapoActive || G.dead || G.won || G.chapoAlarm) return;
-  const watching = G.camOpen && G.curCam === CHAPO_CAM_ID && !isCamDisabled(CHAPO_CAM_ID);
-  if (!watching) G.chapoTimer -= TICK_MS / 1000;
-  if (G.chapoTimer <= 0 && !G.chapoAlarm) triggerChapoAlarm();
+function tickChapo(){
+  if(!G.chapoActive||G.dead||G.won||G.chapoAlarm)return;
+  if(!(G.camOpen&&G.curCam===CHAPO_CAM_ID&&!isCamDisabled(CHAPO_CAM_ID)))G.chapoTimer-=TICK_MS/1000;
+  if(G.chapoTimer<=0&&!G.chapoAlarm)triggerChapoAlarm();
 }
-
-function triggerChapoAlarm() {
-  G.chapoAlarm = true;
-  play('alarm');
-  document.getElementById('alarmFlash').style.display = 'block';
-  refreshDots();
-  if (G.camOpen) renderCamFeed();
-  G.chapoKillTimer = setTimeout(() => { if (!G.dead && !G.won && G.chapoAlarm) triggerChapoJS(); }, CHAPO_KILL_DELAY);
+function triggerChapoAlarm(){
+  G.chapoAlarm=true; play('alarm');
+  document.getElementById('alarmFlash').style.display='block';
+  refreshDots(); if(G.camOpen)renderCamFeed();
+  G.chapoKillTimer=setTimeout(()=>{if(!G.dead&&!G.won&&G.chapoAlarm)triggerChapoJS();},CHAPO_KILL_DELAY);
 }
-
-function resetChapo() {
-  if (G.chapoKillTimer) { clearTimeout(G.chapoKillTimer); G.chapoKillTimer = null; }
-  if (G.chapoAlarm) { stop('alarm'); document.getElementById('alarmFlash').style.display = 'none'; G.chapoAlarm = false; }
-  G.chapoTimer = CHAPO_ATTACK_S; G.chapoSprite = 0;
-  refreshDots();
-  if (G.camOpen) renderCamFeed();
+function resetChapo(){
+  if(G.chapoKillTimer){clearTimeout(G.chapoKillTimer);G.chapoKillTimer=null;}
+  if(G.chapoAlarm){stop('alarm');document.getElementById('alarmFlash').style.display='none';G.chapoAlarm=false;}
+  G.chapoTimer=CHAPO_ATTACK_S; G.chapoSprite=0;
+  refreshDots(); if(G.camOpen)renderCamFeed();
 }
 
 // ════════════════════════════════════════════════════
-//  SECTION 20 — MONSTER AI: DIDDY
+//  SECTION 21 — MONSTER AI: DIDDY
 // ════════════════════════════════════════════════════
-function scheduleDiddyMove() {
-  if (G.diddyMoveTimer) clearTimeout(G.diddyMoveTimer);
-  if (G.dead || G.won || !G.diddyActive) return;
-  const base = DIDDY_MOVE_BASE[Math.min(G.hour, 5)];
-  if (!isFinite(base)) return;
-  const delay = base + Math.random() * 3000 - 1000;
-  G.diddyMoveTimer = setTimeout(() => { advanceDiddy(); scheduleDiddyMove(); }, Math.max(500, delay));
+function scheduleDiddyMove(){
+  if(G.diddyMoveTimer)clearTimeout(G.diddyMoveTimer);
+  if(G.dead||G.won||!G.diddyActive)return;
+  const base=DIDDY_MOVE_BASE[Math.min(G.hour,5)];if(!isFinite(base))return;
+  G.diddyMoveTimer=setTimeout(()=>{advanceDiddy();scheduleDiddyMove();},Math.max(500,base+Math.random()*3000-1000));
 }
-
-function advanceDiddy() {
-  if (G.dead || G.won || !G.diddyActive) return;
-  if (G.diddyPos === POS.LD || G.diddyPos === POS.RD) { triggerDiddyJS(); return; }
-  let np = G.diddyPos;
-  if (G.diddyPos === POS.C0) np = POS.C1;
-  else if (G.diddyPos === POS.C1) np = POS.C2;
-  else if (G.diddyPos === POS.C2) { if (!G.diddyPath) G.diddyPath = Math.random() < 0.5 ? 'left' : 'right'; np = G.diddyPath === 'left' ? POS.C3 : POS.C4; G.diddyPath = null; }
-  else if (G.diddyPos === POS.C3) np = POS.LD;
-  else if (G.diddyPos === POS.C4) np = POS.RD;
-  G.diddyPos = np;
-  refreshDots();
-  if (G.camOpen) renderCamFeed();
-  updateAlarmUI();
-  if (np === POS.LD || np === POS.RD) {
-    if (G.diddyMoveTimer) clearTimeout(G.diddyMoveTimer);
-    G.diddyMoveTimer = setTimeout(() => { if (!G.dead && !G.won) triggerDiddyJS(); }, 2500);
-  }
+function advanceDiddy(){
+  if(G.dead||G.won||!G.diddyActive)return;
+  if(G.diddyPos===POS.LD||G.diddyPos===POS.RD){triggerDiddyJS();return;}
+  let np=G.diddyPos;
+  if(G.diddyPos===POS.C0)np=POS.C1;
+  else if(G.diddyPos===POS.C1)np=POS.C2;
+  else if(G.diddyPos===POS.C2){if(!G.diddyPath)G.diddyPath=Math.random()<.5?'left':'right';np=G.diddyPath==='left'?POS.C3:POS.C4;G.diddyPath=null;}
+  else if(G.diddyPos===POS.C3)np=POS.LD;
+  else if(G.diddyPos===POS.C4)np=POS.RD;
+  G.diddyPos=np; refreshDots(); if(G.camOpen)renderCamFeed(); updateAlarmUI();
+  if(np===POS.LD||np===POS.RD){if(G.diddyMoveTimer)clearTimeout(G.diddyMoveTimer);G.diddyMoveTimer=setTimeout(()=>{if(!G.dead&&!G.won)triggerDiddyJS();},2500);}
 }
-
-function resetDiddy() {
-  if (G.diddyMoveTimer) clearTimeout(G.diddyMoveTimer);
-  G.diddyPos = POS.C0; G.diddyPath = null;
-  refreshDots();
-  if (G.camOpen) renderCamFeed();
-  scheduleDiddyMove();
-}
+function resetDiddy(){if(G.diddyMoveTimer)clearTimeout(G.diddyMoveTimer);G.diddyPos=POS.C0;G.diddyPath=null;refreshDots();if(G.camOpen)renderCamFeed();scheduleDiddyMove();}
 
 // ════════════════════════════════════════════════════
-//  SECTION 21 — MONSTER AI: MADURO
+//  SECTION 22 — MONSTER AI: MADURO
 // ════════════════════════════════════════════════════
-function scheduleMaduro() {
-  if (G.maduroTimer) clearInterval(G.maduroTimer);
-  G.maduroTimer = setInterval(() => {
-    if (G.dead || G.won) return;
-    if (G.maduroPos >= 0) return;
-    if (Math.random() < G.cfg.maduroChance) {
-      const av = MADURO_CAMS.filter(id => !isCamDisabled(id));
-      if (av.length) maduroSpawn(av[Math.floor(Math.random() * av.length)]);
+function scheduleMaduro(){
+  if(G.maduroTimer)clearInterval(G.maduroTimer);
+  G.maduroTimer=setInterval(()=>{
+    if(G.dead||G.won||G.maduroPos>=0)return;
+    if(Math.random()<G.cfg.maduroChance){
+      const av=MADURO_CAMS.filter(id=>!isCamDisabled(id));
+      if(av.length)maduroSpawn(av[Math.floor(Math.random()*av.length)]);
     }
-  }, MADURO_APPEAR_IV);
+  },MADURO_APPEAR_IV);
 }
-
-function maduroSpawn(id) {
-  G.maduroPos = id; G.maduroWatchMs = 0;
-  refreshDots();
-  if (G.camOpen && G.curCam === id) renderCamFeed();
-}
-
-function maduroDespawn() {
-  if (G.maduroPos < 0) return;
-  G.maduroPos = -1; G.maduroWatchMs = 0;
-  refreshDots();
-  if (G.camOpen) renderCamFeed();
-}
-
-function tickMaduro() {
-  if (G.dead || G.won) return;
-  // Tick down disabled cams
-  let changed = false;
-  Object.keys(G.maduroDisabled).forEach(cId => {
-    if (G.maduroDisabled[cId] > 0) {
-      G.maduroDisabled[cId] -= TICK_MS;
-      if (G.maduroDisabled[cId] <= 0) { G.maduroDisabled[cId] = 0; changed = true; }
-      const sec = Math.ceil(G.maduroDisabled[cId] / 1000);
-      if (G.camOpen && G.curCam === parseInt(cId)) {
-        const el = document.getElementById('maduroSec');
-        if (el) el.textContent = sec;
-      }
-    }
+function maduroSpawn(id){G.maduroPos=id;G.maduroWatchMs=0;refreshDots();if(G.camOpen&&G.curCam===id)renderCamFeed();}
+function maduroDespawn(){if(G.maduroPos<0)return;G.maduroPos=-1;G.maduroWatchMs=0;refreshDots();if(G.camOpen)renderCamFeed();}
+function tickMaduro(){
+  if(G.dead||G.won)return;
+  let chg=false;
+  Object.keys(G.maduroDisabled).forEach(cId=>{
+    if(G.maduroDisabled[cId]>0){G.maduroDisabled[cId]-=TICK_MS;if(G.maduroDisabled[cId]<=0){G.maduroDisabled[cId]=0;chg=true;}const sec=Math.ceil(G.maduroDisabled[cId]/1000);if(G.camOpen&&G.curCam===parseInt(cId)){const el=document.getElementById('maduroSec');if(el)el.textContent=sec;}}
   });
-  if (changed) refreshDots();
-
-  // Maduro cam-watch death
-  if (G.maduroPos >= 0 && G.camOpen && G.curCam === G.maduroPos && !isCamDisabled(G.curCam)) {
-    G.maduroWatchMs += TICK_MS;
-    if (G.maduroWatchMs >= MADURO_WATCH_LIM) triggerMaduroDisable(G.maduroPos);
-  } else if (G.maduroPos >= 0) {
-    G.maduroWatchMs = 0;
-  }
+  if(chg)refreshDots();
+  if(G.maduroPos>=0&&G.camOpen&&G.curCam===G.maduroPos&&!isCamDisabled(G.curCam)){G.maduroWatchMs+=TICK_MS;if(G.maduroWatchMs>=MADURO_WATCH_LIM)triggerMaduroDisable(G.maduroPos);}
+  else if(G.maduroPos>=0)G.maduroWatchMs=0;
 }
-
-function triggerMaduroDisable(camId) {
-  play('shock');
-  G.maduroPos = -1; G.maduroWatchMs = 0;
-  G.maduroDisabled[camId] = MADURO_DISABLE_MS;
-  refreshDots();
-  if (G.camOpen && G.curCam === camId) {
+function triggerMaduroDisable(camId){
+  play('shock');G.maduroPos=-1;G.maduroWatchMs=0;G.maduroDisabled[camId]=MADURO_DISABLE_MS;refreshDots();
+  if(G.camOpen&&G.curCam===camId){
     renderCamFeed();
-    const fill = document.getElementById('maduroErrFill');
-    if (fill) {
-      fill.style.transition = 'none'; fill.style.width = '0%';
-      setTimeout(() => { fill.style.transition = `width ${MADURO_DISABLE_MS/1000}s linear`; fill.style.width = '100%'; }, 50);
-    }
-    setTimeout(() => {
-      if (!G.dead && !G.won && G.camOpen && G.curCam === camId) {
-        const other = CAMS.find(c => c.id !== camId && !isCamDisabled(c.id));
-        if (other) switchCam(other.id);
-      }
-    }, 2200);
+    const fill=document.getElementById('maduroErrFill');
+    if(fill){fill.style.transition='none';fill.style.width='0%';setTimeout(()=>{fill.style.transition=`width ${MADURO_DISABLE_MS/1000}s linear`;fill.style.width='100%';},50);}
+    setTimeout(()=>{if(!G.dead&&!G.won&&G.camOpen&&G.curCam===camId){const other=CAMS.find(c=>c.id!==camId&&!isCamDisabled(c.id));if(other)switchCam(other.id);}},2200);
   }
 }
 
 // ════════════════════════════════════════════════════
-//  SECTION 22 — MONSTER AI: MARK (VENT)
+//  SECTION 23 — MONSTER AI: MARK (VENT)
 // ════════════════════════════════════════════════════
-function scheduleMarkCheck() {
-  if (G.markCheckIval) clearInterval(G.markCheckIval);
-  if (!G.cfg.markRutteActive) return;
-  G.markCheckIval = setInterval(() => {
-    if (G.dead || G.won || G.markInVent) return;
-    if (Math.random() < 0.10) markAppear();
-  }, 10000);
+function scheduleMarkCheck(){
+  if(G.markCheckIval)clearInterval(G.markCheckIval);
+  if(!G.cfg.markRutteActive)return;
+  G.markCheckIval=setInterval(()=>{if(G.dead||G.won||G.markInVent)return;if(Math.random()<0.10)markAppear();},10000);
 }
-
-function markAppear() {
-  if (G.dead || G.won || G.markInVent) return;
-  G.markInVent = true;
-  play('vent');
-  if (Math.random() < 0.2) setTimeout(() => play('markAudio'), 400);
-  updateVentUI();
-  if (G.camOpen) renderCamFeed();
-  if (G.ventClosed) { markLeaveAfter(1000 + Math.random() * 2000); return; }
-  if (G.markKillTimer) clearTimeout(G.markKillTimer);
-  G.markKillTimer = setTimeout(() => {
-    if (!G.dead && !G.won && G.markInVent && !G.ventClosed) triggerMarkJS();
-  }, 8000);
+function markAppear(){
+  if(G.dead||G.won||G.markInVent)return;
+  G.markInVent=true; play('vent');
+  if(Math.random()<0.2)setTimeout(()=>play('markAudio'),400);
+  updateVentUI(); if(G.camOpen)renderCamFeed();
+  if(G.ventClosed){markLeaveAfter(1000+Math.random()*2000);return;}
+  if(G.markKillTimer)clearTimeout(G.markKillTimer);
+  G.markKillTimer=setTimeout(()=>{if(!G.dead&&!G.won&&G.markInVent&&!G.ventClosed)triggerMarkJS();},8000);
 }
-
-function markLeave() {
-  if (!G.markInVent) return;
-  G.markInVent = false;
-  if (G.markKillTimer)  { clearTimeout(G.markKillTimer);  G.markKillTimer  = null; }
-  if (G.markLeaveTimer) { clearTimeout(G.markLeaveTimer); G.markLeaveTimer = null; }
-  stop('vent');
-  updateVentUI();
-  if (G.camOpen) renderCamFeed();
+function markLeave(){
+  if(!G.markInVent)return;G.markInVent=false;
+  if(G.markKillTimer){clearTimeout(G.markKillTimer);G.markKillTimer=null;}
+  if(G.markLeaveTimer){clearTimeout(G.markLeaveTimer);G.markLeaveTimer=null;}
+  stop('vent'); updateVentUI(); if(G.camOpen)renderCamFeed();
 }
-
-function markLeaveAfter(ms) {
-  if (G.markLeaveTimer) clearTimeout(G.markLeaveTimer);
-  G.markLeaveTimer = setTimeout(markLeave, ms);
-}
-
-// ════════════════════════════════════════════════════
-//  SECTION 23 — MONSTER AI: SHADOW GIJS
-// ════════════════════════════════════════════════════
-function tickShadowGijs() {
-  if (G.dead || G.won || G.camOpen || G.shadowActive) return;
-  if (G.cfg.shadowChance > 0 && Math.random() < G.cfg.shadowChance) shadowAppear();
-}
-
-function shadowAppear() {
-  if (G.shadowActive || G.dead || G.won) return;
-  G.shadowActive = true;
-  play('shadowGijs');
-  G.shadowKillTimer = setTimeout(() => {
-    if (G.shadowActive && !G.dead && !G.won) triggerShadowJS();
-  }, 3000);
-}
-
-function shadowDismiss() {
-  if (!G.shadowActive) return;
-  G.shadowActive = false;
-  if (G.shadowKillTimer) { clearTimeout(G.shadowKillTimer); G.shadowKillTimer = null; }
-  stop('shadowGijs');
-}
+function markLeaveAfter(ms){if(G.markLeaveTimer)clearTimeout(G.markLeaveTimer);G.markLeaveTimer=setTimeout(markLeave,ms);}
 
 // ════════════════════════════════════════════════════
 //  SECTION 24 — MUSIC BOX (TOM)
 // ════════════════════════════════════════════════════
-function tickMusicBox() {
-  if (!G.cfg.tomActive || G.dead || G.won) return;
-  if (G.isWindingUp && G.camOpen && G.curCam === MUSIC_CAM_ID) {
-    G.musicBox = Math.min(100, G.musicBox + MB_WIND_RATE);
-  } else {
-    const drain = MB_DRAIN_BASE + MB_DRAIN_SCALE * Math.min(G.hour, 5);
-    G.musicBox = Math.max(0, G.musicBox - drain);
-    if (G.musicBox <= 0) triggerTomJS();
-  }
+function tickMusicBox(){
+  if(!G.cfg.tomActive||G.dead||G.won)return;
+  if(G.isWindingUp&&G.camOpen&&G.curCam===MUSIC_CAM_ID)G.musicBox=Math.min(100,G.musicBox+MB_WIND_RATE);
+  else{const drain=MB_DRAIN_BASE+MB_DRAIN_SCALE*Math.min(G.hour,5);G.musicBox=Math.max(0,G.musicBox-drain);if(G.musicBox<=0)triggerTomJS();}
   updateMusicBoxUI();
 }
 
 // ════════════════════════════════════════════════════
-//  SECTION 25 — PLAYER ACTIONS (toggle functions)
+//  SECTION 25 — PLAYER ACTIONS
 // ════════════════════════════════════════════════════
-function toggleCam() {
-  if (!G || G.dead || G.won) return;
-  G.camOpen = !G.camOpen;
-  document.getElementById('camUi').style.display = G.camOpen ? 'flex' : 'none';
-  document.getElementById('camBtn').className = 'act-btn' + (G.camOpen ? ' active' : '');
-  if (!G.camOpen) {
-    stopWindUp();
-    if (SFX.muziek) SFX.muziek.volume = 0.15;
-    if (G.maduroPos >= 0) maduroDespawn();
-    G.maduroWatchMs = 0;
-  } else {
-    switchCam(G.curCam);
-    shadowDismiss();
-  }
-  updateLureUI();
-  updateAlarmUI();
+function toggleCam(){
+  if(!G||G.dead||G.won)return;
+  G.camOpen=!G.camOpen;
+  document.getElementById('camUi').style.display=G.camOpen?'flex':'none';
+  document.getElementById('camBtn').className='act-btn'+(G.camOpen?' active':'');
+  if(!G.camOpen){stopWindUp();if(SFX.muziek)SFX.muziek.volume=0.15;if(G.maduroPos>=0)maduroDespawn();G.maduroWatchMs=0;}
+  else{switchCam(G.curCam);}
+  updateLureUI();updateAlarmUI();
 }
-window.toggleCam = toggleCam;
+window.toggleCam=toggleCam;
 
-function toggleDoor(side) {
-  if (!G || G.dead || G.won) return;
-  if (side === 'left') {
-    G.lfClosed = !G.lfClosed;
-    if (G.lfClosed) play('doorClose');
-    if (G.lfClosed && G.mPos === POS.LD && G.mDoorTimer) { clearTimeout(G.mDoorTimer); G.mDoorTimer = null; }
-    else if (!G.lfClosed && G.cfg.gijsActive && G.mPos === POS.LD) armDoorTimer();
-  } else {
-    G.rtClosed = !G.rtClosed;
-    if (G.rtClosed) play('doorClose');
-    if (G.rtClosed && G.mPos === POS.RD && G.mDoorTimer) { clearTimeout(G.mDoorTimer); G.mDoorTimer = null; }
-    else if (!G.rtClosed && G.cfg.gijsActive && G.mPos === POS.RD) armDoorTimer();
+function toggleDoor(side){
+  if(!G||G.dead||G.won)return;
+  if(side==='left'){
+    G.lfClosed=!G.lfClosed;
+    doorAnim.left.target=G.lfClosed?0:1; // 0=closed,1=open
+    if(G.lfClosed)play('doorClose');
+    if(G.lfClosed&&G.mPos===POS.LD&&G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}
+    else if(!G.lfClosed&&G.cfg.gijsActive&&G.mPos===POS.LD)armDoorTimer();
+  }else{
+    G.rtClosed=!G.rtClosed;
+    doorAnim.right.target=G.rtClosed?0:1;
+    if(G.rtClosed)play('doorClose');
+    if(G.rtClosed&&G.mPos===POS.RD&&G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}
+    else if(!G.rtClosed&&G.cfg.gijsActive&&G.mPos===POS.RD)armDoorTimer();
   }
   refreshDoorUI();
 }
-window.toggleDoor = toggleDoor;
+window.toggleDoor=toggleDoor;
 
-function toggleVent() {
-  if (!G || G.dead || G.won) return;
-  G.ventClosed = !G.ventClosed;
-  if (G.ventClosed) play('doorClose');
+function toggleVent(){
+  if(!G||G.dead||G.won)return;
+  G.ventClosed=!G.ventClosed;
+  ventAnim.target=G.ventClosed?0:1;
+  if(G.ventClosed)play('doorClose');
   updateVentUI();
-  if (G.ventClosed && G.markInVent) {
-    if (G.markKillTimer) { clearTimeout(G.markKillTimer); G.markKillTimer = null; }
-    markLeaveAfter(1000 + Math.random() * 2000);
-  } else if (!G.ventClosed && G.markInVent) {
-    if (G.markKillTimer) clearTimeout(G.markKillTimer);
-    G.markKillTimer = setTimeout(() => { if (!G.dead && !G.won && G.markInVent && !G.ventClosed) triggerMarkJS(); }, 1000);
-  }
+  if(G.ventClosed&&G.markInVent){if(G.markKillTimer){clearTimeout(G.markKillTimer);G.markKillTimer=null;}markLeaveAfter(1000+Math.random()*2000);}
+  else if(!G.ventClosed&&G.markInVent){if(G.markKillTimer)clearTimeout(G.markKillTimer);G.markKillTimer=setTimeout(()=>{if(!G.dead&&!G.won&&G.markInVent&&!G.ventClosed)triggerMarkJS();},1000);}
 }
-window.toggleVent = toggleVent;
+window.toggleVent=toggleVent;
 
-function inLureRange() {
-  if (!G.camOpen) return false;
-  const adj = {0:[1],1:[0,2],2:[1,3,4],3:[2,5],4:[2,6],5:[3],6:[4]};
-  const gInRange = G.cfg.gijsActive && G.curCam !== MUSIC_CAM_ID && (G.mPos === G.curCam || (adj[G.mPos]||[]).includes(G.curCam));
-  const hInRange = G.cfg.hoboActive && G.curCam !== MUSIC_CAM_ID && G.hoboPos === G.curCam;
-  const dInRange = G.diddyActive && G.curCam !== MUSIC_CAM_ID && G.diddyPos === G.curCam;
-  return gInRange || hInRange || dInRange;
+function inLureRange(){
+  if(!G.camOpen)return false;
+  const adj={0:[1],1:[0,2],2:[1,3,4],3:[2,5],4:[2,6],5:[3],6:[4]};
+  const gR=G.cfg.gijsActive&&G.curCam!==MUSIC_CAM_ID&&(G.mPos===G.curCam||(adj[G.mPos]||[]).includes(G.curCam));
+  const hR=G.cfg.hoboActive&&G.curCam!==MUSIC_CAM_ID&&G.hoboPos===G.curCam;
+  const dR=G.diddyActive&&G.curCam!==MUSIC_CAM_ID&&G.diddyPos===G.curCam;
+  return gR||hR||dR;
 }
-
-function useLure() {
-  if (!G || !G.lureReady || !inLureRange() || G.dead || G.won) return;
-  // If hobo is on cam, lure triggers hobo jumpscare
-  if (G.cfg.hoboActive && G.hoboPos === G.curCam && G.curCam !== MUSIC_CAM_ID) { triggerHoboJS(); return; }
+function useLure(){
+  if(!G||!G.lureReady||!inLureRange()||G.dead||G.won)return;
+  if(G.cfg.hoboActive&&G.hoboPos===G.curCam&&G.curCam!==MUSIC_CAM_ID){triggerHoboJS();return;}
   play('lure');
-  // Push Diddy back
-  if (G.diddyActive && G.diddyPos === G.curCam && G.curCam !== MUSIC_CAM_ID) {
-    if (G.diddyMoveTimer) clearTimeout(G.diddyMoveTimer);
-    G.diddyPos = Math.max(0, G.diddyPos - 1); G.diddyPath = null;
-    refreshDots(); if (G.camOpen) renderCamFeed();
-    scheduleDiddyMove();
-  }
-  // Push Gijs back
-  const pb = {5:3,6:4,4:2,3:2,2:1,1:0,0:0};
-  const np = pb[G.mPos];
-  if (np !== undefined) {
-    G.mPos = np;
-    if (G.mDoorTimer) { clearTimeout(G.mDoorTimer); G.mDoorTimer = null; }
-    if (G.mRetreatTimer) { clearTimeout(G.mRetreatTimer); G.mRetreatTimer = null; }
-    refreshDots(); refreshDoorUI();
-    if (G.camOpen) renderCamFeed();
-  }
-  G.lureReady = false; G.lureCD = LURE_CD_S;
-  clearInterval(G.lureCDTimer);
-  G.lureCDTimer = setInterval(() => {
-    G.lureCD--;
-    if (G.lureCD <= 0) { G.lureReady = true; G.lureCD = 0; clearInterval(G.lureCDTimer); }
-    updateLureUI();
-  }, 1000);
+  if(G.diddyActive&&G.diddyPos===G.curCam&&G.curCam!==MUSIC_CAM_ID){if(G.diddyMoveTimer)clearTimeout(G.diddyMoveTimer);G.diddyPos=Math.max(0,G.diddyPos-1);G.diddyPath=null;refreshDots();if(G.camOpen)renderCamFeed();scheduleDiddyMove();}
+  const pb={5:3,6:4,4:2,3:2,2:1,1:0,0:0};const np=pb[G.mPos];
+  if(np!==undefined){G.mPos=np;if(G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}if(G.mRetreatTimer){clearTimeout(G.mRetreatTimer);G.mRetreatTimer=null;}refreshDots();refreshDoorUI();if(G.camOpen)renderCamFeed();}
+  G.lureReady=false;G.lureCD=LURE_CD_S;clearInterval(G.lureCDTimer);
+  G.lureCDTimer=setInterval(()=>{G.lureCD--;if(G.lureCD<=0){G.lureReady=true;G.lureCD=0;clearInterval(G.lureCDTimer);}updateLureUI();},1000);
   updateLureUI();
 }
-window.useLure = useLure;
+window.useLure=useLure;
 
-function useCameraAlarm() {
-  if (!G || !G.alarmReady || G.dead || G.won) return;
+function useCameraAlarm(){
+  if(!G||!G.alarmReady||G.dead||G.won)return;
   play('cameraAlarm');
-  if (G.chapoActive && (G.curCam === CHAPO_CAM_ID || G.chapoAlarm)) resetChapo();
-  if (G.diddyActive && G.diddyPos === G.curCam && G.curCam !== MUSIC_CAM_ID) resetDiddy();
-  G.alarmReady = false; G.alarmCD = ALARM_CD_S;
-  clearInterval(G.alarmCDTimer);
-  G.alarmCDTimer = setInterval(() => {
-    G.alarmCD--;
-    if (G.alarmCD <= 0) { G.alarmReady = true; G.alarmCD = 0; clearInterval(G.alarmCDTimer); }
-    updateAlarmUI();
-  }, 1000);
-  updateAlarmUI(); refreshDots();
+  if(G.chapoActive&&(G.curCam===CHAPO_CAM_ID||G.chapoAlarm))resetChapo();
+  if(G.diddyActive&&G.diddyPos===G.curCam&&G.curCam!==MUSIC_CAM_ID)resetDiddy();
+  G.alarmReady=false;G.alarmCD=ALARM_CD_S;clearInterval(G.alarmCDTimer);
+  G.alarmCDTimer=setInterval(()=>{G.alarmCD--;if(G.alarmCD<=0){G.alarmReady=true;G.alarmCD=0;clearInterval(G.alarmCDTimer);}updateAlarmUI();},1000);
+  updateAlarmUI();refreshDots();
 }
-window.useCameraAlarm = useCameraAlarm;
+window.useCameraAlarm=useCameraAlarm;
 
-function startWindUp(e) {
-  if (e) e.preventDefault();
-  if (!G || G.dead || G.won) return;
-  if (G.curCam !== MUSIC_CAM_ID) return;
-  G.isWindingUp = true;
-  const wb = document.getElementById('windBtn');
-  if (wb) wb.className = 'wind-btn winding';
-  if (SFX.windUp) { SFX.windUp.currentTime = 0; SFX.windUp.play().catch(() => {}); }
+function startWindUp(e){
+  if(e)e.preventDefault();
+  if(!G||G.dead||G.won)return;
+  if(G.curCam!==MUSIC_CAM_ID)return;
+  G.isWindingUp=true;
+  const wb=document.getElementById('windBtn');if(wb)wb.className='wind-btn winding';
+  if(SFX.windUp){SFX.windUp.currentTime=0;SFX.windUp.play().catch(()=>{});}
 }
-window.startWindUp = startWindUp;
-
-function stopWindUp() {
-  if (!G) return;
-  G.isWindingUp = false;
-  const wb = document.getElementById('windBtn');
-  if (wb) wb.className = 'wind-btn';
+window.startWindUp=startWindUp;
+function stopWindUp(){
+  if(!G)return;G.isWindingUp=false;
+  const wb=document.getElementById('windBtn');if(wb)wb.className='wind-btn';
   stop('windUp');
 }
-window.stopWindUp = stopWindUp;
+window.stopWindUp=stopWindUp;
 
 // ════════════════════════════════════════════════════
 //  SECTION 26 — JUMPSCARE & DEATH
 // ════════════════════════════════════════════════════
-function doJumpscare(imgSrc, cause) {
-  if (!G || G.dead) return;
-  G.dead = true;
-  killTimers(); stopAll();
-  play('jumpscare');
-
-  // VR: spawn 3D jumpscare plane
-  if (renderer.xr.isPresenting) {
-    triggerVRJumpscare(imgSrc, () => showDeathScreen(cause));
-  } else {
-    // 2D fallback
-    doFlash(() => {
-      const js = document.getElementById('jsScreen');
-      js.style.display = 'flex';
-      document.getElementById('jsImg').src = imgSrc;
-      setTimeout(() => {
-        js.style.display = 'none';
-        showDeathScreen(cause);
-      }, 3300);
-    });
-  }
-
-  // Hide hud
-  document.getElementById('hud').style.display = 'none';
-  document.getElementById('camUi').style.display = 'none';
+function doJumpscare(imgSrc,cause){
+  if(!G||G.dead)return;G.dead=true;killTimers();stopAll();play('jumpscare');
+  if(renderer.xr.isPresenting){triggerVRJumpscare(imgSrc,()=>showDeathScreen(cause));}
+  else{doFlash(()=>{const js=document.getElementById('jsScreen');js.style.display='flex';document.getElementById('jsImg').src=imgSrc;setTimeout(()=>{js.style.display='none';showDeathScreen(cause);},3300);});}
+  document.getElementById('hud').style.display='none';
+  document.getElementById('camUi').style.display='none';
 }
+function doFlash(cb){const el=document.getElementById('flashEl');el.style.opacity='1';setTimeout(()=>{el.style.opacity='0';setTimeout(cb,60);},80);}
+function showDeathScreen(cause){document.getElementById('deathMsg').innerHTML=cause;document.getElementById('deathScreen').style.display='flex';Object.values(sprites).forEach(m=>m.visible=false);}
 
-function doFlash(cb) {
-  const el = document.getElementById('flashEl');
-  el.style.opacity = '1';
-  setTimeout(() => { el.style.opacity = '0'; setTimeout(cb, 60); }, 80);
-}
+function triggerGijsJS()   {doJumpscare(FILES.gijsJS,     'Meester Gijs heeft je gevonden.<br><em>"That\'s a 1 out of 10. For you."</em>');}
+function triggerPatrickJS(){doJumpscare(FILES.patrickJS,  'De zuurstof raakte op.<br><em>"You should have studied harder."</em>');}
+function triggerHoboJS()   {doJumpscare(FILES.hoboGijsJS, 'Je lokte het verkeerde monster.<br><em>"...You shouldn\'t have done that."</em>');}
+function triggerTomJS()    {stopWindUp();doJumpscare(FILES.tomJS,'De muziek stopte.<br><em>"...I\'ve been waiting so long to come out."</em>');}
+function triggerJeffreyJS(){doJumpscare(FILES.jeffreyJS,  'Jeffrey heeft je gevonden.<br><em>"De deuren houden mij niet tegen."</em>');}
+function triggerMarkJS()   {if(!G||G.dead)return;markLeave();doJumpscare(FILES.markJS,'Mark kwam uit de ventilatie.<br><em>"Je had de schacht moeten sluiten."</em>');}
+function triggerChapoJS()  {if(!G||G.dead)return;stop('alarm');doJumpscare(FILES.chapoJS,'Chapo heeft aangevallen.<br><em>"Deuren? Dat is niets voor mij."</em>');}
+function triggerDiddyJS()  {if(!G||G.dead)return;doJumpscare(FILES.diddyJS,'Diddy heeft je gevonden.<br><em>"Je had het alarm moeten gebruiken."</em>');}
 
-function showDeathScreen(cause) {
-  document.getElementById('deathMsg').innerHTML = cause;
-  document.getElementById('deathScreen').style.display = 'flex';
-  Object.values(sprites).forEach(m => m.visible = false);
-}
-
-function triggerGijsJS()   { doJumpscare(FILES.gijsJS,       'Meester Gijs heeft je gevonden.<br><em>"That\'s a 1 out of 10. For you."</em>'); }
-function triggerPatrickJS(){ doJumpscare(FILES.patrickJS,    'De zuurstof raakte op.<br><em>"You should have studied harder."</em>'); }
-function triggerHoboJS()   { doJumpscare(FILES.hoboGijsJS,   'Je lokte het verkeerde monster.<br><em>"...You shouldn\'t have done that."</em>'); }
-function triggerTomJS()    { stopWindUp(); doJumpscare(FILES.tomJS, 'De muziek stopte.<br><em>"...I\'ve been waiting so long to come out."</em>'); }
-function triggerJeffreyJS(){ doJumpscare(FILES.jeffreyJS,    'Jeffrey heeft je gevonden.<br><em>"De deuren houden mij niet tegen."</em>'); }
-function triggerMarkJS()   { if (!G || G.dead) return; markLeave(); doJumpscare(FILES.markJS, 'Mark kwam uit de ventilatie.<br><em>"Je had de schacht moeten sluiten."</em>'); }
-function triggerChapoJS()  { if (!G || G.dead) return; stop('alarm'); doJumpscare(FILES.chapoJS, 'Chapo heeft aangevallen.<br><em>"Deuren? Dat is niets voor mij."</em>'); }
-function triggerDiddyJS()  { if (!G || G.dead) return; doJumpscare(FILES.diddyJS, 'Diddy heeft je gevonden.<br><em>"Je had het alarm moeten gebruiken."</em>'); }
-function triggerShadowJS() { if (!G || G.dead) return; stop('shadowGijs'); G.shadowActive = false; doJumpscare(FILES.shadowGijsJS, 'Shadow Gijs heeft je gevangen.<br><em>"Je had weg moeten kijken..."</em>'); }
-
-function triggerWin() {
-  if (!G || G.won || G.dead) return;
-  G.won = true;
-  killTimers(); stopAll(); play('win');
-  document.getElementById('hud').style.display = 'none';
-  document.getElementById('camUi').style.display = 'none';
-  document.getElementById('winScreen').style.display = 'flex';
-  Object.values(sprites).forEach(m => m.visible = false);
+function triggerWin(){
+  if(!G||G.won||G.dead)return;G.won=true;killTimers();stopAll();play('win');
+  document.getElementById('hud').style.display='none';
+  document.getElementById('camUi').style.display='none';
+  document.getElementById('winScreen').style.display='flex';
+  Object.values(sprites).forEach(m=>m.visible=false);
 }
 
 // ════════════════════════════════════════════════════
-//  SECTION 27 — MAIN GAME TICK & TIME
+//  SECTION 27 — GAME TICK & TIME
 // ════════════════════════════════════════════════════
-function gameTick() {
-  if (!G || G.dead || G.won) return;
-  let drain = O2_DRAIN_BASE;
-  if (G.lfClosed)  drain += O2_DOOR_TICK;
-  if (G.rtClosed)  drain += O2_DOOR_TICK;
-  if (G.camOpen)   drain += O2_CAM_TICK;
-  if (G.ventClosed)drain += O2_VENT_TICK;
-  G.o2 = Math.max(0, G.o2 - drain);
-  updateO2UI();
-  if (G.o2 <= 0 && !G.o2Dead) oxygenDepleted();
-
-  tickMusicBox();
-  tickJeffrey();
-  tickChapo();
-  tickMaduro();
-  tickShadowGijs();
-  updateAlarmUI();
+function gameTick(){
+  if(!G||G.dead||G.won)return;
+  let drain=O2_DRAIN_BASE;
+  if(G.lfClosed)drain+=O2_DOOR_TICK;if(G.rtClosed)drain+=O2_DOOR_TICK;
+  if(G.camOpen)drain+=O2_CAM_TICK;if(G.ventClosed)drain+=O2_VENT_TICK;
+  G.o2=Math.max(0,G.o2-drain);updateO2UI();
+  if(G.o2<=0&&!G.o2Dead)oxygenDepleted();
+  tickMusicBox();tickJeffrey();tickChapo();tickMaduro();updateAlarmUI();
 }
-
-function oxygenDepleted() {
-  G.o2Dead = true;
-  stop('ambience');
-  play('oxygenOut');
-  setTimeout(triggerPatrickJS, 8000);
+function oxygenDepleted(){G.o2Dead=true;stop('ambience');play('oxygenOut');setTimeout(triggerPatrickJS,8000);}
+function tickTime(){
+  if(!G||G.dead||G.won)return;
+  const prog=Math.min(1,(Date.now()-G.nightStart)/NIGHT_MS);
+  if(prog>=1){triggerWin();return;}
+  const mins=prog*360;
+  G.hour=Math.floor(mins/60);
+  const h=G.hour===0?12:G.hour,m=String(Math.floor(mins%60)).padStart(2,'0');
+  document.getElementById('hudTime').textContent=`${h}:${m} AM`;
+  if(G.hour>=5&&!G.fiveAMDone){G.fiveAMDone=true;stop('ambience');play('fiveAM');}
 }
-
-function tickTime() {
-  if (!G || G.dead || G.won) return;
-  const progress = Math.min(1, (Date.now() - G.nightStart) / NIGHT_MS);
-  if (progress >= 1) { triggerWin(); return; }
-  const totalMins = progress * 360;
-  G.hour = Math.floor(totalMins / 60);
-  const h = G.hour === 0 ? 12 : G.hour;
-  const m = String(Math.floor(totalMins % 60)).padStart(2, '0');
-  document.getElementById('hudTime').textContent = `${h}:${m} AM`;
-  if (G.hour >= 5 && !G.fiveAMDone) { G.fiveAMDone = true; stop('ambience'); play('fiveAM'); }
-}
-
-function killTimers() {
-  if (!G) return;
-  const timers = [
-    G.tickTimer, G.timeTimer, G.mMoveTimer, G.mDoorTimer, G.mRetreatTimer,
-    G.lureCDTimer, G.hoboMoveTimer, G.chapoKillTimer, G.markCheckIval,
-    G.markKillTimer, G.markLeaveTimer, G.maduroTimer, G.diddyMoveTimer,
-    G.alarmCDTimer, G.shadowKillTimer
-  ];
-  timers.forEach(t => { if (t) try { clearInterval(t); clearTimeout(t); } catch(e) {} });
+function killTimers(){
+  if(!G)return;
+  [G.tickTimer,G.timeTimer,G.mMoveTimer,G.mDoorTimer,G.mRetreatTimer,G.lureCDTimer,G.hoboMoveTimer,G.chapoKillTimer,G.markCheckIval,G.markKillTimer,G.markLeaveTimer,G.maduroTimer,G.diddyMoveTimer,G.alarmCDTimer
+  ].forEach(t=>{if(t)try{clearInterval(t);clearTimeout(t);}catch(e){}});
 }
 
 // ════════════════════════════════════════════════════
-//  SECTION 28 — START / RESTART GAME
+//  SECTION 28 — START / RESTART
 // ════════════════════════════════════════════════════
-function startGame() {
-  if (!selectedNight) return;
+function startGame(){
+  if(!selectedNight)return;
   hideVRMenu();
-  document.getElementById('menuScreen').style.display   = 'none';
-  document.getElementById('hud').style.display          = 'flex';
-  document.getElementById('alarmFlash').style.display   = 'none';
-  document.getElementById('deathScreen').style.display  = 'none';
-  document.getElementById('winScreen').style.display    = 'none';
-  document.getElementById('jsScreen').style.display     = 'none';
-  document.getElementById('camUi').style.display        = 'none';
+  document.getElementById('menuScreen').style.display='none';
+  document.getElementById('hud').style.display='flex';
+  ['alarmFlash','deathScreen','winScreen','jsScreen'].forEach(id=>{document.getElementById(id).style.display='none';});
+  document.getElementById('camUi').style.display='none';
 
-  G = mkState();
-  G.nightStart = Date.now();
-  G.running    = true;
+  G=mkState(); G.nightStart=Date.now(); G.running=true;
+  // Reset door/vent animations to open
+  doorAnim.left.open=1;doorAnim.left.target=1;
+  doorAnim.right.open=1;doorAnim.right.target=1;
+  ventAnim.open=1;ventAnim.target=1;
 
-  initAudio();
-  play('ambience');
-  if (G.cfg.tomActive) { SFX.muziek && (SFX.muziek.volume = 0.15); SFX.muziek && SFX.muziek.play().catch(() => {}); }
+  initAudio(); play('ambience');
+  if(G.cfg.tomActive){if(SFX.muziek){SFX.muziek.volume=0.15;SFX.muziek.play().catch(()=>{}); }}
 
-  document.getElementById('nightLbl').textContent = G.cfg.label;
-  const mbSec = document.getElementById('mbSection');
-  if (mbSec) mbSec.style.display = G.cfg.tomActive ? 'block' : 'none';
+  document.getElementById('nightLbl').textContent=G.cfg.label;
+  const mbSec=document.getElementById('mbSection');if(mbSec)mbSec.style.display=G.cfg.tomActive?'block':'none';
 
-  buildCamStrip();
-  updateO2UI();
-  updateMusicBoxUI();
-  updateLureUI();
-  updateVentUI();
-  refreshDots();
-  refreshDoorUI();
+  buildCamStrip();updateO2UI();updateMusicBoxUI();updateLureUI();updateVentUI();refreshDots();refreshDoorUI();
+  highlightCamBtn(0);
 
-  // Start lure cooldown
-  G.lureCD = LURE_CD_S; G.lureReady = false;
-  G.lureCDTimer = setInterval(() => {
-    G.lureCD--;
-    if (G.lureCD <= 0) { G.lureReady = true; G.lureCD = 0; clearInterval(G.lureCDTimer); }
-    updateLureUI();
-  }, 1000);
+  G.lureCD=LURE_CD_S;G.lureReady=false;
+  G.lureCDTimer=setInterval(()=>{G.lureCD--;if(G.lureCD<=0){G.lureReady=true;G.lureCD=0;clearInterval(G.lureCDTimer);}updateLureUI();},1000);
+  G.alarmReady=true;G.alarmCD=0;
 
-  // Alarm starts ready
-  G.alarmReady = true; G.alarmCD = 0;
+  G.tickTimer=setInterval(gameTick,TICK_MS);
+  G.timeTimer=setInterval(tickTime,250);
 
-  // Game loops
-  G.tickTimer = setInterval(gameTick, TICK_MS);
-  G.timeTimer = setInterval(tickTime, 250);
-
-  // Start AI
-  if (G.cfg.gijsActive) setTimeout(scheduleGijsMove, 5000);
-  if (G.cfg.hoboActive) scheduleHoboMove();
-  if (G.cfg.markRutteActive) scheduleMarkCheck();
+  if(G.cfg.gijsActive)setTimeout(scheduleGijsMove,5000);
+  if(G.cfg.hoboActive)scheduleHoboMove();
+  if(G.cfg.markRutteActive)scheduleMarkCheck();
   scheduleMaduro();
-  if (G.jeffreyActive) { G.jeffreyStep = 0; G.jeffreyPos = JEFFREY_PATH[0]; G.jeffreyTimer = JEFFREY_SWITCH_S; }
-  if (G.diddyActive) setTimeout(scheduleDiddyMove, 8000);
+  if(G.jeffreyActive){G.jeffreyStep=0;G.jeffreyPos=JEFFREY_PATH[0];G.jeffreyTimer=JEFFREY_SWITCH_S;}
+  if(G.diddyActive)setTimeout(scheduleDiddyMove,8000);
 
-  // Hide all 3D sprites
-  Object.values(sprites).forEach(m => m.visible = false);
+  Object.values(sprites).forEach(m=>m.visible=false);
+  drawBigScreen(); drawOfficeClock();
+
+  // Auto-enter VR
+  if(xrSupported&&!renderer.xr.isPresenting) requestVRSession();
 }
-window.startGame = startGame;
+window.startGame=startGame;
 
-function restartGame() {
-  killTimers();
-  stopAll();
-  if (G) { G.running = false; G.dead = false; G.won = false; }
-  G = null;
-  Object.values(sprites).forEach(m => m.visible = false);
-  alarmSphereMat.opacity = 0;
-
-  document.getElementById('hud').style.display         = 'none';
-  document.getElementById('camUi').style.display       = 'none';
-  document.getElementById('deathScreen').style.display = 'none';
-  document.getElementById('winScreen').style.display   = 'none';
-  document.getElementById('jsScreen').style.display    = 'none';
-  document.getElementById('alarmFlash').style.display  = 'none';
-  document.getElementById('flashEl').style.opacity     = '0';
-
-  selectedNight = 0;
-  for (let i = 1; i <= 5; i++) { const el = document.getElementById('nb'+i); if (el) el.className = 'nb'; }
-  const sb = document.getElementById('startBtnMenu');
-  if (sb) { sb.disabled = true; sb.textContent = 'SELECTEER EEN NACHT'; }
-
-  document.getElementById('menuScreen').style.display = 'flex';
-  if (xrSupported) showVRMenu();
+function restartGame(){
+  killTimers();stopAll();
+  if(G){G.running=false;G.dead=false;G.won=false;}G=null;
+  Object.values(sprites).forEach(m=>m.visible=false);
+  alarmSphereMat.opacity=0;
+  doorAnim.left.open=1;doorAnim.left.target=1;
+  doorAnim.right.open=1;doorAnim.right.target=1;
+  ventAnim.open=1;ventAnim.target=1;
+  ['hud','camUi','deathScreen','winScreen','jsScreen','alarmFlash'].forEach(id=>{document.getElementById(id).style.display='none';});
+  document.getElementById('flashEl').style.opacity='0';
+  selectedNight=0;
+  for(let i=1;i<=5;i++){const el=document.getElementById('nb'+i);if(el)el.className='nb';}
+  const sb=document.getElementById('startBtnMenu');if(sb){sb.disabled=true;sb.textContent='SELECTEER EEN NACHT';}
+  document.getElementById('menuScreen').style.display='flex';
+  if(xrSupported)showVRMenu();
 }
-window.restartGame = restartGame;
+window.restartGame=restartGame;
 
 // ════════════════════════════════════════════════════
 //  SECTION 29 — KEYBOARD INPUT
 // ════════════════════════════════════════════════════
-window.addEventListener('keydown', e => {
-  if (!G || !G.running) return;
-  const k = e.key.toLowerCase();
-  if (k === 'c') toggleCam();
-  if (k === 'v') toggleVent();
-  if (k === 'l') useLure();
-  if (k === 'a' && G.camOpen) useCameraAlarm();
-  if (k === 'z' || k === 'arrowleft')  toggleDoor('left');
-  if (k === 'x' || k === 'arrowright') toggleDoor('right');
+window.addEventListener('keydown',e=>{
+  if(!G||!G.running)return;
+  const k=e.key.toLowerCase();
+  if(k==='c')toggleCam();if(k==='v')toggleVent();if(k==='l')useLure();
+  if(k==='a'&&G.camOpen)useCameraAlarm();
+  if(k==='z'||k==='arrowleft')toggleDoor('left');
+  if(k==='x'||k==='arrowright')toggleDoor('right');
+  if(k==='1')switchCam(0);if(k==='2')switchCam(1);if(k==='3')switchCam(2);
+  if(k==='4')switchCam(3);if(k==='5')switchCam(4);if(k==='6')switchCam(5);
 });
-
-// Camera nav with arrow keys inside cam view
-window.addEventListener('keydown', e => {
-  if (!G || !G.running || !G.camOpen) return;
-  if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-    const nc = Math.max(0, G.curCam - 1);
-    if (!isCamDisabled(nc)) switchCam(nc);
-  }
-  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-    const nc = Math.min(CAMS.length - 1, G.curCam + 1);
-    if (!isCamDisabled(nc)) switchCam(nc);
-  }
+window.addEventListener('keydown',e=>{
+  if(!G||!G.running||!G.camOpen)return;
+  if(e.key==='ArrowUp'){const nc=Math.max(0,G.curCam-1);if(!isCamDisabled(nc))switchCam(nc);}
+  if(e.key==='ArrowDown'){const nc=Math.min(CAMS.length-1,G.curCam+1);if(!isCamDisabled(nc))switchCam(nc);}
 });
 
 // ════════════════════════════════════════════════════
@@ -2232,19 +1804,10 @@ window.addEventListener('keydown', e => {
 // ════════════════════════════════════════════════════
 buildRoom();
 initSprites();
-
-// Preload images
-Object.values(FILES).forEach(src => {
-  if (src.endsWith('.png') || src.endsWith('.jpg')) {
-    const img = new Image(); img.src = src;
-  }
-});
-CAMS.forEach(c => loadCamBg(c.id, () => {}));
-
-// Start: show warning screen
-document.getElementById('warnScreen').style.display = 'flex';
-document.getElementById('menuScreen').style.display = 'none';
-
+Object.values(FILES).forEach(src=>{if(src.endsWith('.png')||src.endsWith('.jpg')){const i=new Image();i.src=src;}});
+CAMS.forEach(c=>loadCamBg(c.id,()=>{}));
+document.getElementById('warnScreen').style.display='flex';
+document.getElementById('menuScreen').style.display='none';
 </script>
 </body>
 </html>
