@@ -81,25 +81,33 @@ btn.addEventListener('click', () => {
   navigator.xr.requestSession('immersive-vr', {
     optionalFeatures: ['local-floor', 'bounded-floor']
   }).then(session => {
-    return renderer.xr.setSession(session).then(() => session);
+    // Three.js r128: setSession may be sync (void) or async (Promise).
+    // Handle BOTH cases safely.
+    const maybePromise = renderer.xr.setSession(session);
+    const afterSet = (maybePromise && typeof maybePromise.then === 'function')
+      ? maybePromise
+      : Promise.resolve();
+
+    return afterSet.then(() => session);
   }).then(session => {
-    // VR is running — hide the HTML button
     btn.style.display = 'none';
     msgEl.style.display = 'none';
-    // Show the 3D night selection menu
+
+    // Show 3D night menu now that VR is running
     showVRMenu();
+
     session.addEventListener('end', () => {
       btn.style.display = 'block';
       btn.disabled = false;
       btn.textContent = '🥽 SPEEL IN VR';
       msgEl.style.display = 'block';
-      if (G && G.running) { killTimers(); stopAll(); if(G) G.running=false; }
+      if (G && G.running) { killTimers(); stopAll(); if (G) G.running = false; }
     });
   }).catch(err => {
-    console.error('VR error:', err);
+    console.error('VR fout:', err);
     btn.disabled = false;
     btn.textContent = '🥽 SPEEL IN VR';
-    msgEl.textContent = 'Fout: ' + (err.message || err);
+    msgEl.textContent = 'Fout: ' + (err.message || String(err));
   });
 });
 
@@ -1224,6 +1232,13 @@ renderer.setAnimationLoop(time => {
   // Lamp flicker
   lampGlow.intensity = 0.6 + Math.sin(flickT*0.7)*0.06 + (Math.random()<0.003 ? Math.random()*0.35-0.17 : 0);
 
+  // Mark vent warning light — pulses red behind player when Mark is in vent
+  if (G && G.markInVent && !G.ventClosed) {
+    markVentLight.intensity = 0.35 + Math.sin(flickT * 4.5) * 0.25;
+  } else {
+    markVentLight.intensity = 0;
+  }
+
   // Alarm pulse
   if (G && G.chapoAlarm) alarmSphereMat.opacity = 0.05+Math.sin(time*0.009)*0.05;
   else if (!jsPlaneActive) alarmSphereMat.opacity = 0;
@@ -1239,12 +1254,12 @@ renderer.setAnimationLoop(time => {
   updatePointerHighlight();
 
   // Billboard Mark behind player toward camera
-  if(markBehindMesh && markBehindMesh.visible){
+  if (markBehindMesh && markBehindMesh.visible) {
     markBehindMesh.lookAt(camera.position.x, markBehindMesh.position.y, camera.position.z);
   }
 
   // Draw VR HUD when dirty (state changed this tick)
-  if(G && G.running && vrHudDirty) drawVRHud();
+  if (G && G.running && vrHudDirty) drawVRHud();
 
   renderer.render(scene, camera);
 });
