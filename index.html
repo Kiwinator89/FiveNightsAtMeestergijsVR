@@ -183,15 +183,22 @@ ctrlRay.far = 12;
 
 let lastHighlighted = null;
 
+function isWorldVisible(obj) {
+  // Walk up the parent chain — if any ancestor is hidden, object is effectively invisible
+  let o = obj;
+  while (o) { if (!o.visible) return false; o = o.parent; }
+  return true;
+}
+
 function castFromController(idx) {
   const ctrl = controllers[idx];
   if (!ctrl) return null;
   const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(ctrl.quaternion);
   ctrlRay.set(ctrl.position, dir);
   const hits = ctrlRay.intersectObjects(interactables, false);
-  // Only return visible objects so hidden buttons can never be accidentally triggered
+  // Only return objects whose entire parent chain is visible
   for (const hit of hits) {
-    if (hit.object.visible) return hit.object;
+    if (isWorldVisible(hit.object)) return hit.object;
   }
   return null;
 }
