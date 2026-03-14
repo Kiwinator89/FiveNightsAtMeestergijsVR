@@ -189,7 +189,11 @@ function castFromController(idx) {
   const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(ctrl.quaternion);
   ctrlRay.set(ctrl.position, dir);
   const hits = ctrlRay.intersectObjects(interactables, false);
-  return hits.length > 0 ? hits[0].object : null;
+  // Only return visible objects so hidden buttons can never be accidentally triggered
+  for (const hit of hits) {
+    if (hit.object.visible) return hit.object;
+  }
+  return null;
 }
 
 function updatePointerHighlight() {
@@ -1282,7 +1286,7 @@ function buildVRRestartBtn() {
   vrRestartBtn.userData.vrMenuAction = 'restart';
   vrRestartBtn.userData._origColor   = 0x003300;
   vrRestartBtn.visible = false;
-  camera.add(vrRestartBtn); interactables.push(vrRestartBtn);
+  camera.add(vrRestartBtn); // added to interactables only when visible
   const lc=document.createElement('canvas'); lc.width=256; lc.height=64;
   const lctx=lc.getContext('2d');
   lctx.fillStyle='#003300'; lctx.fillRect(0,0,256,64);
