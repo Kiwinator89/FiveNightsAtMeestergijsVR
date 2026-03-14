@@ -51,12 +51,19 @@ import * as THREE from 'three';
 //  SECTION 1 — RENDERER & WEBXR SETUP
 // ══════════════════════════════════════════════════════
 const canvas3d = document.getElementById('threeCanvas');
-const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: true, alpha: false });
+const renderer = new THREE.WebGLRenderer({
+  canvas: canvas3d,
+  antialias: true,
+  alpha: false,
+  // Required for Meta Quest: WebGL context must be XR-compatible
+  powerPreference: 'high-performance'
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.shadowMap.enabled = false;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.setClearColor(0x020202);
+renderer.xr.enabled = true; // Enable XR immediately — always
 
 let xrSupported = false;
 
@@ -70,14 +77,14 @@ async function checkVRSupport() {
     const supported = await navigator.xr.isSessionSupported('immersive-vr');
     if (supported) {
       xrSupported = true;
-      renderer.xr.enabled = true;
-      // Show warning screen to kick things off
       document.getElementById('warnScreen').style.display = 'flex';
     } else {
       showVRRequired();
     }
   } catch(e) {
-    showVRRequired();
+    // On some devices isSessionSupported throws — still try to show warn screen
+    xrSupported = true; // optimistically assume supported
+    document.getElementById('warnScreen').style.display = 'flex';
   }
 }
 
@@ -87,24 +94,39 @@ function showVRRequired() {
 
 checkVRSupport();
 
-function requestVRSession() {
+async function requestVRSession() {
   if (!xrSupported) return;
   if (renderer.xr.isPresenting) return;
-  navigator.xr.requestSession('immersive-vr', {
-    optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
-  }).then(session => {
-    renderer.xr.setSession(session);
-    // Show VR menu as soon as the session is active
-    // Use a short delay to let the renderer settle into XR mode
-    setTimeout(showVRMenu, 400);
-    session.addEventListener('end', () => {
-      // If session ends mid-game, stop everything cleanly
-      if (G && G.running) {
-        killTimers(); stopAll();
-        if (G) G.running = false;
-      }
+
+  let session;
+  try {
+    session = await navigator.xr.requestSession('immersive-vr', {
+      optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
     });
-  }).catch(e => console.warn('VR session failed:', e));
+  } catch(e) {
+    console.warn('VR session request failed:', e);
+    // Try again without optional features (some devices are stricter)
+    try {
+      session = await navigator.xr.requestSession('immersive-vr', {});
+    } catch(e2) {
+      console.warn('VR session fallback also failed:', e2);
+      showVRRequired();
+      return;
+    }
+  }
+
+  // setSession is async in Three.js — must await it
+  await renderer.xr.setSession(session);
+
+  // Session is now active and rendering has started
+  showVRMenu();
+
+  session.addEventListener('end', () => {
+    if (G && G.running) {
+      killTimers(); stopAll();
+      if (G) G.running = false;
+    }
+  });
 }
 
 const scene = new THREE.Scene();
@@ -2195,9 +2217,23 @@ function restartGame(){
     if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=false;
   }
   selectedNight=0;
-  showVRMenu();
+  returnToMenu();
 }
 window.restartGame=restartGame;
+
+// Re-enters VR and shows menu — handles case where session ended
+async function returnToMenu() {
+  if (renderer.xr.isPresenting) {
+    showVRMenu();
+  } else {
+    // XR session ended — need to restart it
+    try {
+      await requestVRSession();
+    } catch(e) {
+      console.warn('Could not restart VR session:', e);
+    }
+  }
+}
 
 // ══════════════════════════════════════════════════════
 //  SECTION 28 — VR-ONLY RESTART HANDLER
@@ -2210,10 +2246,20 @@ window.restartGame=restartGame;
 // ══════════════════════════════════════════════════════
 //  SECTION 29 — WARN SCREEN & INITIAL FLOW
 // ══════════════════════════════════════════════════════
-document.getElementById('warnBtn').addEventListener('click', () => {
-  document.getElementById('warnScreen').style.display='none';
-  if (xrSupported) {
-    requestVRSession(); // This now calls showVRMenu after session starts
+document.getElementById('warnBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('warnBtn');
+  btn.textContent = 'LADEN… ▶';
+  btn.disabled = true;
+
+  try {
+    await requestVRSession();
+    // Session started — hide warn screen
+    document.getElementById('warnScreen').style.display = 'none';
+  } catch(e) {
+    // requestVRSession already handled errors internally
+    btn.textContent = 'IK BEGRIJP HET — DOORGAAN ▶';
+    btn.disabled = false;
+    console.warn('Session start error:', e);
   }
 });
 
