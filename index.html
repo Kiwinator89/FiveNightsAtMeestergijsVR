@@ -400,7 +400,7 @@ function buildVent3D() {
     new THREE.BoxGeometry(0.28, 0.10, 0.06),
     new THREE.MeshLambertMaterial({ color: 0x1a1a44 })
   );
-  vb.position.set(0, 2.45, 5.92);
+  vb.position.set(0, 2.45, 5.68);
   vb.userData.action = 'vent';
   vb.userData._origColor = 0x1a1a44;
   scene.add(vb); interactables.push(vb);
@@ -412,7 +412,7 @@ function buildVent3D() {
   lctx.fillStyle='#7777ff'; lctx.font='bold 16px monospace'; lctx.textAlign='center';
   lctx.fillText('VENT', 64, 30);
   const lm = new THREE.Mesh(new THREE.PlaneGeometry(0.26,0.09), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(lc), transparent:true }));
-  lm.position.set(0, 2.45, 5.89);
+  lm.position.set(0, 2.45, 5.65);
   lm.rotation.y = Math.PI; // face into room (-Z)
   scene.add(lm);
 }
