@@ -855,26 +855,53 @@ function drawAnimatronicsOnFeed(ctx, camId, fx, fy, fw, fh) {
   loadCamOverlayImg('maduro',  FILES.maduroCam);
   loadCamOverlayImg('mark',    FILES.markVent);
 
-  function drawOverlay(img, alignRight, scale) {
-    if (!img || !img.complete || img.naturalWidth === 0) return;
-    const h = fh * (scale||0.85);
-    const w = img.naturalWidth * (h / img.naturalHeight);
-    const x = alignRight ? fx+fw-w-fw*0.05 : fx+fw*0.5-w*0.5;
-    const y = fy+fh-h;
-    ctx.drawImage(img, x, y, w, h);
+  // Build list of enemies present on this camera
+  const present = [];
+  if (G.cfg.gijsActive  && G.mPos===camId      && camId!==MUSIC_CAM_ID) present.push({ key:'gijs',    scale:0.82 });
+  if (G.cfg.hoboActive  && G.hoboPos===camId    && camId!==MUSIC_CAM_ID) present.push({ key:'hobo',   scale:0.74 });
+  if (G.jeffreyActive   && G.jeffreyPos===camId && camId!==MUSIC_CAM_ID) present.push({ key:'jeffrey', scale:0.78 });
+  if (G.chapoActive     && camId===CHAPO_CAM_ID && !G.chapoAlarm)        present.push({ key:'chapo',  scale:0.72 });
+  if (G.diddyActive     && G.diddyPos===camId   && camId!==MUSIC_CAM_ID) present.push({ key:'diddy',  scale:0.80 });
+  if (G.maduroPos===camId)                                                present.push({ key:'maduro', scale:0.55, alpha:0.7 });
+
+  const n = present.length;
+
+  if (n > 0) {
+    // Divide feed width into equal slots, one per enemy
+    // Each enemy is centred in its slot and slightly varied in vertical position for realism
+    const slotW = fw / n;
+    // Vertical offsets cycle through a few values to prevent uniform baseline
+    const vOffsets = [0, -0.06, 0.04, -0.03, 0.07, -0.05];
+
+    present.forEach((e, i) => {
+      const img = camAnimOverlays[e.key];
+      if (!img || !img.complete || img.naturalWidth === 0) return;
+
+      // Scale down further when sharing the frame so nobody clips edges
+      const sharedScale = n === 1 ? e.scale : e.scale * (0.62 + 0.18 / n);
+      const h = fh * sharedScale;
+      const w = img.naturalWidth * (h / img.naturalHeight);
+
+      // Centre of this enemy's slot
+      const slotCx = fx + slotW * i + slotW / 2;
+      const x = slotCx - w / 2;
+      // Vertical: bottom-aligned with a small per-slot offset for naturalness
+      const vOff = vOffsets[i % vOffsets.length];
+      const y = fy + fh - h + fh * vOff;
+
+      ctx.globalAlpha = e.alpha !== undefined ? e.alpha : 1.0;
+      ctx.drawImage(img, x, y, w, h);
+      ctx.globalAlpha = 1.0;
+    });
   }
 
-  if (G.cfg.gijsActive && G.mPos===camId && camId!==MUSIC_CAM_ID) drawOverlay(camAnimOverlays['gijs'], false, 0.88);
-  if (G.cfg.hoboActive && G.hoboPos===camId && camId!==MUSIC_CAM_ID) drawOverlay(camAnimOverlays['hobo'], true, 0.80);
-  if (G.jeffreyActive && G.jeffreyPos===camId && camId!==MUSIC_CAM_ID) drawOverlay(camAnimOverlays['jeffrey'], false, 0.86);
-  if (G.chapoActive && camId===CHAPO_CAM_ID && !G.chapoAlarm) drawOverlay(camAnimOverlays['chapo'], false, 0.78);
-  if (G.diddyActive && G.diddyPos===camId && camId!==MUSIC_CAM_ID) drawOverlay(camAnimOverlays['diddy'], false, 0.92);
-
+  // Tom (music room) — always full-width, no slot needed
   if (G.cfg.tomActive && camId===MUSIC_CAM_ID) {
     if (camAnimOverlays['tom'] && camAnimOverlays['tom'].complete) {
       const d = Math.max(0,(100-G.musicBox)/100);
+      const h = fh * 0.92, w = camAnimOverlays['tom'].naturalWidth * (h/camAnimOverlays['tom'].naturalHeight);
       ctx.globalAlpha = 0.3 + d*0.7;
-      drawOverlay(camAnimOverlays['tom'], false, 0.92);
+      ctx.drawImage(camAnimOverlays['tom'], fx+fw/2-w/2, fy+fh-h, w, h);
       ctx.globalAlpha = 1.0;
       if (d > 0.3) {
         const dg = ctx.createRadialGradient(fx+fw/2,fy+fh/2,fh*0.2,fx+fw/2,fy+fh/2,fh*0.7);
@@ -883,19 +910,16 @@ function drawAnimatronicsOnFeed(ctx, camId, fx, fy, fw, fh) {
       }
     }
   }
-  if (G.maduroPos===camId) {
-    if (camAnimOverlays['maduro'] && camAnimOverlays['maduro'].complete) {
-      ctx.globalAlpha = 0.7;
-      drawOverlay(camAnimOverlays['maduro'], true, 0.65);
-      ctx.globalAlpha = 1.0;
-    }
-  }
+
+  // Mark (vent) — shown in upper-centre of feed
   if (G.markInVent && !G.ventClosed) {
     if (camAnimOverlays['mark'] && camAnimOverlays['mark'].complete) {
       const mh = fh * 0.46, mw = camAnimOverlays['mark'].naturalWidth * (mh/camAnimOverlays['mark'].naturalHeight);
       ctx.drawImage(camAnimOverlays['mark'], fx+fw/2-mw/2, fy, mw, mh);
     }
   }
+
+  // Maduro cam-offline overlay
   if (G.maduroDisabled && G.maduroDisabled[camId] > 0) {
     ctx.fillStyle='rgba(0,0,0,0.85)'; ctx.fillRect(fx,fy,fw,fh);
     ctx.fillStyle='#ff0000'; ctx.font='bold 28px monospace'; ctx.textAlign='center';
@@ -906,6 +930,8 @@ function drawAnimatronicsOnFeed(ctx, camId, fx, fy, fw, fh) {
     ctx.fillStyle='#330000'; ctx.font='12px monospace';
     ctx.fillText(`HERVERBINDING IN ${sec}s`, fx+fw/2, fy+fh/2+38);
   }
+
+  // Chapo alarm overlay
   if (G.chapoAlarm) {
     ctx.fillStyle='rgba(180,0,0,0.15)'; ctx.fillRect(fx,fy,fw,fh);
     ctx.strokeStyle='#ff2200'; ctx.lineWidth=4; ctx.strokeRect(fx+2,fy+2,fw-4,fh-4);
