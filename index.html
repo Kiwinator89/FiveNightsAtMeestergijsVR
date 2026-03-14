@@ -278,6 +278,7 @@ function buildRoom() {
   addMesh(new THREE.PlaneGeometry(12,4),  wallMat,   6, 1.7, 0, 0,-Math.PI/2, 0);
   addMesh(new THREE.PlaneGeometry(3, 4),  wallMat, -4.5,1.7, 6, 0, Math.PI, 0);
   addMesh(new THREE.PlaneGeometry(3, 4),  wallMat,  4.5,1.7, 6, 0, Math.PI, 0);
+  addMesh(new THREE.PlaneGeometry(3, 4),  wallMat,  0,   1.7, 6, 0, Math.PI, 0);
 
   const deskMat = new THREE.MeshLambertMaterial({ color: 0x180e04 });
   addMesh(new THREE.BoxGeometry(2.8,0.08,1.0), deskMat, 0, 0.84, 1.9);
@@ -375,29 +376,60 @@ function buildDoor3D(x, side) {
   scene.add(lm);
 }
 
-function buildVent3D() {
-  const ventMat = new THREE.MeshLambertMaterial({ color: 0x3a2a10 });
-  addMesh(new THREE.BoxGeometry(0.72,0.58,0.07), ventMat, 0, 2.85,-5.96);
-  for (let i=-3;i<=3;i++) addMesh(new THREE.BoxGeometry(0.64,0.020,0.020), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }), 0, 2.85+i*0.08,-5.93);
-  for (let i=-2;i<=2;i++) addMesh(new THREE.BoxGeometry(0.020,0.52,0.020), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }), i*0.14, 2.85,-5.93);
 
+function buildVent3D() {
+  // Vent on the FRONT wall (z=6) behind the player — player must turn around to close it.
+  const ventMat = new THREE.MeshLambertMaterial({ color: 0x3a2a10 });
+
+  // Frame flush against front wall, facing into room (-Z direction)
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.72,0.58,0.07), ventMat);
+  frame.position.set(0, 2.85, 5.96);
+  scene.add(frame);
+
+  // Horizontal grate bars
+  for (let i=-3;i<=3;i++) {
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.64,0.020,0.020), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }));
+    bar.position.set(0, 2.85+i*0.08, 5.93);
+    scene.add(bar);
+  }
+  // Vertical grate bars
+  for (let i=-2;i<=2;i++) {
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.020,0.52,0.020), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }));
+    bar.position.set(i*0.14, 2.85, 5.93);
+    scene.add(bar);
+  }
+
+  // Cover panel — animates open/closed
   ventPanelMesh = new THREE.Mesh(new THREE.BoxGeometry(0.70,0.56,0.05), new THREE.MeshLambertMaterial({ color: 0x221808 }));
-  ventPanelMesh.position.set(0, 2.85,-5.93);
+  ventPanelMesh.position.set(0, 2.85, 5.93);
   ventPanelMesh.visible = false;
   scene.add(ventPanelMesh);
 
+  // Status light
   ventStatusLight = new THREE.Mesh(new THREE.SphereGeometry(0.04,6,6), new THREE.MeshBasicMaterial({ color: 0x111111 }));
-  ventStatusLight.position.set(0.30, 3.06,-5.93);
+  ventStatusLight.position.set(0.30, 3.06, 5.93);
   scene.add(ventStatusLight);
 
+  // Interactive button below the vent, facing into room
   const vb = new THREE.Mesh(
-    new THREE.BoxGeometry(0.22,0.09,0.05),
+    new THREE.BoxGeometry(0.28, 0.10, 0.06),
     new THREE.MeshLambertMaterial({ color: 0x1a1a44 })
   );
-  vb.position.set(0, 2.62,-5.92);
+  vb.position.set(0, 2.45, 5.92);
   vb.userData.action = 'vent';
   vb.userData._origColor = 0x1a1a44;
   scene.add(vb); interactables.push(vb);
+
+  // Button label
+  const lc = document.createElement('canvas'); lc.width=128; lc.height=48;
+  const lctx = lc.getContext('2d');
+  lctx.fillStyle='#1a1a44'; lctx.fillRect(0,0,128,48);
+  lctx.fillStyle='#7777ff'; lctx.font='bold 16px monospace'; lctx.textAlign='center';
+  lctx.fillText('VENT', 64, 30);
+  const lm = new THREE.Mesh(new THREE.PlaneGeometry(0.26,0.09), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(lc), transparent:true }));
+  lm.position.set(0, 2.45, 5.89);
+  lm.rotation.y = Math.PI; // face into room (-Z)
+  scene.add(lm);
 }
 
 // ══════════════════════════════════════════════════════
@@ -409,12 +441,42 @@ function updateDoorAnimations(dt) {
     const mesh = doorMeshes[side];
     if (!mesh) return;
     anim.open += (anim.target - anim.open) * Math.min(1, anim.speed * dt);
+
+    // Slide door panel: open=1 hidden below floor, open=0 fully raised in frame
     mesh.position.y = -0.5 + (1 - anim.open) * 1.65;
+
+    const closed  = anim.open < 0.1;
+    const moving  = anim.open > 0.05 && anim.open < 0.95;
+    const atDoor  = (side==='left') ? (G&&G.mPos===POS.LD) : (G&&G.mPos===POS.RD);
+
+    // Door panel colour: dark green when closed, pulsing red when open+threat, near-black when open+safe
+    if (closed) {
+      mesh.material.color.setHex(0x0a2a0a);
+    } else if (atDoor) {
+      const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.008);
+      const r = Math.floor(0x22 + pulse * 0x33);
+      mesh.material.color.setRGB(r/255, 0, 0);
+    } else {
+      mesh.material.color.setHex(0x080308);
+    }
+
+    // Status light: bright green=closed, amber=moving, bright red=open+monster, dim=open+safe
     const dl = doorLights[side];
     if (dl) {
-      const closed = anim.open < 0.1;
-      const atDoor = (side==='left') ? (G&&G.mPos===POS.LD) : (G&&G.mPos===POS.RD);
-      dl.material.color.setHex(closed ? 0x00e050 : (atDoor ? 0xff2200 : 0x111111));
+      if (closed)        dl.material.color.setHex(0x00ff44);
+      else if (moving)   dl.material.color.setHex(0xffaa00);
+      else if (atDoor)   dl.material.color.setHex(0xff1100);
+      else               dl.material.color.setHex(0x222222);
+    }
+
+    // Button colour: green=closed, blue=open
+    for (const obj of interactables) {
+      if (obj.userData.action === (side==='left' ? 'leftDoor' : 'rightDoor') && obj !== lastHighlighted) {
+        const col = closed ? 0x1a441a : 0x1a1a44;
+        obj.material.color.setHex(col);
+        obj.userData._origColor = col;
+        break;
+      }
     }
   });
   if (ventPanelMesh) {
@@ -434,6 +496,8 @@ function updateDoorAnimations(dt) {
 // ══════════════════════════════════════════════════════
 let bigScreenCanvas, bigScreenCtx, bigScreenTex, bigScreenMesh;
 let windUpBtnMesh = null;
+let lureBtnMesh = null, alarmBtnMesh = null;
+let lureLabelCanvas, lureLabelTex, alarmLabelCanvas, alarmLabelTex;
 const BIG_W = 1024, BIG_H = 640;
 const camBtnMeshes = {};
 
@@ -495,25 +559,37 @@ function buildBigCameraScreen() {
     lm.position.set(startX + i*(btnW+gap), 1.08,-5.89); scene.add(lm);
   });
 
-  const lureBtn = new THREE.Mesh(
+  lureBtnMesh = new THREE.Mesh(
     new THREE.BoxGeometry(0.46, 0.15, 0.055),
     new THREE.MeshLambertMaterial({ color: 0x0a2a0a })
   );
-  lureBtn.position.set(1.82, 1.08,-5.92);
-  lureBtn.userData.action = 'lure';
-  lureBtn.userData._origColor = 0x0a2a0a;
-  scene.add(lureBtn); interactables.push(lureBtn);
-  makeLabelPlane('LOKKEN', 0x0a2a0a, '#88dd44', 1.82, 1.08,-5.89, 0.44, 0.13);
+  lureBtnMesh.position.set(1.82, 1.08,-5.92);
+  lureBtnMesh.userData.action = 'lure';
+  lureBtnMesh.userData._origColor = 0x0a2a0a;
+  scene.add(lureBtnMesh); interactables.push(lureBtnMesh);
 
-  const alarmBtn = new THREE.Mesh(
+  // Dynamic label canvas for lure — redrawn each tick to show cooldown
+  lureLabelCanvas = document.createElement('canvas'); lureLabelCanvas.width=128; lureLabelCanvas.height=48;
+  lureLabelTex = new THREE.CanvasTexture(lureLabelCanvas);
+  lureLabelTex.minFilter = THREE.LinearFilter; lureLabelTex.generateMipmaps = false;
+  const lureLabelMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.42,0.11), new THREE.MeshBasicMaterial({ map: lureLabelTex, transparent:true }));
+  lureLabelMesh.position.set(1.82, 1.08,-5.89); scene.add(lureLabelMesh);
+
+  alarmBtnMesh = new THREE.Mesh(
     new THREE.BoxGeometry(0.46, 0.15, 0.055),
     new THREE.MeshLambertMaterial({ color: 0x2a0a0a })
   );
-  alarmBtn.position.set(2.32, 1.08,-5.92);
-  alarmBtn.userData.action = 'alarm';
-  alarmBtn.userData._origColor = 0x2a0a0a;
-  scene.add(alarmBtn); interactables.push(alarmBtn);
-  makeLabelPlane('ALARM', 0x2a0a0a, '#ff4444', 2.32, 1.08,-5.89, 0.44, 0.13);
+  alarmBtnMesh.position.set(2.32, 1.08,-5.92);
+  alarmBtnMesh.userData.action = 'alarm';
+  alarmBtnMesh.userData._origColor = 0x2a0a0a;
+  scene.add(alarmBtnMesh); interactables.push(alarmBtnMesh);
+
+  // Dynamic label canvas for alarm — redrawn each tick to show cooldown
+  alarmLabelCanvas = document.createElement('canvas'); alarmLabelCanvas.width=128; alarmLabelCanvas.height=48;
+  alarmLabelTex = new THREE.CanvasTexture(alarmLabelCanvas);
+  alarmLabelTex.minFilter = THREE.LinearFilter; alarmLabelTex.generateMipmaps = false;
+  const alarmLabelMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.42,0.11), new THREE.MeshBasicMaterial({ map: alarmLabelTex, transparent:true }));
+  alarmLabelMesh.position.set(2.32, 1.08,-5.89); scene.add(alarmLabelMesh);
 
   windUpBtnMesh = new THREE.Mesh(
     new THREE.BoxGeometry(0.7, 0.15, 0.055),
@@ -561,6 +637,58 @@ function highlightCamBtn(activeId) {
   scene.children.forEach(m => {
     if (m.userData._windLabel) m.visible = (activeId === MUSIC_CAM_ID && G && G.cfg.tomActive);
   });
+}
+
+// ── Lure & Alarm cooldown button updater ─────────────
+function updateCooldownButtons() {
+  if (!lureLabelCanvas || !alarmLabelCanvas) return;
+
+  function drawCDLabel(canvas, tex, btnMesh, label, ready, cdSec, maxCD) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,128,48);
+    if (ready) {
+      // Ready: bright colour, "KLAAR" subtitle
+      const bgCol  = label === 'LOKKEN' ? '#0a3a0a' : '#3a0a0a';
+      const fgCol  = label === 'LOKKEN' ? '#88ff44' : '#ff5555';
+      const brdCol = label === 'LOKKEN' ? '#44cc22' : '#cc2222';
+      ctx.fillStyle = bgCol; ctx.fillRect(0,0,128,48);
+      ctx.strokeStyle = brdCol; ctx.lineWidth = 2; ctx.strokeRect(1,1,126,46);
+      ctx.fillStyle = fgCol; ctx.font = 'bold 17px monospace'; ctx.textAlign = 'center';
+      ctx.fillText(label, 64, 20);
+      ctx.fillStyle = brdCol; ctx.font = 'bold 12px monospace';
+      ctx.fillText('✓ KLAAR', 64, 38);
+      if (btnMesh && btnMesh !== lastHighlighted) {
+        btnMesh.material.color.setHex(label === 'LOKKEN' ? 0x0a3a0a : 0x3a0a0a);
+        btnMesh.userData._origColor = label === 'LOKKEN' ? 0x0a3a0a : 0x3a0a0a;
+      }
+    } else {
+      // On cooldown: greyed out, countdown + progress bar
+      ctx.fillStyle = '#080808'; ctx.fillRect(0,0,128,48);
+      ctx.strokeStyle = '#222222'; ctx.lineWidth = 1; ctx.strokeRect(1,1,126,46);
+      // Progress bar (fills up as cooldown expires)
+      const pct = Math.max(0, Math.min(1, 1 - cdSec / maxCD));
+      const barCol = label === 'LOKKEN' ? '#1a4a0a' : '#4a0a0a';
+      ctx.fillStyle = '#111111'; ctx.fillRect(4,37,120,8);
+      ctx.fillStyle = barCol; ctx.fillRect(4,37, Math.floor(120*pct), 8);
+      ctx.fillStyle = '#444444'; ctx.font = 'bold 15px monospace'; ctx.textAlign = 'center';
+      ctx.fillText(label, 64, 18);
+      ctx.fillStyle = '#666666'; ctx.font = 'bold 13px monospace';
+      ctx.fillText(Math.ceil(cdSec) + 's', 64, 33);
+      if (btnMesh && btnMesh !== lastHighlighted) {
+        btnMesh.material.color.setHex(0x080808);
+        btnMesh.userData._origColor = 0x080808;
+      }
+    }
+    tex.needsUpdate = true;
+  }
+
+  const lureReady  = G ? G.lureReady  : false;
+  const alarmReady = G ? G.alarmReady : false;
+  const lureCD     = G ? G.lureCD     : 0;
+  const alarmCD    = G ? G.alarmCD    : 0;
+
+  drawCDLabel(lureLabelCanvas,  lureLabelTex,  lureBtnMesh,  'LOKKEN', lureReady,  lureCD,  30);
+  drawCDLabel(alarmLabelCanvas, alarmLabelTex, alarmBtnMesh, 'ALARM',  alarmReady, alarmCD, 20);
 }
 
 function drawBigScreen() {
@@ -903,6 +1031,7 @@ renderer.setAnimationLoop(time => {
   updateJsPlane(dt);
   pollGamepads();
   updatePointerHighlight();
+  if (G && G.running) updateCooldownButtons();
 
   renderer.render(scene, camera);
 });
@@ -1105,8 +1234,6 @@ function drawVRHud() {
     ctx.fillStyle='#ddcc00'; ctx.font='16px monospace';
     ctx.fillText(`🎵 ${Math.round(G.musicBox)}%`, 10, 94);
   }
-  ctx.fillStyle='#442222'; ctx.font='13px monospace'; ctx.textAlign='right';
-  ctx.fillText(G.cfg.label, W-10, 38);
   ctx.fillStyle=G.lfClosed?'#00e050':'#441111'; ctx.font='11px monospace'; ctx.textAlign='right';
   ctx.fillText('L:'+(G.lfClosed?'●':'○')+'  R:'+(G.rtClosed?'●':'○')+'  V:'+(G.ventClosed?'●':'○'), W-10, 68);
   vrHudTex.needsUpdate = true;
@@ -1593,7 +1720,7 @@ function startGame(){
   if(G.jeffreyActive){G.jeffreyStep=0;G.jeffreyPos=JEFFREY_PATH[0];G.jeffreyTimer=JEFFREY_SWITCH_S;}
   if(G.diddyActive)   setTimeout(scheduleDiddyMove,8000);
 
-  drawBigScreen(); drawVRHud();
+  drawBigScreen(); drawVRHud(); updateCooldownButtons();
 }
 window.startGame=startGame;
 
