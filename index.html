@@ -256,8 +256,6 @@ scene.add(new THREE.Mesh(new THREE.SphereGeometry(50, 8, 8), alarmSphereMat));
 const doorMeshes   = { left: null, right: null };
 const doorLights   = { left: null, right: null };
 const doorAnim     = { left:  { open: 1, target: 1, speed: 3.0 }, right: { open: 1, target: 1, speed: 3.0 } };
-const ventAnim     = { open: 1, target: 1, speed: 4.0 };
-let ventPanelMesh  = null;
 let ventStatusLight = null;
 
 function addMesh(geo, mat, x=0,y=0,z=0,rx=0,ry=0,rz=0) {
@@ -280,12 +278,6 @@ function buildRoom() {
   addMesh(new THREE.PlaneGeometry(3, 4),  wallMat,  4.5,1.7, 6, 0, Math.PI, 0);
   addMesh(new THREE.PlaneGeometry(3, 4),  wallMat,  0,   1.7, 6, 0, Math.PI, 0);
 
-  const deskMat = new THREE.MeshLambertMaterial({ color: 0x180e04 });
-  addMesh(new THREE.BoxGeometry(2.8,0.08,1.0), deskMat, 0, 0.84, 1.9);
-  addMesh(new THREE.BoxGeometry(0.08,0.84,1.0), deskMat, -1.36, 0.42, 1.9);
-  addMesh(new THREE.BoxGeometry(0.08,0.84,1.0), deskMat,  1.36, 0.42, 1.9);
-  addMesh(new THREE.BoxGeometry(0.55,0.055,0.55), new THREE.MeshLambertMaterial({ color: 0x0d0d0d }), 0, 0.56, 2.5);
-  addMesh(new THREE.BoxGeometry(0.55,0.65,0.055), new THREE.MeshLambertMaterial({ color: 0x0d0d0d }), 0, 0.90, 2.75);
 
   buildBlackboard();
 
@@ -309,8 +301,8 @@ function buildRoom() {
   buildDoor3D(-4.5, 'left');
   buildDoor3D( 4.5, 'right');
   buildVent3D();
-  buildDeskMonitor();
   buildBigCameraScreen();
+  buildAnalogClock();
 }
 
 function buildBlackboard() {
@@ -328,17 +320,6 @@ function buildBlackboard() {
   m.position.set(-2.5, 2.1,-5.94); scene.add(m);
 }
 
-function buildDeskMonitor() {
-  addMesh(new THREE.BoxGeometry(0.6,0.4,0.035), new THREE.MeshLambertMaterial({ color: 0x0c0c14 }), 0.6,1.14,1.65);
-  const mc = document.createElement('canvas'); mc.width=256; mc.height=160;
-  const ctx = mc.getContext('2d');
-  ctx.fillStyle='#0a0a14'; ctx.fillRect(0,0,256,160);
-  ctx.fillStyle='#00ff66'; ctx.font='bold 14px monospace'; ctx.fillText('SECURITY ONLINE',12,44);
-  ctx.fillStyle='rgba(0,255,100,.5)'; ctx.font='12px monospace';
-  ctx.fillText('>>> ACTIVE',12,70); ctx.fillText('CAM SYSTEM OK',12,90);
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(0.57,0.37), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(mc) }));
-  m.position.set(0.6,1.14,1.647); scene.add(m);
-}
 
 function buildDoor3D(x, side) {
   const sign = x < 0 ? 1 : -1;
@@ -352,8 +333,8 @@ function buildDoor3D(x, side) {
   scene.add(door);
   doorMeshes[side] = door;
 
-  const dl = new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8), new THREE.MeshBasicMaterial({ color: 0x111111 }));
-  dl.position.set(x + sign*0.40, 2.18, 0.12);
+  const dl = new THREE.Mesh(new THREE.SphereGeometry(0.14,10,10), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+  dl.position.set(x + sign*0.40, 2.18, 0.14);
   scene.add(dl);
   doorLights[side] = dl;
 
@@ -399,15 +380,10 @@ function buildVent3D() {
     scene.add(bar);
   }
 
-  // Cover panel — animates open/closed
-  ventPanelMesh = new THREE.Mesh(new THREE.BoxGeometry(0.70,0.56,0.05), new THREE.MeshLambertMaterial({ color: 0x221808 }));
-  ventPanelMesh.position.set(0, 2.85, 5.93);
-  ventPanelMesh.visible = false;
-  scene.add(ventPanelMesh);
 
   // Status light
-  ventStatusLight = new THREE.Mesh(new THREE.SphereGeometry(0.04,6,6), new THREE.MeshBasicMaterial({ color: 0x111111 }));
-  ventStatusLight.position.set(0.30, 3.06, 5.93);
+  ventStatusLight = new THREE.Mesh(new THREE.SphereGeometry(0.14,10,10), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+  ventStatusLight.position.set(0, 2.45, 5.89);
   scene.add(ventStatusLight);
 
   // Interactive button below the vent, facing into room
@@ -441,60 +417,131 @@ function updateDoorAnimations(dt) {
     const mesh = doorMeshes[side];
     if (!mesh) return;
     anim.open += (anim.target - anim.open) * Math.min(1, anim.speed * dt);
-
-    // Slide door panel: open=1 hidden below floor, open=0 fully raised in frame
     mesh.position.y = -0.5 + (1 - anim.open) * 1.65;
 
-    const closed  = anim.open < 0.1;
-    const moving  = anim.open > 0.05 && anim.open < 0.95;
-    const atDoor  = (side==='left') ? (G&&G.mPos===POS.LD) : (G&&G.mPos===POS.RD);
-
-    // Door panel colour: dark green when closed, pulsing red when open+threat, near-black when open+safe
-    if (closed) {
-      mesh.material.color.setHex(0x0a2a0a);
-    } else if (atDoor) {
-      const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.008);
-      const r = Math.floor(0x22 + pulse * 0x33);
-      mesh.material.color.setRGB(r/255, 0, 0);
-    } else {
-      mesh.material.color.setHex(0x080308);
-    }
-
-    // Status light: bright green=closed, amber=moving, bright red=open+monster, dim=open+safe
+    // Big simple indicator: bright green = closed, bright red = open
+    const closed = anim.open < 0.1;
     const dl = doorLights[side];
-    if (dl) {
-      if (closed)        dl.material.color.setHex(0x00ff44);
-      else if (moving)   dl.material.color.setHex(0xffaa00);
-      else if (atDoor)   dl.material.color.setHex(0xff1100);
-      else               dl.material.color.setHex(0x222222);
-    }
-
-    // Button colour: green=closed, blue=open
-    for (const obj of interactables) {
-      if (obj.userData.action === (side==='left' ? 'leftDoor' : 'rightDoor') && obj !== lastHighlighted) {
-        const col = closed ? 0x1a441a : 0x1a1a44;
-        obj.material.color.setHex(col);
-        obj.userData._origColor = col;
-        break;
-      }
-    }
+    if (dl) dl.material.color.setHex(closed ? 0x00ff00 : 0xff0000);
   });
-  if (ventPanelMesh) {
-    ventAnim.open += (ventAnim.target - ventAnim.open) * Math.min(1, ventAnim.speed * dt);
-    const isClosed = ventAnim.open < 0.92;
-    ventPanelMesh.visible = isClosed;
-    ventPanelMesh.rotation.x = (1 - ventAnim.open) * (Math.PI * 0.45);
-    ventPanelMesh.position.y = 2.85 - (1 - ventAnim.open) * 0.22;
-  }
+
+  // Vent indicator: bright green = closed, bright red = open
   if (ventStatusLight) {
-    ventStatusLight.material.color.setHex(G&&G.markInVent&&!G.ventClosed ? 0xff4400 : 0x111111);
+    ventStatusLight.material.color.setHex(G&&G.ventClosed ? 0x00ff00 : 0xff0000);
   }
+}
+
+// ══════════════════════════════════════════════════════
+//  ANALOG WALL CLOCK — left wall, z=-1, x=-5.94
+// ══════════════════════════════════════════════════════
+function buildAnalogClock() {
+  clockCanvas = document.createElement('canvas');
+  clockCanvas.width = 256; clockCanvas.height = 256;
+  clockCtx = clockCanvas.getContext('2d');
+  clockTex = new THREE.CanvasTexture(clockCanvas);
+  clockTex.minFilter = THREE.LinearFilter;
+  clockTex.generateMipmaps = false;
+
+  // Clock face plane on left wall, facing into room (+X direction)
+  clockMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.55, 0.55),
+    new THREE.MeshBasicMaterial({ map: clockTex })
+  );
+  clockMesh.position.set(-5.94, 2.1, -1.0);
+  clockMesh.rotation.y = Math.PI / 2; // face into room
+  scene.add(clockMesh);
+
+  // Wooden frame rim around the clock
+  const rimMat = new THREE.MeshLambertMaterial({ color: 0x2a1a08 });
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.295, 0.04, 8, 32), rimMat);
+  rim.position.set(-5.91, 2.1, -1.0);
+  rim.rotation.y = Math.PI / 2;
+  scene.add(rim);
+
+  drawAnalogClock();
+}
+
+function drawAnalogClock() {
+  const ctx = clockCtx;
+  const W = 256, H = 256, cx = 128, cy = 128, R = 112;
+  ctx.clearRect(0, 0, W, H);
+
+  // Clock face
+  ctx.fillStyle = '#f0e8d0';
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.fill();
+
+  // Subtle radial gradient for depth
+  const grad = ctx.createRadialGradient(cx-20, cy-20, 10, cx, cy, R);
+  grad.addColorStop(0, 'rgba(255,255,255,0.3)');
+  grad.addColorStop(1, 'rgba(0,0,0,0.18)');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.fill();
+
+  // Hour tick marks
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+    const isHour = true;
+    const len = i % 3 === 0 ? 14 : 8;
+    const r1 = R - 4, r2 = R - 4 - len;
+    ctx.strokeStyle = '#1a0a00';
+    ctx.lineWidth = i % 3 === 0 ? 3 : 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a)*r1, cy + Math.sin(a)*r1);
+    ctx.lineTo(cx + Math.cos(a)*r2, cy + Math.sin(a)*r2);
+    ctx.stroke();
+  }
+
+  // Compute game time angles
+  // Game goes 12:00AM -> 6:00AM over NIGHT_MS ms
+  // prog 0->1 = 0->360 game-minutes = 0->6 game-hours from midnight
+  let hourAngle, minuteAngle;
+  if (G && G.running) {
+    const prog = Math.min(1, (Date.now() - G.nightStart) / NIGHT_MS);
+    const totalMins = prog * 360; // 0 -> 360 game minutes (12:00 -> 6:00)
+    const gameHour = totalMins / 60; // 0 -> 6 (hours past midnight, so 12->6AM)
+    // 12:00 AM = hour 0 on 12h clock face = top (angle = -PI/2 + 0)
+    // Each hour = PI/6 radians on hour hand
+    // Hour hand: full rotation per 12h = 2PI / 12 per hour
+    const hourFrac = (gameHour % 12) / 12;
+    hourAngle   = hourFrac * Math.PI * 2 - Math.PI / 2;
+    minuteAngle = ((totalMins % 60) / 60) * Math.PI * 2 - Math.PI / 2;
+  } else {
+    // Default: show 12:00
+    hourAngle   = -Math.PI / 2;
+    minuteAngle = -Math.PI / 2;
+  }
+
+  // Minute hand — long and thin
+  ctx.strokeStyle = '#1a0a00';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx - Math.cos(minuteAngle)*12, cy - Math.sin(minuteAngle)*12);
+  ctx.lineTo(cx + Math.cos(minuteAngle)*(R-18), cy + Math.sin(minuteAngle)*(R-18));
+  ctx.stroke();
+
+  // Hour hand — short and thick
+  ctx.strokeStyle = '#1a0a00';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(cx - Math.cos(hourAngle)*10, cy - Math.sin(hourAngle)*10);
+  ctx.lineTo(cx + Math.cos(hourAngle)*(R-38), cy + Math.sin(hourAngle)*(R-38));
+  ctx.stroke();
+
+  // Centre pin
+  ctx.fillStyle = '#3a1a00';
+  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#cc8833';
+  ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI*2); ctx.fill();
+
+  clockTex.needsUpdate = true;
 }
 
 // ══════════════════════════════════════════════════════
 //  SECTION 7 — BIG CAMERA MONITOR (back wall)
 // ══════════════════════════════════════════════════════
 let bigScreenCanvas, bigScreenCtx, bigScreenTex, bigScreenMesh;
+let clockCanvas, clockCtx, clockTex, clockMesh;
 let windUpBtnMesh = null;
 let lureBtnMesh = null, alarmBtnMesh = null;
 let lureLabelCanvas, lureLabelTex, alarmLabelCanvas, alarmLabelTex;
@@ -737,14 +784,7 @@ function drawBigScreen() {
   ctx.fillStyle='#cc0000'; ctx.font='bold 14px monospace'; ctx.textAlign='left';
   ctx.fillText(G&&G.cfg?G.cfg.label:'FNAG VR', rpX, rpY+16);
 
-  ctx.fillStyle='#0a0a18'; ctx.fillRect(rpX,rpY+22,rpW,62);
-  ctx.strokeStyle='#222266'; ctx.lineWidth=1; ctx.strokeRect(rpX,rpY+22,rpW,62);
-  ctx.fillStyle='#5555aa'; ctx.font='10px monospace'; ctx.textAlign='center';
-  ctx.fillText('TIJD', rpX+rpW/2, rpY+36);
-  ctx.fillStyle='#e8920a'; ctx.font='bold 24px monospace';
-  ctx.fillText(G&&G.running?gameTimeStr:'12:00 AM', rpX+rpW/2, rpY+76);
-
-  const o2Y = rpY+96;
+  const o2Y = rpY+22;
   ctx.fillStyle='#0a0a18'; ctx.fillRect(rpX,o2Y,rpW,78);
   ctx.strokeStyle='#222244'; ctx.lineWidth=1; ctx.strokeRect(rpX,o2Y,rpW,78);
   ctx.fillStyle='#5555aa'; ctx.font='10px monospace'; ctx.textAlign='center';
@@ -1031,7 +1071,7 @@ renderer.setAnimationLoop(time => {
   updateJsPlane(dt);
   pollGamepads();
   updatePointerHighlight();
-  if (G && G.running) updateCooldownButtons();
+  if (G && G.running) { updateCooldownButtons(); drawAnalogClock(); }
 
   renderer.render(scene, camera);
 });
@@ -1197,48 +1237,6 @@ function mkState() {
   };
 }
 
-// ══════════════════════════════════════════════════════
-//  SECTION 15 — VR IN-WORLD HUD
-// ══════════════════════════════════════════════════════
-let vrHudCanvas, vrHudCtx, vrHudTex, vrHudMesh;
-const VR_HUD_W=512, VR_HUD_H=128;
-
-function buildVRHud() {
-  vrHudCanvas = document.createElement('canvas'); vrHudCanvas.width=VR_HUD_W; vrHudCanvas.height=VR_HUD_H;
-  vrHudCtx = vrHudCanvas.getContext('2d');
-  vrHudTex = new THREE.CanvasTexture(vrHudCanvas);
-  vrHudTex.minFilter = THREE.LinearFilter;
-  vrHudMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.55,0.14),
-    new THREE.MeshBasicMaterial({ map: vrHudTex, transparent:true })
-  );
-  vrHudMesh.position.set(-0.28,-0.18,-0.65);
-  vrHudMesh.visible = false;
-  camera.add(vrHudMesh);
-}
-buildVRHud();
-
-function drawVRHud() {
-  if (!vrHudCtx || !G || !G.running) return;
-  const ctx=vrHudCtx, W=VR_HUD_W, H=VR_HUD_H;
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='rgba(2,2,10,0.82)'; ctx.fillRect(0,0,W,H);
-  ctx.strokeStyle='#2a2a44'; ctx.lineWidth=1; ctx.strokeRect(1,1,W-2,H-2);
-  ctx.fillStyle='#e8920a'; ctx.font='bold 28px monospace'; ctx.textAlign='left';
-  ctx.fillText(gameTimeStr, 10, 38);
-  const o2pct=Math.max(0,Math.round(G.o2));
-  ctx.fillStyle=o2pct<=10?'#ff3300':o2pct<=30?'#ffaa00':'#55bbff';
-  ctx.font='bold 18px monospace';
-  ctx.fillText(`O₂: ${o2pct}%`, 10, 68);
-  if(G.cfg.tomActive){
-    ctx.fillStyle='#ddcc00'; ctx.font='16px monospace';
-    ctx.fillText(`🎵 ${Math.round(G.musicBox)}%`, 10, 94);
-  }
-  ctx.fillStyle=G.lfClosed?'#00e050':'#441111'; ctx.font='11px monospace'; ctx.textAlign='right';
-  ctx.fillText('L:'+(G.lfClosed?'●':'○')+'  R:'+(G.rtClosed?'●':'○')+'  V:'+(G.ventClosed?'●':'○'), W-10, 68);
-  vrHudTex.needsUpdate = true;
-}
-
 let vrDeathCanvas, vrDeathCtx, vrDeathTex, vrDeathMesh;
 function buildVRDeathPanel() {
   vrDeathCanvas=document.createElement('canvas'); vrDeathCanvas.width=768; vrDeathCanvas.height=512;
@@ -1343,7 +1341,6 @@ window.toggleDoor=toggleDoor;
 function toggleVent(){
   if(!G||G.dead||G.won)return;
   G.ventClosed=!G.ventClosed;
-  ventAnim.target=G.ventClosed?0:1;
   if(G.ventClosed) play('doorClose');
   if(G.ventClosed&&G.markInVent){if(G.markKillTimer){clearTimeout(G.markKillTimer);G.markKillTimer=null;} markLeaveAfter(1000+Math.random()*2000);}
   else if(!G.ventClosed&&G.markInVent){if(G.markKillTimer)clearTimeout(G.markKillTimer);G.markKillTimer=setTimeout(()=>{if(!G.dead&&!G.won&&G.markInVent&&!G.ventClosed)triggerMarkJS();},1000);}
@@ -1597,7 +1594,6 @@ function doJumpscare(imgSrc, cause){
   if(!G||G.dead)return;
   G.dead=true; killTimers(); stopAll(); play('jumpscare');
   triggerVRJumpscare(imgSrc, () => showVRDeathScreen(cause));
-  if(vrHudMesh) vrHudMesh.visible=false;
   if(vrRestartBtn){ vrRestartBtn.visible=true; if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=true; }
   interactables.push(vrRestartBtn);
 }
@@ -1627,7 +1623,6 @@ function triggerWin(){
   ctx.fillText('Kijk naar de OPNIEUW knop', W/2, H-60);
   vrDeathTex.needsUpdate=true;
   vrDeathMesh.visible=true;
-  if(vrHudMesh) vrHudMesh.visible=false;
   if(vrRestartBtn){ vrRestartBtn.visible=true; if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=true; }
 }
 
@@ -1644,7 +1639,7 @@ function gameTick(){
   G.o2=Math.max(0,G.o2-drain);
   if(G.o2<=0&&!G.o2Dead)oxygenDepleted();
   tickMusicBox(); tickJeffrey(); tickChapo(); tickMaduro();
-  drawVRHud();
+ 
 }
 
 function oxygenDepleted(){
@@ -1691,10 +1686,8 @@ function startGame(){
 
   doorAnim.left.open=1;  doorAnim.left.target=1;
   doorAnim.right.open=1; doorAnim.right.target=1;
-  ventAnim.open=1; ventAnim.target=1;
   if(doorMeshes.left)  doorMeshes.left.position.y  = -0.5;
   if(doorMeshes.right) doorMeshes.right.position.y = -0.5;
-  if(ventPanelMesh){ ventPanelMesh.visible=false; ventPanelMesh.rotation.x=0; }
 
   initAudio();
   const ac=getAudioCtx();
@@ -1703,7 +1696,6 @@ function startGame(){
 
   if(G.cfg.tomActive&&SFX.muziek){SFX.muziek.volume=0.15;SFX.muziek.play().catch(()=>{});}
 
-  if(vrHudMesh) vrHudMesh.visible=true;
   highlightCamBtn(0);
 
   G.lureCD=LURE_CD_S; G.lureReady=false;
@@ -1720,7 +1712,7 @@ function startGame(){
   if(G.jeffreyActive){G.jeffreyStep=0;G.jeffreyPos=JEFFREY_PATH[0];G.jeffreyTimer=JEFFREY_SWITCH_S;}
   if(G.diddyActive)   setTimeout(scheduleDiddyMove,8000);
 
-  drawBigScreen(); drawVRHud(); updateCooldownButtons();
+  drawBigScreen(); updateCooldownButtons();
 }
 window.startGame=startGame;
 
@@ -1731,11 +1723,8 @@ function restartGame(){
   alarmSphereMat.opacity=0;
   doorAnim.left.open=1;  doorAnim.left.target=1;
   doorAnim.right.open=1; doorAnim.right.target=1;
-  ventAnim.open=1; ventAnim.target=1;
   if(doorMeshes.left)  doorMeshes.left.position.y  = -0.5;
   if(doorMeshes.right) doorMeshes.right.position.y = -0.5;
-  if(ventPanelMesh){ ventPanelMesh.visible=false; ventPanelMesh.rotation.x=0; }
-  if(vrHudMesh)  vrHudMesh.visible=false;
   if(vrDeathMesh)vrDeathMesh.visible=false;
   if(vrRestartBtn){
     vrRestartBtn.visible=false;
