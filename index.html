@@ -8,14 +8,14 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
 #vrRequiredScreen{position:fixed;inset:0;z-index:999;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-.vr-req-box{max-width:520px;border:2px solid #440000;padding:40px;background:#000;text-align:center}
-.vr-req-title{font-size:1.6rem;color:#cc0000;letter-spacing:4px;margin-bottom:20px;text-shadow:0 0 20px #ff000066}
-.vr-req-msg{color:#663333;font-size:.9rem;line-height:2;letter-spacing:1px}
-#warnScreen{position:fixed;inset:0;z-index:500;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-.warn-box{max-width:min(580px,92vw);border:2px solid #ff0000;padding:36px 40px;background:#000}
-.warn-title{font-size:1.9rem;color:#ff0000;letter-spacing:5px;text-align:center;margin-bottom:18px;text-shadow:0 0 22px #ff000099}
-.warn-line{color:#cc3333;font-size:.78rem;line-height:2.2;margin-bottom:4px;letter-spacing:1px}
-.menu-btn{padding:12px 40px;background:transparent;border:1px solid #660000;color:#880000;font-family:monospace;font-size:1rem;letter-spacing:4px;cursor:pointer;transition:all .2s;display:inline-block;margin-top:6px}
+.vr-req-box{max-width:560px;border:2px solid #440000;padding:48px 40px;background:#050000;text-align:center;border-radius:4px}
+.vr-req-title{font-size:2rem;color:#cc0000;letter-spacing:4px;margin-bottom:24px;text-shadow:0 0 20px #ff000066}
+.vr-req-msg{color:#886666;font-size:1rem;line-height:2.2;letter-spacing:1px}
+#warnScreen{position:fixed;inset:0;z-index:500;background:radial-gradient(ellipse at center,#080000 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.warn-box{max-width:min(600px,94vw);border:2px solid #ff0000;padding:40px 44px;background:#050000;border-radius:4px;box-shadow:0 0 40px rgba(200,0,0,0.15)}
+.warn-title{font-size:2rem;color:#ff0000;letter-spacing:5px;text-align:center;margin-bottom:20px;text-shadow:0 0 22px #ff000099}
+.warn-line{color:#cc4444;font-size:.85rem;line-height:2.4;margin-bottom:2px;letter-spacing:1px}
+.menu-btn{padding:12px 40px;background:transparent;border:1px solid #660000;color:#880000;font-family:monospace;font-size:1rem;letter-spacing:4px;cursor:pointer;transition:all .2s;display:inline-block;margin-top:6px;border-radius:2px}
 .menu-btn:hover{border-color:#cc0000;color:#ff2200;box-shadow:0 0 20px #66000055}
 #threeCanvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0;z-index:1}
 </style>
@@ -35,8 +35,9 @@ body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
     <div class="warn-line">Dit spel bevat jumpscares en harde geluiden.</div>
     <div class="warn-line">Spelen met koptelefoon op eigen risico.</div>
     <div class="warn-line">Satirische horror-parodie — volledig fictief.</div>
-    <div class="warn-line">VR modus vereist — zet uw headset op.</div>
-    <button class="menu-btn" style="width:100%;margin-top:20px" id="warnBtn">IK BEGRIJP HET — DOORGAAN ▶</button>
+    <div class="warn-line" style="color:#ff4444;font-weight:bold;margin-top:12px">🥽 VR HEADSET VEREIST</div>
+    <div class="warn-line">Open in de Meta Quest browser voor VR.</div>
+    <button class="menu-btn" style="width:100%;margin-top:24px;font-size:1.1rem;padding:16px 40px" id="warnBtn">IK BEGRIJP HET — DOORGAAN ▶</button>
   </div>
 </div>
 
@@ -93,7 +94,16 @@ function requestVRSession() {
     optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
   }).then(session => {
     renderer.xr.setSession(session);
-    session.addEventListener('end', () => {});
+    // Show VR menu as soon as the session is active
+    // Use a short delay to let the renderer settle into XR mode
+    setTimeout(showVRMenu, 400);
+    session.addEventListener('end', () => {
+      // If session ends mid-game, stop everything cleanly
+      if (G && G.running) {
+        killTimers(); stopAll();
+        if (G) G.running = false;
+      }
+    });
   }).catch(e => console.warn('VR session failed:', e));
 }
 
@@ -120,21 +130,22 @@ let leftTriggerHeld  = false;
 const prevThumbPress = [false, false];
 
 function makeRayLine() {
-  const pts = [new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-8)];
+  // Ray length 6m — enough to reach all buttons without clipping back wall
+  const pts = [new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-6)];
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  return new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x88aaff, transparent: true, opacity: 0.45 }));
+  return new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x88aaff, transparent: true, opacity: 0.35 }));
 }
 
 for (let i = 0; i < 2; i++) {
   const ctrl = renderer.xr.getController(i);
   ctrl.userData.index = i;
   ctrl.add(makeRayLine());
-  // Pointer dot
+  // Pointer tip dot at end of ray
   const dot = new THREE.Mesh(
-    new THREE.SphereGeometry(0.010, 6, 6),
+    new THREE.SphereGeometry(0.008, 8, 8),
     new THREE.MeshBasicMaterial({ color: 0xffffff })
   );
-  dot.position.set(0, 0, -8);
+  dot.position.set(0, 0, -6);
   ctrl.add(dot);
   ctrl.addEventListener('selectstart', () => onTriggerPress(i));
   ctrl.addEventListener('selectend',   () => onTriggerRelease(i));
@@ -149,23 +160,31 @@ function onTriggerPress(idx) {
   if (idx === 1) rightTriggerHeld = true;
   if (idx === 0) leftTriggerHeld  = true;
 
-  // VR menu interaction
-  if (vrMenuState !== 'hidden') {
-    const hit = castFromController(idx);
-    if (hit && hit.userData.vrMenuAction) { handleVRMenuClick(hit.userData.vrMenuAction); return; }
-  }
-  if (!G || !G.running) return;
-
-  // Check interactable
+  // Single raycast — reused for all checks below
   const hit = castFromController(idx);
+
+  // vrMenuAction covers: night buttons, start button, restart button
+  // Always checked first regardless of game state
+  if (hit && hit.userData.vrMenuAction) {
+    handleVRMenuClick(hit.userData.vrMenuAction);
+    return;
+  }
+
+  // Block all world-action interaction while menu is open
+  if (vrMenuState !== 'hidden') return;
+
+  // Block all world-action interaction if game not running / dead / won
+  if (!G || !G.running || G.dead || G.won) return;
+
+  // World interactable hit
   if (hit && hit.userData.action) {
     const a = hit.userData.action;
-    // windUp is handled by hold — just start it
     if (a === 'windUp') { startWindUp(); return; }
     handleVRAction(a);
     return;
   }
-  // Default: left trigger = left door, right trigger = right door (fallback)
+
+  // No interactable hit — fallback door toggles
   if (idx === 0) toggleDoor('left');
   else toggleDoor('right');
 }
@@ -208,13 +227,17 @@ function pollGamepads() {
       }
     }
   }
-  // If right trigger held, check if pointing at windUp button
-  if (G && G.running && rightTriggerHeld) {
-    const hit = castFromController(1);
-    if (hit && hit.userData.action === 'windUp') {
-      if (!G.isWindingUp) startWindUp();
-    } else if (G.isWindingUp && !hit) {
-      stopWindUp();
+  // If right trigger held, maintain windUp only while pointing at windUp button
+  if (G && G.running) {
+    if (rightTriggerHeld) {
+      const hit = castFromController(1);
+      if (hit && hit.userData.action === 'windUp') {
+        if (!G.isWindingUp) startWindUp();
+      } else if (G.isWindingUp) {
+        stopWindUp(); // stop if no longer pointing at button
+      }
+    } else if (G.isWindingUp) {
+      stopWindUp(); // stop if trigger released
     }
   }
 }
@@ -224,7 +247,7 @@ function pollGamepads() {
 // ══════════════════════════════════════════════════════
 const interactables = [];
 const ctrlRay = new THREE.Raycaster();
-ctrlRay.far = 12;
+ctrlRay.far = 6.5; // slightly beyond ray line length
 
 let lastHighlighted = null;
 
@@ -233,26 +256,61 @@ function castFromController(idx) {
   if (!ctrl) return null;
   const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(ctrl.quaternion);
   ctrlRay.set(ctrl.position, dir);
+  // Intersect all interactables; Three.js will skip non-visible objects internally
+  // We filter invisible ourselves to avoid hits on hidden menu buttons
   const hits = ctrlRay.intersectObjects(interactables, false);
-  return hits.length > 0 ? hits[0].object : null;
+  for (const hit of hits) {
+    if (hit.object.visible) return hit.object;
+  }
+  return null;
+}
+
+// Per-controller ray tip dots, updated to hit point each frame
+const ctrlDots = [null, null];
+function initCtrlDots() {
+  controllers.forEach((ctrl, i) => {
+    if (!ctrl) return;
+    // Find the dot child (last added sphere child)
+    ctrl.children.forEach(child => {
+      if (child instanceof THREE.Mesh && child.geometry instanceof THREE.SphereGeometry) {
+        ctrlDots[i] = child;
+      }
+    });
+  });
 }
 
 function updatePointerHighlight() {
-  // Right controller does the primary highlighting
+  // Right controller does primary highlighting, fall back to left
   let hit = castFromController(1);
   if (!hit) hit = castFromController(0);
 
+  // Restore previous highlighted object
   if (lastHighlighted && lastHighlighted !== hit) {
-    if (lastHighlighted.userData._origColor !== undefined)
+    if (lastHighlighted.userData._origColor !== undefined) {
       lastHighlighted.material.color.setHex(lastHighlighted.userData._origColor);
+    }
     lastHighlighted = null;
   }
+
+  // Highlight new target
   if (hit && hit !== lastHighlighted) {
-    if (!hit.userData._origColor !== undefined)
+    if (hit.userData._origColor === undefined) {
       hit.userData._origColor = hit.material.color.getHex();
+    }
     hit.material.color.setHex(0x44ff88);
     lastHighlighted = hit;
   }
+
+  // Update ray tip dot color: green when hitting something, white otherwise
+  [1, 0].forEach(i => {
+    const dot = ctrlDots[i];
+    if (!dot) return;
+    const h = castFromController(i);
+    dot.material.color.setHex(h ? 0x44ff88 : 0xffffff);
+    // Scale dot up slightly when hitting
+    const s = h ? 1.6 : 1.0;
+    dot.scale.setScalar(s);
+  });
 }
 
 function handleVRAction(action) {
@@ -268,8 +326,10 @@ function handleVRAction(action) {
     default:
       if (action.startsWith('cam:')) {
         const id = parseInt(action.split(':')[1]);
-        if (!G.camOpen) G.camOpen = true;
+        // Opening a camera button always activates the camera view
+        G.camOpen = true;
         switchCam(id);
+        markHudDirty();
       }
       break;
   }
@@ -292,6 +352,14 @@ scene.add(lampGlow);
 const screenGlow = new THREE.PointLight(0x003311, 0.5, 4);
 screenGlow.position.set(0, 2.2, -4.5);
 scene.add(screenGlow);
+// Front-room fill light (behind player area) — gives depth to the back half of office
+const frontFill = new THREE.PointLight(0x080410, 0.3, 6);
+frontFill.position.set(0, 2.5, 4.5);
+scene.add(frontFill);
+// Mark vent warning light — pulses red when Mark is present
+const markVentLight = new THREE.PointLight(0x440000, 0.0, 3.5);
+markVentLight.position.set(0, 2.6, 5.0);
+scene.add(markVentLight);
 const alarmSphereMat = new THREE.MeshBasicMaterial({ color: 0x440000, transparent: true, opacity: 0, side: THREE.BackSide });
 scene.add(new THREE.Mesh(new THREE.SphereGeometry(50, 8, 8), alarmSphereMat));
 
@@ -440,32 +508,25 @@ function buildDoor3D(x, side) {
 }
 
 function buildVent3D() {
+  // This is the DECORATIVE back-wall vent (camera room side) — NOT Mark's vent
+  // It is visual-only and has NO interactive button (Mark's vent is on the front wall)
   const ventMat = new THREE.MeshLambertMaterial({ color: 0x3a2a10 });
   addMesh(new THREE.BoxGeometry(0.72,0.58,0.07), ventMat, 0, 2.85,-5.96);
   // Grate bars
   for (let i=-3;i<=3;i++) addMesh(new THREE.BoxGeometry(0.64,0.020,0.020), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }), 0, 2.85+i*0.08,-5.93);
   for (let i=-2;i<=2;i++) addMesh(new THREE.BoxGeometry(0.020,0.52,0.020), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }), i*0.14, 2.85,-5.93);
 
-  // Vent cover panel (shown when closed)
+  // Vent cover panel (shown when closed — animates with ventAnim)
   ventPanelMesh = new THREE.Mesh(new THREE.BoxGeometry(0.70,0.56,0.05), new THREE.MeshLambertMaterial({ color: 0x221808 }));
   ventPanelMesh.position.set(0, 2.85,-5.93);
   ventPanelMesh.visible = false;
   scene.add(ventPanelMesh);
 
-  // Status light
+  // Status light (orange when Mark is in vent)
   ventStatusLight = new THREE.Mesh(new THREE.SphereGeometry(0.04,6,6), new THREE.MeshBasicMaterial({ color: 0x111111 }));
   ventStatusLight.position.set(0.30, 3.06,-5.93);
   scene.add(ventStatusLight);
-
-  // Vent button
-  const vb = new THREE.Mesh(
-    new THREE.BoxGeometry(0.22,0.09,0.05),
-    new THREE.MeshLambertMaterial({ color: 0x1a1a44 })
-  );
-  vb.position.set(0, 2.62,-5.92);
-  vb.userData.action = 'vent';
-  vb.userData._origColor = 0x1a1a44;
-  scene.add(vb); interactables.push(vb);
+  // NO interactive button here — Mark's vent is controlled from the front-wall button
 }
 
 // ══════════════════════════════════════════════════════
@@ -482,9 +543,27 @@ function updateDoorAnimations(dt) {
     mesh.position.y = -0.5 + (1 - anim.open) * 1.65;
     const dl = doorLights[side];
     if (dl) {
-      const closed = anim.open < 0.1;
-      const atDoor = (side==='left') ? (G&&G.mPos===POS.LD) : (G&&G.mPos===POS.RD);
-      dl.material.color.setHex(closed ? 0x00e050 : (atDoor ? 0xff2200 : 0x111111));
+      const closed  = anim.open < 0.1;
+      const atDoor  = (side==='left') ? (G&&G.mPos===POS.LD) : (G&&G.mPos===POS.RD);
+      // Green = closed+safe, Red = open+monster, Orange = closed+monster, Off = open+safe
+      if (closed && atDoor)       dl.material.color.setHex(0xff8800); // orange: closed but threat
+      else if (closed)            dl.material.color.setHex(0x00e050); // green: door closed, safe
+      else if (atDoor)            dl.material.color.setHex(0xff1100); // red: open, monster here!
+      else                        dl.material.color.setHex(0x111111); // off
+    }
+    // Update door button color to reflect state
+    // Find the button for this side in interactables
+    for (const obj of interactables) {
+      if (obj.userData.action === (side==='left'?'leftDoor':'rightDoor') && obj.userData._origColor !== undefined) {
+        const isDoorClosed = anim.open < 0.1;
+        const baseColor = isDoorClosed ? 0x1a1a66 : 0x1a1a44;
+        // Don't override if currently highlighted by pointer
+        if (obj !== lastHighlighted) {
+          obj.material.color.setHex(baseColor);
+        }
+        obj.userData._origColor = baseColor;
+        break;
+      }
     }
   });
   // Vent
@@ -651,6 +730,9 @@ function drawBigScreen() {
   const ctx = bigScreenCtx, W = BIG_W, H = BIG_H;
   ctx.clearRect(0,0,W,H);
 
+  // Single timestamp for this frame
+  const ts = new Date().toLocaleTimeString('nl-NL');
+
   // BG
   ctx.fillStyle = '#030808'; ctx.fillRect(0,0,W,H);
 
@@ -658,7 +740,6 @@ function drawBigScreen() {
   ctx.fillStyle = '#081808'; ctx.fillRect(0,0,W,44);
   ctx.fillStyle = '#22aa44'; ctx.font = 'bold 18px monospace'; ctx.textAlign = 'left';
   ctx.fillText('SECURITY MONITOR — FNAG SYSTEMS', 12, 28);
-  const ts = new Date().toLocaleTimeString('nl-NL');
   ctx.fillStyle = '#116622'; ctx.textAlign = 'right';
   ctx.fillText(ts, W-12, 28);
 
@@ -788,16 +869,6 @@ function loadCamOverlayImg(key, src) {
 function drawAnimatronicsOnFeed(ctx, camId, fx, fy, fw, fh) {
   if (!G || !G.running) return;
 
-  // Pre-load overlay images
-  loadCamOverlayImg('gijs',    FILES.gijsCam);
-  loadCamOverlayImg('hobo',    FILES.hoboGijsCam);
-  loadCamOverlayImg('jeffrey', FILES.jeffreyCam);
-  loadCamOverlayImg('chapo',   FILES.chapoCam);
-  loadCamOverlayImg('diddy',   FILES.diddyCam);
-  loadCamOverlayImg('tom',     FILES.tomCam);
-  loadCamOverlayImg('maduro',  FILES.maduroCam);
-  loadCamOverlayImg('mark',    FILES.markVent);
-
   function drawOverlay(img, alignRight, scale) {
     if (!img || !img.complete || img.naturalWidth === 0) return;
     const h = fh * (scale||0.85);
@@ -808,54 +879,44 @@ function drawAnimatronicsOnFeed(ctx, camId, fx, fy, fw, fh) {
   }
 
   // Gijs
-  if (G.cfg.gijsActive && G.mPos===camId && camId!==MUSIC_CAM_ID) {
+  if (G.cfg.gijsActive && G.mPos===camId && camId!==MUSIC_CAM_ID)
     drawOverlay(camAnimOverlays['gijs'], false, 0.88);
-  }
   // Hobo
-  if (G.cfg.hoboActive && G.hoboPos===camId && camId!==MUSIC_CAM_ID) {
+  if (G.cfg.hoboActive && G.hoboPos===camId && camId!==MUSIC_CAM_ID)
     drawOverlay(camAnimOverlays['hobo'], true, 0.80);
-  }
   // Jeffrey
-  if (G.jeffreyActive && G.jeffreyPos===camId && camId!==MUSIC_CAM_ID) {
+  if (G.jeffreyActive && G.jeffreyPos===camId && camId!==MUSIC_CAM_ID)
     drawOverlay(camAnimOverlays['jeffrey'], false, 0.86);
-  }
   // Chapo
-  if (G.chapoActive && camId===CHAPO_CAM_ID && !G.chapoAlarm) {
+  if (G.chapoActive && camId===CHAPO_CAM_ID && !G.chapoAlarm)
     drawOverlay(camAnimOverlays['chapo'], false, 0.78);
-  }
   // Diddy
-  if (G.diddyActive && G.diddyPos===camId && camId!==MUSIC_CAM_ID) {
+  if (G.diddyActive && G.diddyPos===camId && camId!==MUSIC_CAM_ID)
     drawOverlay(camAnimOverlays['diddy'], false, 0.92);
-  }
   // Tom (music room)
-  if (G.cfg.tomActive && camId===MUSIC_CAM_ID) {
-    if (camAnimOverlays['tom'] && camAnimOverlays['tom'].complete) {
-      const d = Math.max(0,(100-G.musicBox)/100);
-      ctx.globalAlpha = 0.3 + d*0.7;
-      drawOverlay(camAnimOverlays['tom'], false, 0.92);
-      ctx.globalAlpha = 1.0;
-      // Danger overlay
-      if (d > 0.3) {
-        const dg = ctx.createRadialGradient(fx+fw/2,fy+fh/2,fh*0.2,fx+fw/2,fy+fh/2,fh*0.7);
-        dg.addColorStop(0,'rgba(0,0,0,0)'); dg.addColorStop(1,`rgba(180,0,0,${d*0.4})`);
-        ctx.fillStyle=dg; ctx.fillRect(fx,fy,fw,fh);
-      }
+  if (G.cfg.tomActive && camId===MUSIC_CAM_ID && camAnimOverlays['tom']?.complete) {
+    const d = Math.max(0,(100-G.musicBox)/100);
+    ctx.globalAlpha = 0.3 + d*0.7;
+    drawOverlay(camAnimOverlays['tom'], false, 0.92);
+    ctx.globalAlpha = 1.0;
+    if (d > 0.3) {
+      const dg = ctx.createRadialGradient(fx+fw/2,fy+fh/2,fh*0.2,fx+fw/2,fy+fh/2,fh*0.7);
+      dg.addColorStop(0,'rgba(0,0,0,0)'); dg.addColorStop(1,`rgba(180,0,0,${d*0.4})`);
+      ctx.fillStyle=dg; ctx.fillRect(fx,fy,fw,fh);
     }
   }
   // Maduro
-  if (G.maduroPos===camId) {
-    if (camAnimOverlays['maduro'] && camAnimOverlays['maduro'].complete) {
-      ctx.globalAlpha = 0.7;
-      drawOverlay(camAnimOverlays['maduro'], true, 0.65);
-      ctx.globalAlpha = 1.0;
-    }
+  if (G.maduroPos===camId && camAnimOverlays['maduro']?.complete) {
+    ctx.globalAlpha = 0.7;
+    drawOverlay(camAnimOverlays['maduro'], true, 0.65);
+    ctx.globalAlpha = 1.0;
   }
-  // Mark (vent cam)
+  // Mark — shown as a bottom-bar warning text on ALL cameras when in vent (not overlaying image)
   if (G.markInVent && !G.ventClosed) {
-    if (camAnimOverlays['mark'] && camAnimOverlays['mark'].complete) {
-      const mh = fh * 0.46, mw = camAnimOverlays['mark'].naturalWidth * (mh/camAnimOverlays['mark'].naturalHeight);
-      ctx.drawImage(camAnimOverlays['mark'], fx+fw/2-mw/2, fy, mw, mh);
-    }
+    ctx.fillStyle='rgba(0,0,0,0.65)';
+    ctx.fillRect(fx, fy+fh-26, fw, 26);
+    ctx.fillStyle='#ff6600'; ctx.font='bold 13px monospace'; ctx.textAlign='center';
+    ctx.fillText('⚠ MARK IN VENTILATIE — DRAAI OM & SLUIT VENT', fx+fw/2, fy+fh-8);
   }
   // Maduro camera disabled overlay
   if (G.maduroDisabled && G.maduroDisabled[camId] > 0) {
@@ -896,12 +957,12 @@ function triggerVRJumpscare(imgSrc, onDone) {
     jsPlane.material.map = tex;
     jsPlane.material.opacity = 0;
     jsPlane.material.needsUpdate = true;
-    jsPlane.position.set(0, 0, -4.5);
+    jsPlane.position.set(0, 0, -5.0); // start further away
     jsPlane.visible = true;
     jsPlaneActive = true;
     jsPlaneTimer  = 0;
-    alarmSphereMat.opacity = 0.4;
-    setTimeout(() => { alarmSphereMat.opacity = 0; }, 1500);
+    alarmSphereMat.opacity = 0.5;
+    setTimeout(() => { alarmSphereMat.opacity = 0; }, 2000);
     jsPlane.userData.onDone = onDone;
   }, undefined, () => {
     jsPlane.visible = false;
@@ -912,13 +973,36 @@ function triggerVRJumpscare(imgSrc, onDone) {
 function updateJsPlane(dt) {
   if (!jsPlaneActive || !jsPlane) return;
   jsPlaneTimer += dt;
-  const t = Math.min(jsPlaneTimer / 1.2, 1.0);
-  jsPlane.position.z = -4.5 + t * 4.0;
-  jsPlane.material.opacity = Math.min(t * 2.0, 1.0);
-  if (jsPlaneTimer >= 3.2) {
+
+  // Phase 1 (0→0.8s): rush in fast with slight jitter
+  // Phase 2 (0.8→2.5s): hold at face, slight sway
+  // Phase 3 (2.5→3.5s): fade out
+  if (jsPlaneTimer < 0.8) {
+    const t = jsPlaneTimer / 0.8;
+    // Ease-in cubic: starts fast, slows to -1.2
+    const ease = 1 - Math.pow(1-t, 3);
+    jsPlane.position.z = -5.0 + ease * 3.8; // -5.0 → -1.2
+    jsPlane.material.opacity = Math.min(t * 3.0, 1.0);
+    // Random jitter for horror effect
+    jsPlane.position.x = (Math.random()-0.5) * 0.06 * t;
+    jsPlane.position.y = (Math.random()-0.5) * 0.06 * t;
+  } else if (jsPlaneTimer < 2.5) {
+    const holdT = (jsPlaneTimer - 0.8) / 1.7;
+    jsPlane.position.z = -1.2 + Math.sin(holdT * 12) * 0.025;
+    jsPlane.position.x = Math.sin(holdT * 8.3) * 0.018;
+    jsPlane.position.y = Math.cos(holdT * 7.1) * 0.012;
+    jsPlane.material.opacity = 1.0;
+  } else {
+    const fadeT = (jsPlaneTimer - 2.5) / 1.0;
+    jsPlane.material.opacity = Math.max(0, 1.0 - fadeT);
+    jsPlane.position.z = -1.2 - fadeT * 0.5;
+  }
+
+  if (jsPlaneTimer >= 3.5) {
     jsPlaneActive = false;
     jsPlane.visible = false;
     jsPlane.material.opacity = 0;
+    jsPlane.position.set(0,0,-5.0);
     if (jsPlane.userData.onDone) {
       jsPlane.userData.onDone();
       jsPlane.userData.onDone = null;
@@ -930,7 +1014,11 @@ function updateJsPlane(dt) {
 //  SECTION 9 — VR MENU (3D floating panel)
 // ══════════════════════════════════════════════════════
 let vrMenuState = 'hidden'; // 'hidden' | 'visible'
-const vrMenuGroup = new THREE.Group(); scene.add(vrMenuGroup); vrMenuGroup.visible = false;
+const vrMenuGroup = new THREE.Group();
+// Park far off-screen until showVRMenu positions it correctly
+vrMenuGroup.position.set(0, -999, 0);
+scene.add(vrMenuGroup);
+vrMenuGroup.visible = false;
 
 const vrMenuCanvas = document.createElement('canvas'); vrMenuCanvas.width=1024; vrMenuCanvas.height=768;
 const vrMenuCtx   = vrMenuCanvas.getContext('2d');
@@ -941,66 +1029,189 @@ const vrMenuMesh  = new THREE.Mesh(
 );
 vrMenuMesh.position.set(0, 0, 0); vrMenuGroup.add(vrMenuMesh);
 
-// Night select buttons (3D)
+// Night select buttons (3D) — proper VR size, hidden until menu opens
 const vrNightBtns = [];
 function buildVRMenuButtons() {
+  // Night buttons: wider, taller, clearly spaced for VR finger-pointing
+  // Each button is 0.30m tall — comfortable to aim at from ~2.5m away
   const rows=[
-    {label:'NACHT 1',night:1,y:0.55},{label:'NACHT 2',night:2,y:0.33},
-    {label:'NACHT 3',night:3,y:0.11},{label:'NACHT 4',night:4,y:-0.11},
-    {label:'NACHT 5',night:5,y:-0.33},{label:'▶ START',night:0,y:-0.65}
+    {label:'NACHT 1', night:1, y: 0.52, col:0x1a0000},
+    {label:'NACHT 2', night:2, y: 0.26, col:0x1a0500},
+    {label:'NACHT 3', night:3, y: 0.00, col:0x140a00},
+    {label:'NACHT 4', night:4, y:-0.26, col:0x0e0e00},
+    {label:'NACHT 5', night:5, y:-0.52, col:0x0a140a},
+    {label:'▶ START', night:0, y:-0.82, col:0x003300},
   ];
   rows.forEach(b=>{
+    // Backing plate
     const m=new THREE.Mesh(
-      new THREE.BoxGeometry(2.2,0.20,0.04),
-      new THREE.MeshLambertMaterial({ color: b.night===0?0x003300:0x1a0000 })
+      new THREE.BoxGeometry(2.4, 0.22, 0.05),
+      new THREE.MeshLambertMaterial({ color: b.col })
     );
-    m.position.set(0,b.y,0.06);
-    m.userData.vrMenuAction = b.night===0?'start':'night:'+b.night;
-    m.userData._origColor   = b.night===0?0x003300:0x1a0000;
+    m.position.set(0, b.y, 0.06);
+    m.userData.vrMenuAction = b.night===0 ? 'start' : 'night:'+b.night;
+    m.userData._origColor   = b.col;
+    m.visible = false; // hidden until showVRMenu()
     vrMenuGroup.add(m); interactables.push(m); vrNightBtns.push(m);
+
+    // Raised edge highlight strip (top)
+    const edge = new THREE.Mesh(
+      new THREE.BoxGeometry(2.4, 0.012, 0.06),
+      new THREE.MeshBasicMaterial({ color: b.night===0 ? 0x004400 : 0x440000 })
+    );
+    edge.position.set(0, b.y + 0.105, 0.06);
+    edge.visible = false;
+    vrMenuGroup.add(edge); vrNightBtns.push(edge);
   });
 }
 buildVRMenuButtons();
 
 function redrawVRMenu(){
-  const ctx=vrMenuCtx; ctx.clearRect(0,0,1024,768);
-  ctx.fillStyle='rgba(2,0,0,0.97)'; ctx.fillRect(0,0,1024,768);
-  ctx.strokeStyle='#660000'; ctx.lineWidth=3; ctx.strokeRect(6,6,1012,756);
-  ctx.fillStyle='#cc0000'; ctx.font='bold 48px monospace'; ctx.textAlign='center';
-  ctx.fillText('FIVE NIGHTS AT',512,70); ctx.fillText('MEESTER GIJS',512,128);
-  ctx.fillStyle='#333'; ctx.font='16px monospace'; ctx.fillText('VR EDITION',512,165);
+  const ctx=vrMenuCtx, CW=1024, CH=768;
+  ctx.clearRect(0,0,CW,CH);
 
-  [{n:1,l:'NACHT 1',s:'Gijs · Hobo',y:242},{n:2,l:'NACHT 2',s:'+Tom · Mark',y:310},
-   {n:3,l:'NACHT 3',s:'+Jeffrey',y:378},{n:4,l:'NACHT 4',s:'+Chapo',y:446},
-   {n:5,l:'NACHT 5',s:'ALLES',y:514}].forEach(n=>{
+  // ── Background gradient ──
+  const bg=ctx.createLinearGradient(0,0,0,CH);
+  bg.addColorStop(0,'#0c0000'); bg.addColorStop(1,'#000000');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,CW,CH);
+
+  // Outer border with glow effect
+  ctx.strokeStyle='#880000'; ctx.lineWidth=4; ctx.strokeRect(4,4,CW-8,CH-8);
+  ctx.strokeStyle='rgba(200,0,0,0.15)'; ctx.lineWidth=12; ctx.strokeRect(4,4,CW-8,CH-8);
+
+  // ── Title ──
+  ctx.fillStyle='#cc0000';
+  ctx.font='bold 54px monospace'; ctx.textAlign='center';
+  ctx.fillText('FIVE NIGHTS AT', CW/2, 66);
+  ctx.fillStyle='#ff2200';
+  ctx.font='bold 62px monospace';
+  ctx.fillText('MEESTER GIJS', CW/2, 136);
+  // Underline
+  ctx.strokeStyle='#440000'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(80,152); ctx.lineTo(CW-80,152); ctx.stroke();
+  ctx.fillStyle='#442222'; ctx.font='14px monospace';
+  ctx.fillText('— VR EDITION — Selecteer een nacht om te beginnen —', CW/2, 174);
+
+  // ── Night rows ──
+  const nights=[
+    {n:1,label:'NACHT  1',diff:1, enemies:'Gijs  ·  Hobo',          icon:'🌙'},
+    {n:2,label:'NACHT  2',diff:2, enemies:'+Tom  ·  Mark',           icon:'🌑'},
+    {n:3,label:'NACHT  3',diff:3, enemies:'+Jeffrey',                icon:'💀'},
+    {n:4,label:'NACHT  4',diff:4, enemies:'+Chapo',                  icon:'☠'},
+    {n:5,label:'NACHT  5',diff:5, enemies:'ALLES  —  VIEL GELUK',    icon:'🔥'},
+  ];
+
+  const ROW_H=78, ROW_Y0=192, ROW_PAD_X=48;
+
+  nights.forEach((n,i)=>{
+    const ry=ROW_Y0+i*ROW_H;
     const sel=selectedNight===n.n;
-    ctx.fillStyle=sel?'rgba(100,0,0,0.4)':'rgba(20,0,0,0.3)'; ctx.fillRect(170,n.y-28,684,50);
-    ctx.strokeStyle=sel?'#880000':'#330000'; ctx.lineWidth=sel?2:1; ctx.strokeRect(170,n.y-28,684,50);
-    ctx.fillStyle=sel?'#cc0000':'#440000'; ctx.font='bold 22px monospace'; ctx.textAlign='left';
-    ctx.fillText(n.l,200,n.y+8);
-    ctx.fillStyle=sel?'#884444':'#221111'; ctx.font='17px monospace';
-    ctx.fillText(n.s,420,n.y+8);
+
+    // Row background
+    if(sel){
+      const rg=ctx.createLinearGradient(ROW_PAD_X,ry,CW-ROW_PAD_X,ry);
+      rg.addColorStop(0,'rgba(140,0,0,0.0)');
+      rg.addColorStop(0.3,'rgba(140,0,0,0.45)');
+      rg.addColorStop(0.7,'rgba(140,0,0,0.45)');
+      rg.addColorStop(1,'rgba(140,0,0,0.0)');
+      ctx.fillStyle=rg; ctx.fillRect(ROW_PAD_X,ry+2,CW-ROW_PAD_X*2,ROW_H-6);
+      // Selected border
+      ctx.strokeStyle='#cc2200'; ctx.lineWidth=2;
+      ctx.strokeRect(ROW_PAD_X,ry+2,CW-ROW_PAD_X*2,ROW_H-6);
+      // Left accent bar
+      ctx.fillStyle='#ff3300'; ctx.fillRect(ROW_PAD_X,ry+2,5,ROW_H-6);
+    } else {
+      ctx.strokeStyle='#2a0000'; ctx.lineWidth=1;
+      ctx.strokeRect(ROW_PAD_X,ry+2,CW-ROW_PAD_X*2,ROW_H-6);
+    }
+
+    const cy=ry+ROW_H/2+6;
+
+    // Icon
+    ctx.font='28px monospace'; ctx.textAlign='left';
+    ctx.fillText(n.icon, ROW_PAD_X+14, cy);
+
+    // Night label
+    ctx.fillStyle=sel?'#ff4422':'#883322';
+    ctx.font=`bold ${sel?30:26}px monospace`; ctx.textAlign='left';
+    ctx.fillText(n.label, ROW_PAD_X+58, cy);
+
+    // Difficulty stars
+    const starX=ROW_PAD_X+300;
+    for(let s=0;s<5;s++){
+      ctx.fillStyle = s<n.diff ? (sel?'#ff6600':'#882200') : '#1a0000';
+      ctx.font='22px monospace';
+      ctx.fillText('★', starX+s*28, cy);
+    }
+
+    // Enemy list
+    ctx.fillStyle=sel?'#cc8866':'#442222';
+    ctx.font=`${sel?16:14}px monospace`; ctx.textAlign='right';
+    ctx.fillText(n.enemies, CW-ROW_PAD_X-14, cy);
+
+    // Selection checkmark
+    if(sel){
+      ctx.fillStyle='#ff4400'; ctx.font='bold 26px monospace'; ctx.textAlign='left';
+      ctx.fillText('▶', ROW_PAD_X-34, cy);
+    }
   });
-  ctx.fillStyle=selectedNight>0?'#005500':'#001100'; ctx.fillRect(170,600,684,58);
-  ctx.strokeStyle=selectedNight>0?'#00aa00':'#002200'; ctx.lineWidth=2; ctx.strokeRect(170,600,684,58);
-  ctx.fillStyle=selectedNight>0?'#00ff66':'#004400'; ctx.font='bold 26px monospace'; ctx.textAlign='center';
-  ctx.fillText(selectedNight>0?`▶ NACHT ${selectedNight} STARTEN`:'SELECTEER EEN NACHT',512,638);
+
+  // ── START BUTTON ──
+  const sbY=CH-130;
+  const sbReady=selectedNight>0;
+  if(sbReady){
+    const sbg=ctx.createLinearGradient(80,sbY,CW-80,sbY);
+    sbg.addColorStop(0,'rgba(0,80,0,0.1)'); sbg.addColorStop(0.5,'rgba(0,140,0,0.5)'); sbg.addColorStop(1,'rgba(0,80,0,0.1)');
+    ctx.fillStyle=sbg; ctx.fillRect(80,sbY,CW-160,80);
+    ctx.strokeStyle='#00aa00'; ctx.lineWidth=2; ctx.strokeRect(80,sbY,CW-160,80);
+    // Animated-looking dots
+    ctx.fillStyle='#00ff44'; ctx.font='bold 28px monospace'; ctx.textAlign='center';
+    ctx.fillText(`▶  NACHT ${selectedNight} STARTEN  ◀`, CW/2, sbY+50);
+    ctx.fillStyle='#006600'; ctx.font='13px monospace';
+    ctx.fillText('Richt controller op knop en druk TRIGGER', CW/2, sbY+70);
+  } else {
+    ctx.strokeStyle='#1a1a00'; ctx.lineWidth=1; ctx.strokeRect(80,sbY,CW-160,80);
+    ctx.fillStyle='#332200'; ctx.font='bold 24px monospace'; ctx.textAlign='center';
+    ctx.fillText('SELECTEER EERST EEN NACHT', CW/2, sbY+48);
+    ctx.fillStyle='#221100'; ctx.font='13px monospace';
+    ctx.fillText('Richt op een nacht-knop en druk TRIGGER om te selecteren', CW/2, sbY+68);
+  }
+
+  // Controller hint at bottom
+  ctx.fillStyle='#1a0a00'; ctx.font='12px monospace'; ctx.textAlign='center';
+  ctx.fillText('Controller: TRIGGER = selecteer / bevestig', CW/2, CH-14);
+
   vrMenuTex.needsUpdate=true;
 }
 
 function handleVRMenuClick(action){
+  if(action==='restart'){ restartGame(); return; }
   if(action.startsWith('night:')){ selectNight(parseInt(action.split(':')[1])); redrawVRMenu(); }
   else if(action==='start'&&selectedNight>0){ hideVRMenu(); startGame(); }
 }
+
+// ── KEYBOARD INPUT INTENTIONALLY REMOVED ──────────────
+// This is a VR-only game. All interaction is via controller triggers and raycasting.
+// No keyboard event listeners are registered anywhere in this file.
+// If you need to re-add keyboard support for development/debugging only,
+// uncomment and add a DEV_MODE guard so it never ships to players.
 function showVRMenu(){
   vrMenuState='visible'; vrMenuGroup.visible=true;
+  // Make all child meshes (buttons) visible
+  vrMenuGroup.children.forEach(c=>{ c.visible=true; });
+  // Position in front of player
   const fwd=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
   vrMenuGroup.position.copy(camera.position).addScaledVector(fwd,2.8);
-  vrMenuGroup.position.y=Math.max(0.8, camera.position.y);
+  vrMenuGroup.position.y=Math.max(1.0, camera.position.y - 0.1);
   vrMenuGroup.lookAt(camera.position);
   redrawVRMenu();
 }
-function hideVRMenu(){ vrMenuState='hidden'; vrMenuGroup.visible=false; }
+function hideVRMenu(){
+  vrMenuState='hidden';
+  vrMenuGroup.visible=false;
+  // Hide all buttons so they can't be accidentally hit by raycasts
+  vrMenuGroup.children.forEach(c=>{ c.visible=false; });
+}
 
 // ══════════════════════════════════════════════════════
 //  SECTION 10 — RENDER LOOP
@@ -1030,6 +1241,14 @@ renderer.setAnimationLoop(time => {
   updateJsPlane(dt);
   pollGamepads();
   updatePointerHighlight();
+
+  // Billboard Mark behind player toward camera
+  if(markBehindMesh && markBehindMesh.visible){
+    markBehindMesh.lookAt(camera.position.x, markBehindMesh.position.y, camera.position.z);
+  }
+
+  // Draw VR HUD when dirty (state changed this tick)
+  if(G && G.running && vrHudDirty) drawVRHud();
 
   renderer.render(scene, camera);
 });
@@ -1199,51 +1418,103 @@ function mkState() {
 // ══════════════════════════════════════════════════════
 //  SECTION 15 — VR IN-WORLD HUD (floating near player)
 // ══════════════════════════════════════════════════════
-// In VR-only mode, all UI is 3D in-world. We draw a small HUD panel
-// that floats slightly to the left/below of view.
+// Positioned bottom-left of view, always readable in VR
 let vrHudCanvas, vrHudCtx, vrHudTex, vrHudMesh;
-const VR_HUD_W=512, VR_HUD_H=128;
+const VR_HUD_W=640, VR_HUD_H=200;
 
 function buildVRHud() {
-  vrHudCanvas = document.createElement('canvas'); vrHudCanvas.width=VR_HUD_W; vrHudCanvas.height=VR_HUD_H;
+  vrHudCanvas = document.createElement('canvas');
+  vrHudCanvas.width=VR_HUD_W; vrHudCanvas.height=VR_HUD_H;
   vrHudCtx = vrHudCanvas.getContext('2d');
   vrHudTex = new THREE.CanvasTexture(vrHudCanvas);
   vrHudTex.minFilter = THREE.LinearFilter;
+  vrHudTex.generateMipmaps = false;
   vrHudMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.55,0.14),
-    new THREE.MeshBasicMaterial({ map: vrHudTex, transparent:true })
+    new THREE.PlaneGeometry(0.72, 0.225),
+    new THREE.MeshBasicMaterial({ map: vrHudTex, transparent:true, depthTest:false })
   );
-  vrHudMesh.position.set(-0.28,-0.18,-0.65);
+  // Bottom-left of view, slightly angled for comfort
+  vrHudMesh.position.set(-0.33, -0.22, -0.7);
+  vrHudMesh.rotation.set(0.08, 0.06, 0);
   vrHudMesh.visible = false;
   camera.add(vrHudMesh);
 }
 buildVRHud();
 
+let vrHudDirty = true; // flag: redraw on next frame
+function markHudDirty() { vrHudDirty = true; }
+
+// Helper: draw a status indicator pill on the HUD canvas
+// Defined outside drawVRHud so it's not recreated on every call
+function _drawHudIndicator(ctx, label, active, warning, x, y) {
+  const bg  = warning ? 'rgba(180,0,0,0.75)' : active ? 'rgba(0,110,35,0.75)' : 'rgba(8,8,18,0.75)';
+  const fg  = warning ? '#ff5533'             : active ? '#44ff88'             : '#334455';
+  const brd = warning ? '#ff2200'             : active ? '#22bb55'             : '#1a2233';
+  ctx.fillStyle=bg;   ctx.fillRect(x, y, 84, 30);
+  ctx.strokeStyle=brd; ctx.lineWidth=1.5; ctx.strokeRect(x, y, 84, 30);
+  ctx.fillStyle=fg;   ctx.font='bold 13px monospace'; ctx.textAlign='center';
+  ctx.fillText(label, x+42, y+20);
+}
+
+  // Panel background
+  ctx.fillStyle='rgba(2,2,12,0.88)'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(60,60,100,0.7)'; ctx.lineWidth=1.5;
+  ctx.strokeRect(1,1,W-2,H-2);
+
+  // ── Row 1: Time + Night label ──────────────────────
+  const o2pct = Math.max(0, Math.round(G.o2));
+  const timeColor = G.hour>=5 ? '#ffee44' : '#e8920a';
+  ctx.fillStyle=timeColor; ctx.font='bold 36px monospace'; ctx.textAlign='left';
+  ctx.fillText(gameTimeStr, 12, 44);
+
+  ctx.fillStyle='#553333'; ctx.font='bold 16px monospace'; ctx.textAlign='right';
+  ctx.fillText(G.cfg.label, W-12, 28);
+
+  // ── Row 2: O2 bar ──────────────────────────────────
+  const o2Color = o2pct<=10?'#ff2200':o2pct<=30?'#ff8800':'#2288ff';
+  const o2Bg    = o2pct<=10?'rgba(80,0,0,0.6)':o2pct<=30?'rgba(60,30,0,0.6)':'rgba(0,10,30,0.6)';
+  ctx.fillStyle=o2Bg; ctx.fillRect(12,52,W-24,22);
+  const o2FillW = Math.max(0,(W-24)*(o2pct/100));
+  ctx.fillStyle=o2Color; ctx.fillRect(12,52,o2FillW,22);
+  ctx.strokeStyle='rgba(80,80,120,0.5)'; ctx.lineWidth=1; ctx.strokeRect(12,52,W-24,22);
+  ctx.fillStyle='#ffffff'; ctx.font='bold 13px monospace'; ctx.textAlign='left';
+  ctx.fillText(`O₂  ${o2pct}%`, 18, 67);
+
 function drawVRHud() {
   if (!vrHudCtx || !G || !G.running) return;
+  if (!vrHudDirty) return;
+  vrHudDirty = false;
+
   const ctx=vrHudCtx, W=VR_HUD_W, H=VR_HUD_H;
   ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='rgba(2,2,10,0.82)'; ctx.fillRect(0,0,W,H);
-  ctx.strokeStyle='#2a2a44'; ctx.lineWidth=1; ctx.strokeRect(1,1,W-2,H-2);
-  // Time
-  ctx.fillStyle='#e8920a'; ctx.font='bold 28px monospace'; ctx.textAlign='left';
-  ctx.fillText(gameTimeStr, 10, 38);
-  // O2
-  const o2pct=Math.max(0,Math.round(G.o2));
-  ctx.fillStyle=o2pct<=10?'#ff3300':o2pct<=30?'#ffaa00':'#55bbff';
-  ctx.font='bold 18px monospace';
-  ctx.fillText(`O₂: ${o2pct}%`, 10, 68);
-  // Music box
-  if(G.cfg.tomActive){
-    ctx.fillStyle='#ddcc00'; ctx.font='16px monospace';
-    ctx.fillText(`🎵 ${Math.round(G.musicBox)}%`, 10, 94);
+
+  // ── Row 4: Music box (if active) ──────────────────
+  if (G.cfg.tomActive) {
+    const mbpct = Math.max(0, Math.round(G.musicBox));
+    const mbColor = mbpct<=20?'#ff2200':mbpct<=50?'#ffaa00':'#ddcc00';
+    ctx.fillStyle='rgba(10,10,4,0.7)'; ctx.fillRect(12,128,W-24,22);
+    const mbW = Math.max(0,(W-24)*(mbpct/100));
+    ctx.fillStyle=mbColor; ctx.fillRect(12,128,mbW,22);
+    ctx.strokeStyle='rgba(80,70,0,0.5)'; ctx.lineWidth=1; ctx.strokeRect(12,128,W-24,22);
+    ctx.fillStyle='#ffffff'; ctx.font='bold 13px monospace'; ctx.textAlign='left';
+    ctx.fillText(`🎵 MUZIEKDOOS  ${mbpct}%${G.isWindingUp?' ⚙':''}`, 18, 143);
   }
-  // Night label
-  ctx.fillStyle='#442222'; ctx.font='13px monospace'; ctx.textAlign='right';
-  ctx.fillText(G.cfg.label, W-10, 38);
-  // Door status
-  ctx.fillStyle=G.lfClosed?'#00e050':'#441111'; ctx.font='11px monospace'; ctx.textAlign='right';
-  ctx.fillText('L:'+(G.lfClosed?'●':'○')+'  R:'+(G.rtClosed?'●':'○')+'  V:'+(G.ventClosed?'●':'○'), W-10, 68);
+
+  // ── Row 5: Mark warning overlay ───────────────────
+  if (G.markInVent && !G.ventClosed) {
+    ctx.fillStyle='rgba(255,60,0,0.15)';
+    ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='#ff3300'; ctx.lineWidth=3; ctx.strokeRect(1,1,W-2,H-2);
+    ctx.fillStyle='#ff4400'; ctx.font='bold 15px monospace'; ctx.textAlign='center';
+    ctx.fillText('⚠ MARK ACHTER JE — SLUIT VENT!', W/2, H-12);
+  }
+
+  // ── Current cam label (bottom right) ──────────────
+  if (G.camOpen) {
+    const cn = CAMS[G.curCam];
+    ctx.fillStyle='rgba(0,80,30,0.8)'; ctx.font='bold 13px monospace'; ctx.textAlign='right';
+    ctx.fillText(`📷 ${cn?cn.name+' '+cn.room:''}`, W-12, H-12);
+  }
 
   vrHudTex.needsUpdate = true;
 }
@@ -1284,24 +1555,27 @@ function showVRDeathScreen(msg) {
 function hideVRDeathScreen() { if(vrDeathMesh) vrDeathMesh.visible=false; }
 
 // Restart button (3D, visible after death)
+// NOTE: NOT added to interactables here — added dynamically when shown after death
 let vrRestartBtn = null;
 function buildVRRestartBtn() {
   vrRestartBtn = new THREE.Mesh(
-    new THREE.BoxGeometry(0.6,0.15,0.05),
+    new THREE.BoxGeometry(0.7,0.18,0.06),
     new THREE.MeshLambertMaterial({ color: 0x003300 })
   );
-  vrRestartBtn.position.set(0,-0.7,-2.5);
+  vrRestartBtn.position.set(0,-0.72,-2.5);
   vrRestartBtn.userData.vrMenuAction = 'restart';
   vrRestartBtn.userData._origColor   = 0x003300;
   vrRestartBtn.visible = false;
-  camera.add(vrRestartBtn); interactables.push(vrRestartBtn);
-  const lc=document.createElement('canvas'); lc.width=256; lc.height=64;
+  camera.add(vrRestartBtn);
+  // DO NOT push to interactables here — done dynamically in doJumpscare/triggerWin
+  const lc=document.createElement('canvas'); lc.width=280; lc.height=72;
   const lctx=lc.getContext('2d');
-  lctx.fillStyle='#003300'; lctx.fillRect(0,0,256,64);
-  lctx.fillStyle='#00ff44'; lctx.font='bold 22px monospace'; lctx.textAlign='center';
-  lctx.fillText('↩ OPNIEUW', 128, 40);
-  const lm=new THREE.Mesh(new THREE.PlaneGeometry(0.58,0.13), new THREE.MeshBasicMaterial({ map:new THREE.CanvasTexture(lc), transparent:true }));
-  lm.position.set(0,-0.7,-2.47); lm.visible=false; camera.add(lm);
+  lctx.fillStyle='#003300'; lctx.fillRect(0,0,280,72);
+  lctx.strokeStyle='#00aa44'; lctx.lineWidth=2; lctx.strokeRect(2,2,276,68);
+  lctx.fillStyle='#00ff55'; lctx.font='bold 26px monospace'; lctx.textAlign='center';
+  lctx.fillText('↩ OPNIEUW SPELEN', 140, 46);
+  const lm=new THREE.Mesh(new THREE.PlaneGeometry(0.68,0.165), new THREE.MeshBasicMaterial({ map:new THREE.CanvasTexture(lc), transparent:true }));
+  lm.position.set(0,-0.72,-2.47); lm.visible=false; camera.add(lm);
   vrRestartBtn.userData._label=lm;
 }
 buildVRRestartBtn();
@@ -1318,8 +1592,16 @@ window.selectNight=selectNight;
 function toggleCam(){
   if(!G||G.dead||G.won)return;
   G.camOpen=!G.camOpen;
-  if(!G.camOpen){ stopWindUp(); if(SFX.muziek)SFX.muziek.volume=0.15; if(G.maduroPos>=0)maduroDespawn(); G.maduroWatchMs=0;}
-  else{ switchCam(G.curCam); }
+  if(!G.camOpen){
+    stopWindUp();
+    if(SFX.muziek) SFX.muziek.volume=0.15;
+    if(G.maduroPos>=0) maduroDespawn();
+    G.maduroWatchMs=0;
+    // Reset music to lower volume
+  } else {
+    switchCam(G.curCam); // re-apply music volume & highlight
+  }
+  markHudDirty();
 }
 window.toggleCam=toggleCam;
 
@@ -1328,9 +1610,11 @@ function switchCam(id){
   if(G.maduroDisabled&&G.maduroDisabled[id]>0)return;
   if(id!==G.curCam) play('camSwitch');
   if(G.maduroPos===G.curCam&&id!==G.curCam) maduroDespawn();
+  G.camOpen = true; // Pressing any cam button = actively using cameras
   G.curCam=id; G.maduroWatchMs=0;
   if(SFX.muziek) SFX.muziek.volume=id===MUSIC_CAM_ID?0.55:0.15;
   highlightCamBtn(id);
+  markHudDirty();
 }
 window.switchCam=switchCam;
 
@@ -1349,6 +1633,7 @@ function toggleDoor(side){
     if(G.rtClosed&&G.mPos===POS.RD&&G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}
     else if(!G.rtClosed&&G.cfg.gijsActive&&G.mPos===POS.RD) armDoorTimer();
   }
+  markHudDirty();
 }
 window.toggleDoor=toggleDoor;
 
@@ -1357,17 +1642,30 @@ function toggleVent(){
   G.ventClosed=!G.ventClosed;
   ventAnim.target=G.ventClosed?0:1;
   if(G.ventClosed) play('doorClose');
+  // Update all vent buttons' base color to reflect state
+  for(const obj of interactables){
+    if(obj.userData.action==='vent' && obj !== lastHighlighted){
+      obj.material.color.setHex(G.ventClosed ? 0x225500 : 0x442200);
+      obj.userData._origColor = G.ventClosed ? 0x225500 : 0x442200;
+    }
+  }
   if(G.ventClosed&&G.markInVent){if(G.markKillTimer){clearTimeout(G.markKillTimer);G.markKillTimer=null;} markLeaveAfter(1000+Math.random()*2000);}
   else if(!G.ventClosed&&G.markInVent){if(G.markKillTimer)clearTimeout(G.markKillTimer);G.markKillTimer=setTimeout(()=>{if(!G.dead&&!G.won&&G.markInVent&&!G.ventClosed)triggerMarkJS();},1000);}
+  markHudDirty();
 }
 window.toggleVent=toggleVent;
 
 function inLureRange(){
-  if(!G||!G.camOpen)return false;
+  if(!G)return false;
   const adj={0:[1],1:[0,2],2:[1,3,4],3:[2,5],4:[2,6],5:[3],6:[4]};
-  const gR=G.cfg.gijsActive&&G.curCam!==MUSIC_CAM_ID&&(G.mPos===G.curCam||(adj[G.mPos]||[]).includes(G.curCam));
-  const hR=G.cfg.hoboActive&&G.curCam!==MUSIC_CAM_ID&&G.hoboPos===G.curCam;
-  const dR=G.diddyActive&&G.curCam!==MUSIC_CAM_ID&&G.diddyPos===G.curCam;
+  const cur = G.curCam;
+  // Gijs: on current cam or adjacent, not music room
+  const gR = G.cfg.gijsActive && cur!==MUSIC_CAM_ID &&
+             (G.mPos===cur || (adj[G.mPos]||[]).includes(cur));
+  // Hobo: exactly on current cam, not music room
+  const hR = G.cfg.hoboActive && cur!==MUSIC_CAM_ID && G.hoboPos===cur;
+  // Diddy: exactly on current cam, not music room
+  const dR = G.diddyActive && cur!==MUSIC_CAM_ID && G.diddyPos===cur;
   return gR||hR||dR;
 }
 
@@ -1379,7 +1677,8 @@ function useLure(){
   const pb={5:3,6:4,4:2,3:2,2:1,1:0,0:0}; const np=pb[G.mPos];
   if(np!==undefined){G.mPos=np;if(G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}if(G.mRetreatTimer){clearTimeout(G.mRetreatTimer);G.mRetreatTimer=null;}}
   G.lureReady=false; G.lureCD=LURE_CD_S; clearInterval(G.lureCDTimer);
-  G.lureCDTimer=setInterval(()=>{G.lureCD--;if(G.lureCD<=0){G.lureReady=true;G.lureCD=0;clearInterval(G.lureCDTimer);}},1000);
+  G.lureCDTimer=setInterval(()=>{G.lureCD--;if(G.lureCD<=0){G.lureReady=true;G.lureCD=0;clearInterval(G.lureCDTimer);}markHudDirty();},1000);
+  markHudDirty();
 }
 window.useLure=useLure;
 
@@ -1389,16 +1688,25 @@ function useCameraAlarm(){
   if(G.chapoActive&&(G.curCam===CHAPO_CAM_ID||G.chapoAlarm)) resetChapo();
   if(G.diddyActive&&G.diddyPos===G.curCam&&G.curCam!==MUSIC_CAM_ID) resetDiddy();
   G.alarmReady=false; G.alarmCD=ALARM_CD_S; clearInterval(G.alarmCDTimer);
-  G.alarmCDTimer=setInterval(()=>{G.alarmCD--;if(G.alarmCD<=0){G.alarmReady=true;G.alarmCD=0;clearInterval(G.alarmCDTimer);}},1000);
+  G.alarmCDTimer=setInterval(()=>{G.alarmCD--;if(G.alarmCD<=0){G.alarmReady=true;G.alarmCD=0;clearInterval(G.alarmCDTimer);}markHudDirty();},1000);
+  markHudDirty();
 }
 window.useCameraAlarm=useCameraAlarm;
 
 function startWindUp(){
   if(!G||G.dead||G.won)return;
-  if(!G.camOpen||G.curCam!==MUSIC_CAM_ID)return;
+  // In VR the 3D screen is always visible — no need to require G.camOpen
+  // But we do need to be on Music Room cam conceptually for the AI tick to register winding
+  if(G.curCam !== MUSIC_CAM_ID){
+    G.camOpen = true;
+    G.curCam  = MUSIC_CAM_ID;
+    highlightCamBtn(MUSIC_CAM_ID);
+    if(SFX.muziek) SFX.muziek.volume = 0.55;
+  }
   if(G.isWindingUp)return;
   G.isWindingUp=true;
   if(SFX.windUp){SFX.windUp.currentTime=0;SFX.windUp.play().catch(()=>{});}
+  markHudDirty();
 }
 window.startWindUp=startWindUp;
 
@@ -1407,6 +1715,7 @@ function stopWindUp(){
   if(!G.isWindingUp)return;
   G.isWindingUp=false;
   stop('windUp');
+  markHudDirty();
 }
 window.stopWindUp=stopWindUp;
 
@@ -1569,29 +1878,111 @@ function triggerMaduroDisable(camId){
   },2200);
 }
 
+// ── MARK'S BEHIND-PLAYER SPAWN POSITION ──────────────
+// The player sits at z≈2.0, facing -Z (toward the camera wall).
+// "Behind" the player = positive Z (the front wall with the door gap).
+// Mark crawls out of a vent behind the player's head — very scary in VR.
+const MARK_SPAWN_POS = new THREE.Vector3(0, 2.4, 5.2);  // behind player, near ceiling front wall
+
+// 3D vent hole on the front wall (behind player) — where Mark emerges
+function buildMarkVentOpening() {
+  const ventMat = new THREE.MeshLambertMaterial({ color: 0x1a1008 });
+  // Vent frame on front wall (z=6, facing INTO the room)
+  addMesh(new THREE.BoxGeometry(0.65,0.52,0.06), ventMat, 0, 2.65, 5.96);
+  // Grate bars
+  for(let i=-2;i<=2;i++){
+    addMesh(new THREE.BoxGeometry(0.58,0.016,0.016), new THREE.MeshLambertMaterial({color:0x221208}), 0, 2.65+i*0.07, 5.93);
+    addMesh(new THREE.BoxGeometry(0.016,0.48,0.016), new THREE.MeshLambertMaterial({color:0x221208}), i*0.12, 2.65, 5.93);
+  }
+  // Red warning light above vent
+  const markWarnLight = new THREE.Mesh(new THREE.SphereGeometry(0.035,6,6), new THREE.MeshBasicMaterial({ color:0x111111 }));
+  markWarnLight.position.set(0.28, 2.88, 5.93);
+  scene.add(markWarnLight);
+  scene.userData.markWarnLight = markWarnLight;
+
+  // ── VENT CONTROL BUTTON — left side of office, near player ──
+  // Player turns around and sees Mark + this button on the left wall
+  const markVentBtnMesh = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 0.16, 0.28),  // mounted on left wall, sticks out into room
+    new THREE.MeshLambertMaterial({ color: 0x442200 })
+  );
+  markVentBtnMesh.position.set(-5.94, 1.35, 3.5); // on left wall, player height
+  markVentBtnMesh.userData.action = 'vent';
+  markVentBtnMesh.userData._origColor = 0x442200;
+  scene.add(markVentBtnMesh); interactables.push(markVentBtnMesh);
+
+  // Label canvas — on the face of the button (facing +X into room)
+  const mvlc = document.createElement('canvas'); mvlc.width=128; mvlc.height=64;
+  const mvlctx = mvlc.getContext('2d');
+  mvlctx.fillStyle='#2a1400'; mvlctx.fillRect(0,0,128,64);
+  mvlctx.strokeStyle='#884400'; mvlctx.lineWidth=2; mvlctx.strokeRect(2,2,124,60);
+  mvlctx.fillStyle='#ffaa44'; mvlctx.font='bold 16px monospace'; mvlctx.textAlign='center';
+  mvlctx.fillText('VENT', 64, 24);
+  mvlctx.fillStyle='#cc6600'; mvlctx.font='13px monospace';
+  mvlctx.fillText('SLUITEN', 64, 44);
+  const mvlm = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.26, 0.14),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(mvlc), transparent:true })
+  );
+  // Position slightly off wall face, rotated to face +X (into room)
+  mvlm.position.set(-5.90, 1.35, 3.5);
+  mvlm.rotation.y = Math.PI / 2; // face into room (+X direction)
+  scene.add(mvlm);
+}
+
+// Mark sprite (billboarded plane, shown behind player when markInVent)
+let markBehindMesh = null;
+function buildMarkBehindSprite() {
+  const tex = new THREE.TextureLoader().load(FILES.markVent, t=>{ t.needsUpdate=true; });
+  markBehindMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.55, 0.72),
+    new THREE.MeshBasicMaterial({ map:tex, transparent:true, alphaTest:0.06, side:THREE.DoubleSide })
+  );
+  markBehindMesh.position.copy(MARK_SPAWN_POS);
+  markBehindMesh.visible = false;
+  scene.add(markBehindMesh);
+}
 // ══════════════════════════════════════════════════════
-//  SECTION 23 — AI: MARK (VENT)
+//  SECTION 23 — AI: MARK (SPAWNS BEHIND PLAYER)
 // ══════════════════════════════════════════════════════
 function scheduleMarkCheck(){
   if(G.markCheckIval)clearInterval(G.markCheckIval);
   if(!G.cfg.markRutteActive)return;
-  G.markCheckIval=setInterval(()=>{if(G.dead||G.won||G.markInVent)return;if(Math.random()<0.10)markAppear();},10000);
+  G.markCheckIval=setInterval(()=>{ if(G.dead||G.won||G.markInVent)return; if(Math.random()<0.10)markAppear(); },10000);
 }
 function markAppear(){
   if(G.dead||G.won||G.markInVent)return;
   G.markInVent=true; play('vent');
-  if(Math.random()<0.2)setTimeout(()=>play('markAudio'),400);
-  if(G.ventClosed){markLeaveAfter(1000+Math.random()*2000);return;}
+  if(Math.random()<0.2) setTimeout(()=>play('markAudio'),400);
+  // Show Mark's sprite BEHIND the player at the front-wall vent
+  if(markBehindMesh){
+    markBehindMesh.position.copy(MARK_SPAWN_POS);
+    // Face toward player (negative Z)
+    markBehindMesh.lookAt(camera.position.x, MARK_SPAWN_POS.y, camera.position.z);
+    markBehindMesh.visible=true;
+  }
+  const wl=scene.userData.markWarnLight;
+  if(wl) wl.material.color.setHex(0xff3300);
+  markHudDirty();
+  if(G.ventClosed){ markLeaveAfter(1000+Math.random()*2000); return; }
   if(G.markKillTimer)clearTimeout(G.markKillTimer);
-  G.markKillTimer=setTimeout(()=>{if(!G.dead&&!G.won&&G.markInVent&&!G.ventClosed)triggerMarkJS();},8000);
+  G.markKillTimer=setTimeout(()=>{ if(!G.dead&&!G.won&&G.markInVent&&!G.ventClosed)triggerMarkJS(); },8000);
 }
 function markLeave(){
-  if(!G.markInVent)return;G.markInVent=false;
+  if(!G.markInVent)return;
+  G.markInVent=false;
   if(G.markKillTimer){clearTimeout(G.markKillTimer);G.markKillTimer=null;}
   if(G.markLeaveTimer){clearTimeout(G.markLeaveTimer);G.markLeaveTimer=null;}
   stop('vent');
+  if(markBehindMesh) markBehindMesh.visible=false;
+  const wl=scene.userData.markWarnLight;
+  if(wl) wl.material.color.setHex(0x111111);
+  markHudDirty();
 }
-function markLeaveAfter(ms){if(G.markLeaveTimer)clearTimeout(G.markLeaveTimer);G.markLeaveTimer=setTimeout(markLeave,ms);}
+function markLeaveAfter(ms){
+  if(G.markLeaveTimer)clearTimeout(G.markLeaveTimer);
+  G.markLeaveTimer=setTimeout(markLeave,ms);
+}
 
 // ══════════════════════════════════════════════════════
 //  SECTION 24 — MUSIC BOX (TOM)
@@ -1611,8 +2002,12 @@ function doJumpscare(imgSrc, cause){
   G.dead=true; killTimers(); stopAll(); play('jumpscare');
   triggerVRJumpscare(imgSrc, () => showVRDeathScreen(cause));
   if(vrHudMesh) vrHudMesh.visible=false;
-  if(vrRestartBtn){ vrRestartBtn.visible=true; if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=true; }
-  interactables.push(vrRestartBtn);
+  if(vrRestartBtn && !vrRestartBtn.visible){
+    vrRestartBtn.visible=true;
+    if(vrRestartBtn.userData._label) vrRestartBtn.userData._label.visible=true;
+    // Only add to interactables if not already there
+    if(!interactables.includes(vrRestartBtn)) interactables.push(vrRestartBtn);
+  }
 }
 
 function triggerGijsJS()   {doJumpscare(FILES.gijsJS,     'Meester Gijs heeft je gevonden. "That\'s a 1 out of 10."');}
@@ -1642,7 +2037,11 @@ function triggerWin(){
   vrDeathTex.needsUpdate=true;
   vrDeathMesh.visible=true;
   if(vrHudMesh) vrHudMesh.visible=false;
-  if(vrRestartBtn){ vrRestartBtn.visible=true; if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=true; }
+  if(vrRestartBtn && !vrRestartBtn.visible){
+    vrRestartBtn.visible=true;
+    if(vrRestartBtn.userData._label) vrRestartBtn.userData._label.visible=true;
+    if(!interactables.includes(vrRestartBtn)) interactables.push(vrRestartBtn);
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -1658,8 +2057,7 @@ function gameTick(){
   G.o2=Math.max(0,G.o2-drain);
   if(G.o2<=0&&!G.o2Dead)oxygenDepleted();
   tickMusicBox(); tickJeffrey(); tickChapo(); tickMaduro();
-  // VR HUD update
-  drawVRHud();
+  markHudDirty(); // flag HUD for redraw next frame
 }
 
 function oxygenDepleted(){
@@ -1702,15 +2100,28 @@ function startGame(){
   }
 
   G = mkState(); G.nightStart=Date.now(); G.running=true;
+  G.camOpen = true; // In VR big screen is always visible; start with cameras active
   gameTimeStr='12:00 AM';
+  bigScreenTimer = 0; // prevent immediate burst redraw
 
-  // Reset door/vent
+  // Reset door/vent animations and button colors
   doorAnim.left.open=1;  doorAnim.left.target=1;
   doorAnim.right.open=1; doorAnim.right.target=1;
   ventAnim.open=1; ventAnim.target=1;
   if(doorMeshes.left)  doorMeshes.left.position.y  = -0.5;
   if(doorMeshes.right) doorMeshes.right.position.y = -0.5;
   if(ventPanelMesh){ ventPanelMesh.visible=false; ventPanelMesh.rotation.x=0; }
+  // Reset all button colors to default open state
+  for(const obj of interactables){
+    if(obj.userData.action==='leftDoor'||obj.userData.action==='rightDoor'){
+      obj.material.color.setHex(0x1a1a44);
+      obj.userData._origColor=0x1a1a44;
+    }
+    if(obj.userData.action==='vent'){
+      obj.material.color.setHex(0x442200);
+      obj.userData._origColor=0x442200;
+    }
+  }
 
   initAudio();
   // Ensure AudioContext is resumed in VR
@@ -1738,10 +2149,17 @@ function startGame(){
   if(G.jeffreyActive){G.jeffreyStep=0;G.jeffreyPos=JEFFREY_PATH[0];G.jeffreyTimer=JEFFREY_SWITCH_S;}
   if(G.diddyActive)   setTimeout(scheduleDiddyMove,8000);
 
-  drawBigScreen(); drawVRHud();
+  drawBigScreen();
+  markHudDirty();
 
-  // Preload all animatronic overlay images
-  Object.keys(camAnimOverlays).forEach(k=>{}); // already loads on first draw
+  // Preload all animatronic overlay images now
+  loadCamOverlayImg('gijs',    FILES.gijsCam);
+  loadCamOverlayImg('hobo',    FILES.hoboGijsCam);
+  loadCamOverlayImg('jeffrey', FILES.jeffreyCam);
+  loadCamOverlayImg('chapo',   FILES.chapoCam);
+  loadCamOverlayImg('diddy',   FILES.diddyCam);
+  loadCamOverlayImg('tom',     FILES.tomCam);
+  loadCamOverlayImg('maduro',  FILES.maduroCam);
 }
 window.startGame=startGame;
 
@@ -1758,6 +2176,18 @@ function restartGame(){
   if(ventPanelMesh){ ventPanelMesh.visible=false; ventPanelMesh.rotation.x=0; }
   if(vrHudMesh)  vrHudMesh.visible=false;
   if(vrDeathMesh)vrDeathMesh.visible=false;
+  if(markBehindMesh) markBehindMesh.visible=false;
+  const wl=scene.userData.markWarnLight; if(wl)wl.material.color.setHex(0x111111);
+  // Reset button colors to default
+  for(const obj of interactables){
+    if(obj.userData.action==='leftDoor'||obj.userData.action==='rightDoor'){
+      obj.material.color.setHex(0x1a1a44); obj.userData._origColor=0x1a1a44;
+    }
+    if(obj.userData.action==='vent'){
+      obj.material.color.setHex(0x442200); obj.userData._origColor=0x442200;
+    }
+  }
+  lastHighlighted = null;
   if(vrRestartBtn){
     vrRestartBtn.visible=false;
     const idx=interactables.indexOf(vrRestartBtn);
@@ -1770,43 +2200,20 @@ function restartGame(){
 window.restartGame=restartGame;
 
 // ══════════════════════════════════════════════════════
-//  SECTION 28 — VR MENU CLICK HANDLER (restart)
+//  SECTION 28 — VR-ONLY RESTART HANDLER
 // ══════════════════════════════════════════════════════
-// Patch onTriggerPress to handle restart action
-const _origHandleVRMenuClick = handleVRMenuClick;
-// Override to include restart
-window._handleVRMenuClickPatched = function(action) {
-  if (action === 'restart') { restartGame(); return; }
-  _origHandleVRMenuClick(action);
-};
-// Patch handleVRMenuClick used in onTriggerPress
-// (done inline in onTriggerPress check)
-
-// Patch onTriggerPress to check restart
-controllers.forEach((ctrl, i) => {
-  if (!ctrl) return;
-  ctrl.addEventListener('selectstart', () => {
-    if (vrMenuState === 'hidden' && G && G.dead) {
-      const hit = castFromController(i);
-      if (hit && hit.userData.vrMenuAction === 'restart') { restartGame(); }
-    }
-    if ((!G || !G.running) && !G?.dead) {
-      const hit = castFromController(i);
-      if (hit && hit.userData.vrMenuAction === 'restart') { restartGame(); }
-    }
-  });
-});
+// No keyboard input anywhere in this file — VR controllers only.
+// The restart button (vrRestartBtn) already has vrMenuAction='restart'
+// which is caught by handleVRMenuClick() in onTriggerPress.
+// Nothing else needed here.
 
 // ══════════════════════════════════════════════════════
 //  SECTION 29 — WARN SCREEN & INITIAL FLOW
 // ══════════════════════════════════════════════════════
 document.getElementById('warnBtn').addEventListener('click', () => {
   document.getElementById('warnScreen').style.display='none';
-  // Enter VR and show VR menu
   if (xrSupported) {
-    requestVRSession();
-    // Show VR menu after a brief delay to allow session to start
-    setTimeout(showVRMenu, 800);
+    requestVRSession(); // This now calls showVRMenu after session starts
   }
 });
 
@@ -1814,6 +2221,11 @@ document.getElementById('warnBtn').addEventListener('click', () => {
 //  SECTION 30 — INIT
 // ══════════════════════════════════════════════════════
 buildRoom();
+// Build Mark's vent and sprite AFTER FILES is defined
+buildMarkVentOpening();
+buildMarkBehindSprite();
+// Init controller dot references
+initCtrlDots();
 
 // Preload all images
 Object.values(FILES).forEach(src => {
