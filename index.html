@@ -139,15 +139,22 @@ function onTriggerPress(idx) {
   if (idx === 1) rightTriggerHeld = true;
   if (idx === 0) leftTriggerHeld  = true;
 
+  const hit = castFromController(idx);
+
+  // Restart button — always checked first regardless of game/menu state
+  if (hit && hit.userData.vrMenuAction === 'restart') {
+    restartGame(); return;
+  }
+
   // VR menu interaction
   if (vrMenuState !== 'hidden') {
-    const hit = castFromController(idx);
     if (hit && hit.userData.vrMenuAction) { handleVRMenuClick(hit.userData.vrMenuAction); return; }
+    return; // menu open but didn't hit anything — do nothing
   }
+
   if (!G || !G.running) return;
 
   // Check interactable
-  const hit = castFromController(idx);
   if (hit && hit.userData.action) {
     const a = hit.userData.action;
     if (a === 'windUp') { startWindUp(); return; }
@@ -993,6 +1000,7 @@ function updateJsPlane(dt) {
 //  SECTION 9 — VR MENU
 // ══════════════════════════════════════════════════════
 let vrMenuState = 'hidden';
+let vrMenuHovered = null; // currently hovered menu action
 const vrMenuGroup = new THREE.Group(); scene.add(vrMenuGroup); vrMenuGroup.visible = false;
 
 const vrMenuCanvas = document.createElement('canvas'); vrMenuCanvas.width=1024; vrMenuCanvas.height=768;
@@ -1012,13 +1020,14 @@ function buildVRMenuButtons() {
     {label:'NACHT 5',night:5,y:-0.33},{label:'▶ START',night:0,y:-0.65}
   ];
   rows.forEach(b=>{
+    // Invisible hitbox plane — sits flush with the canvas so text shows through
     const m=new THREE.Mesh(
-      new THREE.BoxGeometry(2.2,0.20,0.04),
-      new THREE.MeshLambertMaterial({ color: b.night===0?0x003300:0x1a0000 })
+      new THREE.PlaneGeometry(2.2, 0.20),
+      new THREE.MeshBasicMaterial({ transparent:true, opacity:0, depthWrite:false })
     );
-    m.position.set(0,b.y,0.06);
+    m.position.set(0, b.y, 0.02);
     m.userData.vrMenuAction = b.night===0?'start':'night:'+b.night;
-    m.userData._origColor   = b.night===0?0x003300:0x1a0000;
+    m.userData._origColor   = 0x000000; // no colour to restore
     vrMenuGroup.add(m); interactables.push(m); vrNightBtns.push(m);
   });
 }
@@ -1035,17 +1044,23 @@ function redrawVRMenu(){
   [{n:1,l:'NACHT 1',s:'Gijs · Hobo',y:242},{n:2,l:'NACHT 2',s:'+Tom · Mark',y:310},
    {n:3,l:'NACHT 3',s:'+Jeffrey',y:378},{n:4,l:'NACHT 4',s:'+Chapo',y:446},
    {n:5,l:'NACHT 5',s:'ALLES',y:514}].forEach(n=>{
-    const sel=selectedNight===n.n;
-    ctx.fillStyle=sel?'rgba(100,0,0,0.4)':'rgba(20,0,0,0.3)'; ctx.fillRect(170,n.y-28,684,50);
-    ctx.strokeStyle=sel?'#880000':'#330000'; ctx.lineWidth=sel?2:1; ctx.strokeRect(170,n.y-28,684,50);
-    ctx.fillStyle=sel?'#cc0000':'#440000'; ctx.font='bold 22px monospace'; ctx.textAlign='left';
+    const sel = selectedNight===n.n;
+    const hov = vrMenuHovered===('night:'+n.n);
+    const bg  = sel ? 'rgba(120,0,0,0.55)' : hov ? 'rgba(60,0,0,0.45)' : 'rgba(20,0,0,0.3)';
+    const brd = sel ? '#cc0000' : hov ? '#660000' : '#330000';
+    ctx.fillStyle=bg; ctx.fillRect(170,n.y-28,684,50);
+    ctx.strokeStyle=brd; ctx.lineWidth=sel?2.5:hov?1.5:1; ctx.strokeRect(170,n.y-28,684,50);
+    // Arrow indicator when hovered
+    if (hov && !sel) { ctx.fillStyle='#660000'; ctx.font='bold 22px monospace'; ctx.textAlign='left'; ctx.fillText('▶', 175, n.y+8); }
+    ctx.fillStyle=sel?'#ff2200':hov?'#cc4422':'#440000'; ctx.font='bold 22px monospace'; ctx.textAlign='left';
     ctx.fillText(n.l,200,n.y+8);
-    ctx.fillStyle=sel?'#884444':'#221111'; ctx.font='17px monospace';
+    ctx.fillStyle=sel?'#aa5544':hov?'#774433':'#221111'; ctx.font='17px monospace';
     ctx.fillText(n.s,420,n.y+8);
   });
-  ctx.fillStyle=selectedNight>0?'#005500':'#001100'; ctx.fillRect(170,600,684,58);
-  ctx.strokeStyle=selectedNight>0?'#00aa00':'#002200'; ctx.lineWidth=2; ctx.strokeRect(170,600,684,58);
-  ctx.fillStyle=selectedNight>0?'#00ff66':'#004400'; ctx.font='bold 26px monospace'; ctx.textAlign='center';
+  const startHov = vrMenuHovered==='start';
+  ctx.fillStyle=selectedNight>0?(startHov?'#007700':'#005500'):'#001100'; ctx.fillRect(170,600,684,58);
+  ctx.strokeStyle=selectedNight>0?(startHov?'#00ff44':'#00aa00'):'#002200'; ctx.lineWidth=2; ctx.strokeRect(170,600,684,58);
+  ctx.fillStyle=selectedNight>0?(startHov?'#44ff88':'#00ff66'):'#004400'; ctx.font='bold 26px monospace'; ctx.textAlign='center';
   ctx.fillText(selectedNight>0?`▶ NACHT ${selectedNight} STARTEN`:'SELECTEER EEN NACHT',512,638);
   vrMenuTex.needsUpdate=true;
 }
@@ -1063,7 +1078,7 @@ function showVRMenu(){
   vrMenuGroup.lookAt(camera.position);
   redrawVRMenu();
 }
-function hideVRMenu(){ vrMenuState='hidden'; vrMenuGroup.visible=false; }
+function hideVRMenu(){ vrMenuState='hidden'; vrMenuGroup.visible=false; vrMenuHovered=null; }
 
 // ══════════════════════════════════════════════════════
 //  SECTION 10 — RENDER LOOP
@@ -1096,6 +1111,13 @@ renderer.setAnimationLoop(time => {
   pollGamepads();
   updatePointerHighlight();
   if (G && G.running) { updateCooldownButtons(); drawAnalogClock(); }
+
+  // Update menu hover highlight
+  if (vrMenuState !== 'hidden') {
+    const hHit = castFromController(1) || castFromController(0);
+    const hAction = hHit ? (hHit.userData.vrMenuAction || null) : null;
+    if (hAction !== vrMenuHovered) { vrMenuHovered = hAction; redrawVRMenu(); }
+  }
 
   renderer.render(scene, camera);
 });
@@ -1618,8 +1640,11 @@ function doJumpscare(imgSrc, cause){
   if(!G||G.dead)return;
   G.dead=true; killTimers(); stopAll(); play('jumpscare');
   triggerVRJumpscare(imgSrc, () => showVRDeathScreen(cause));
-  if(vrRestartBtn){ vrRestartBtn.visible=true; if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=true; }
-  interactables.push(vrRestartBtn);
+  if(vrRestartBtn){
+    vrRestartBtn.visible=true;
+    if(vrRestartBtn.userData._label) vrRestartBtn.userData._label.visible=true;
+    if(!interactables.includes(vrRestartBtn)) interactables.push(vrRestartBtn);
+  }
 }
 
 function triggerGijsJS()   {doJumpscare(FILES.gijsJS,     'Meester Gijs heeft je gevonden. "That\'s a 1 out of 10."');}
@@ -1647,7 +1672,11 @@ function triggerWin(){
   ctx.fillText('Kijk naar de OPNIEUW knop', W/2, H-60);
   vrDeathTex.needsUpdate=true;
   vrDeathMesh.visible=true;
-  if(vrRestartBtn){ vrRestartBtn.visible=true; if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=true; }
+  if(vrRestartBtn){
+    vrRestartBtn.visible=true;
+    if(vrRestartBtn.userData._label) vrRestartBtn.userData._label.visible=true;
+    if(!interactables.includes(vrRestartBtn)) interactables.push(vrRestartBtn);
+  }
 }
 
 // ══════════════════════════════════════════════════════
