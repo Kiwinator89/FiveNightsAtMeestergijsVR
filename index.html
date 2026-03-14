@@ -6,42 +6,37 @@
 <title>Five Nights at Meester Gijs — VR Edition</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
-#vrRequiredScreen{position:fixed;inset:0;z-index:999;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-.vr-req-box{max-width:560px;border:2px solid #440000;padding:48px 40px;background:#050000;text-align:center;border-radius:4px}
-.vr-req-title{font-size:2rem;color:#cc0000;letter-spacing:4px;margin-bottom:24px;text-shadow:0 0 20px #ff000066}
-.vr-req-msg{color:#886666;font-size:1rem;line-height:2.2;letter-spacing:1px}
-#warnScreen{position:fixed;inset:0;z-index:500;background:radial-gradient(ellipse at center,#080000 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-.warn-box{max-width:min(600px,94vw);border:2px solid #ff0000;padding:40px 44px;background:#050000;border-radius:4px;box-shadow:0 0 40px rgba(200,0,0,0.15)}
-.warn-title{font-size:2rem;color:#ff0000;letter-spacing:5px;text-align:center;margin-bottom:20px;text-shadow:0 0 22px #ff000099}
-.warn-line{color:#cc4444;font-size:.85rem;line-height:2.4;margin-bottom:2px;letter-spacing:1px}
-.menu-btn{padding:12px 40px;background:transparent;border:1px solid #660000;color:#880000;font-family:monospace;font-size:1rem;letter-spacing:4px;cursor:pointer;transition:all .2s;display:inline-block;margin-top:6px;border-radius:2px}
-.menu-btn:hover{border-color:#cc0000;color:#ff2200;box-shadow:0 0 20px #66000055}
+body{background:#000;overflow:hidden;font-family:monospace}
 #threeCanvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0;z-index:1}
+#enterVRBtn{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:100;
+  background:#000;
+  border:3px solid #cc0000;
+  color:#ff2200;
+  font-family:monospace;
+  font-size:2rem;
+  font-weight:bold;
+  letter-spacing:6px;
+  padding:32px 64px;
+  cursor:pointer;
+  text-shadow:0 0 20px #ff0000;
+  box-shadow:0 0 40px #cc000055;
+}
+#enterVRBtn:hover{background:#110000;border-color:#ff2200}
+#enterVRBtn:disabled{opacity:0.5;cursor:not-allowed}
+#statusMsg{
+  position:fixed;bottom:40px;left:50%;transform:translateX(-50%);
+  z-index:100;color:#664444;font-family:monospace;font-size:1rem;
+  letter-spacing:2px;text-align:center;pointer-events:none;
+}
 </style>
 </head>
 <body>
 
-<div id="vrRequiredScreen">
-  <div class="vr-req-box">
-    <div class="vr-req-title">🥽 VR HEADSET REQUIRED</div>
-    <div class="vr-req-msg">VR headset required to play this game.<br><br>Please open this page in your Meta Quest browser<br>or another WebXR-compatible VR headset.</div>
-  </div>
-</div>
-
-<div id="warnScreen">
-  <div class="warn-box">
-    <div class="warn-title">⚠ WAARSCHUWING</div>
-    <div class="warn-line">Dit spel bevat jumpscares en harde geluiden.</div>
-    <div class="warn-line">Spelen met koptelefoon op eigen risico.</div>
-    <div class="warn-line">Satirische horror-parodie — volledig fictief.</div>
-    <div class="warn-line" style="color:#ff4444;font-weight:bold;margin-top:12px">🥽 VR HEADSET VEREIST</div>
-    <div class="warn-line">Open in de Meta Quest browser voor VR.</div>
-    <button class="menu-btn" style="width:100%;margin-top:24px;font-size:1.1rem;padding:16px 40px" id="warnBtn">IK BEGRIJP HET — DOORGAAN ▶</button>
-  </div>
-</div>
-
 <canvas id="threeCanvas"></canvas>
+<button id="enterVRBtn">🥽 SPEEL IN VR</button>
+<div id="statusMsg">Five Nights at Meester Gijs — VR Edition</div>
 
 <script type="importmap">{"imports":{"three":"https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js"}}</script>
 <script type="module">
@@ -51,83 +46,62 @@ import * as THREE from 'three';
 //  SECTION 1 — RENDERER & WEBXR SETUP
 // ══════════════════════════════════════════════════════
 const canvas3d = document.getElementById('threeCanvas');
-const renderer = new THREE.WebGLRenderer({
-  canvas: canvas3d,
-  antialias: true,
-  alpha: false,
-  // Required for Meta Quest: WebGL context must be XR-compatible
-  powerPreference: 'high-performance'
-});
+const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.shadowMap.enabled = false;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.setClearColor(0x020202);
-renderer.xr.enabled = true; // Enable XR immediately — always
+renderer.xr.enabled = true;
 
-let xrSupported = false;
+const btn   = document.getElementById('enterVRBtn');
+const msgEl = document.getElementById('statusMsg');
 
-// Check VR support
-async function checkVRSupport() {
-  if (!navigator.xr) {
-    showVRRequired();
-    return;
-  }
-  try {
-    const supported = await navigator.xr.isSessionSupported('immersive-vr');
-    if (supported) {
-      xrSupported = true;
-      document.getElementById('warnScreen').style.display = 'flex';
-    } else {
-      showVRRequired();
+// Check if WebXR is available at all
+if (!navigator.xr) {
+  btn.textContent = '❌ VR NIET BESCHIKBAAR';
+  btn.disabled = true;
+  msgEl.textContent = 'Open in Meta Quest browser';
+} else {
+  navigator.xr.isSessionSupported('immersive-vr').then(supported => {
+    if (!supported) {
+      btn.textContent = '❌ VR NIET ONDERSTEUND';
+      btn.disabled = true;
+      msgEl.textContent = 'VR headset vereist';
     }
-  } catch(e) {
-    // On some devices isSessionSupported throws — still try to show warn screen
-    xrSupported = true; // optimistically assume supported
-    document.getElementById('warnScreen').style.display = 'flex';
-  }
+  }).catch(() => {});
 }
 
-function showVRRequired() {
-  document.getElementById('vrRequiredScreen').style.display = 'flex';
-}
+// THE button — one click, enter VR, show night menu
+btn.addEventListener('click', () => {
+  btn.disabled = true;
+  btn.textContent = '⏳ LADEN…';
+  msgEl.textContent = 'VR sessie starten…';
 
-checkVRSupport();
-
-async function requestVRSession() {
-  if (!xrSupported) return;
-  if (renderer.xr.isPresenting) return;
-
-  let session;
-  try {
-    session = await navigator.xr.requestSession('immersive-vr', {
-      optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
+  navigator.xr.requestSession('immersive-vr', {
+    optionalFeatures: ['local-floor', 'bounded-floor']
+  }).then(session => {
+    return renderer.xr.setSession(session).then(() => session);
+  }).then(session => {
+    // VR is running — hide the HTML button
+    btn.style.display = 'none';
+    msgEl.style.display = 'none';
+    // Show the 3D night selection menu
+    showVRMenu();
+    session.addEventListener('end', () => {
+      btn.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = '🥽 SPEEL IN VR';
+      msgEl.style.display = 'block';
+      if (G && G.running) { killTimers(); stopAll(); if(G) G.running=false; }
     });
-  } catch(e) {
-    console.warn('VR session request failed:', e);
-    // Try again without optional features (some devices are stricter)
-    try {
-      session = await navigator.xr.requestSession('immersive-vr', {});
-    } catch(e2) {
-      console.warn('VR session fallback also failed:', e2);
-      showVRRequired();
-      return;
-    }
-  }
-
-  // setSession is async in Three.js — must await it
-  await renderer.xr.setSession(session);
-
-  // Session is now active and rendering has started
-  showVRMenu();
-
-  session.addEventListener('end', () => {
-    if (G && G.running) {
-      killTimers(); stopAll();
-      if (G) G.running = false;
-    }
+  }).catch(err => {
+    console.error('VR error:', err);
+    btn.disabled = false;
+    btn.textContent = '🥽 SPEEL IN VR';
+    msgEl.textContent = 'Fout: ' + (err.message || err);
   });
-}
+});
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x020202);
@@ -2217,63 +2191,18 @@ function restartGame(){
     if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=false;
   }
   selectedNight=0;
-  returnToMenu();
+  showVRMenu(); // XR session is still active when restarting in-game
 }
 window.restartGame=restartGame;
-
-// Re-enters VR and shows menu — handles case where session ended
-async function returnToMenu() {
-  if (renderer.xr.isPresenting) {
-    showVRMenu();
-  } else {
-    // XR session ended — need to restart it
-    try {
-      await requestVRSession();
-    } catch(e) {
-      console.warn('Could not restart VR session:', e);
-    }
-  }
-}
-
-// ══════════════════════════════════════════════════════
-//  SECTION 28 — VR-ONLY RESTART HANDLER
-// ══════════════════════════════════════════════════════
-// No keyboard input anywhere in this file — VR controllers only.
-// The restart button (vrRestartBtn) already has vrMenuAction='restart'
-// which is caught by handleVRMenuClick() in onTriggerPress.
-// Nothing else needed here.
-
-// ══════════════════════════════════════════════════════
-//  SECTION 29 — WARN SCREEN & INITIAL FLOW
-// ══════════════════════════════════════════════════════
-document.getElementById('warnBtn').addEventListener('click', async () => {
-  const btn = document.getElementById('warnBtn');
-  btn.textContent = 'LADEN… ▶';
-  btn.disabled = true;
-
-  try {
-    await requestVRSession();
-    // Session started — hide warn screen
-    document.getElementById('warnScreen').style.display = 'none';
-  } catch(e) {
-    // requestVRSession already handled errors internally
-    btn.textContent = 'IK BEGRIJP HET — DOORGAAN ▶';
-    btn.disabled = false;
-    console.warn('Session start error:', e);
-  }
-});
 
 // ══════════════════════════════════════════════════════
 //  SECTION 30 — INIT
 // ══════════════════════════════════════════════════════
 buildRoom();
-// Build Mark's vent and sprite AFTER FILES is defined
 buildMarkVentOpening();
 buildMarkBehindSprite();
-// Init controller dot references
 initCtrlDots();
 
-// Preload all images
 Object.values(FILES).forEach(src => {
   if (src.endsWith('.png') || src.endsWith('.jpg')) {
     const i = new Image(); i.src = src;
