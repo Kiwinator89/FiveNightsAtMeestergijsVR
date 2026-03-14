@@ -59,25 +59,16 @@ renderer.setClearColor(0x020202);
 
 let xrSupported = false;
 
-// Check VR support
 async function checkVRSupport() {
-  if (!navigator.xr) {
-    showVRRequired();
-    return;
-  }
+  if (!navigator.xr) { showVRRequired(); return; }
   try {
     const supported = await navigator.xr.isSessionSupported('immersive-vr');
     if (supported) {
       xrSupported = true;
       renderer.xr.enabled = true;
-      // Show warning screen to kick things off
       document.getElementById('warnScreen').style.display = 'flex';
-    } else {
-      showVRRequired();
-    }
-  } catch(e) {
-    showVRRequired();
-  }
+    } else { showVRRequired(); }
+  } catch(e) { showVRRequired(); }
 }
 
 function showVRRequired() {
@@ -112,12 +103,11 @@ window.addEventListener('resize', () => {
 });
 
 // ══════════════════════════════════════════════════════
-//  SECTION 2 — CONTROLLER INPUT (VR ONLY)
+//  SECTION 2 — CONTROLLER INPUT (TRIGGER ONLY)
 // ══════════════════════════════════════════════════════
 const controllers = [null, null];
 let rightTriggerHeld = false;
 let leftTriggerHeld  = false;
-const prevThumbPress = [false, false];
 
 function makeRayLine() {
   const pts = [new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-8)];
@@ -138,8 +128,8 @@ for (let i = 0; i < 2; i++) {
   ctrl.add(dot);
   ctrl.addEventListener('selectstart', () => onTriggerPress(i));
   ctrl.addEventListener('selectend',   () => onTriggerRelease(i));
-  ctrl.addEventListener('squeezestart', () => onGripPress(i));
-  ctrl.addEventListener('squeezeend',   () => onGripRelease(i));
+  // NOTE: grip (squeezestart/squeezeend) and thumbstick inputs intentionally removed.
+  // All interaction is via trigger + raycast only.
   scene.add(ctrl);
   scene.add(renderer.xr.getControllerGrip(i));
   controllers[i] = ctrl;
@@ -160,12 +150,11 @@ function onTriggerPress(idx) {
   const hit = castFromController(idx);
   if (hit && hit.userData.action) {
     const a = hit.userData.action;
-    // windUp is handled by hold — just start it
     if (a === 'windUp') { startWindUp(); return; }
     handleVRAction(a);
     return;
   }
-  // Default: left trigger = left door, right trigger = right door (fallback)
+  // Default fallback: left trigger = left door, right trigger = right door
   if (idx === 0) toggleDoor('left');
   else toggleDoor('right');
 }
@@ -175,40 +164,8 @@ function onTriggerRelease(idx) {
   if (idx === 0) { leftTriggerHeld  = false; }
 }
 
-function onGripPress(idx) {
-  if (!G || !G.running) return;
-  if (idx === 0) toggleCam();
-  else toggleVent();
-}
-function onGripRelease(idx) {}
-
 function pollGamepads() {
-  const session = renderer.xr.getSession();
-  if (!session) return;
-  for (const src of session.inputSources) {
-    if (!src.gamepad) continue;
-    const hi = src.handedness === 'left' ? 0 : 1;
-    // Thumbstick press
-    const tb = src.gamepad.buttons[3];
-    if (tb) {
-      if (tb.pressed && !prevThumbPress[hi]) {
-        if (hi === 0) toggleCam();
-        else toggleVent();
-      }
-      prevThumbPress[hi] = tb.pressed;
-    }
-    // Right stick = switch cam
-    if (G && G.running && G.camOpen && hi === 1 && src.gamepad.axes.length >= 3) {
-      const ax = src.gamepad.axes[2];
-      if (Math.abs(ax) > 0.7 && !src._axDeb) {
-        src._axDeb = true;
-        const nc = G.curCam + (ax > 0 ? 1 : -1);
-        if (nc >= 0 && nc < CAMS.length) switchCam(nc);
-        setTimeout(() => { src._axDeb = false; }, 350);
-      }
-    }
-  }
-  // If right trigger held, check if pointing at windUp button
+  // Only handles windUp hold detection — all other gamepad polling removed.
   if (G && G.running && rightTriggerHeld) {
     const hit = castFromController(1);
     if (hit && hit.userData.action === 'windUp') {
@@ -238,7 +195,6 @@ function castFromController(idx) {
 }
 
 function updatePointerHighlight() {
-  // Right controller does the primary highlighting
   let hit = castFromController(1);
   if (!hit) hit = castFromController(0);
 
@@ -288,7 +244,6 @@ scene.add(redFill);
 const lampGlow = new THREE.PointLight(0xffaa44, 0.6, 5);
 lampGlow.position.set(0, 2.55, -1);
 scene.add(lampGlow);
-// Screen glow
 const screenGlow = new THREE.PointLight(0x003311, 0.5, 4);
 screenGlow.position.set(0, 2.2, -4.5);
 scene.add(screenGlow);
@@ -324,50 +279,36 @@ function buildRoom() {
   addMesh(new THREE.PlaneGeometry(3, 4),  wallMat, -4.5,1.7, 6, 0, Math.PI, 0);
   addMesh(new THREE.PlaneGeometry(3, 4),  wallMat,  4.5,1.7, 6, 0, Math.PI, 0);
 
-  // Desk
   const deskMat = new THREE.MeshLambertMaterial({ color: 0x180e04 });
   addMesh(new THREE.BoxGeometry(2.8,0.08,1.0), deskMat, 0, 0.84, 1.9);
   addMesh(new THREE.BoxGeometry(0.08,0.84,1.0), deskMat, -1.36, 0.42, 1.9);
   addMesh(new THREE.BoxGeometry(0.08,0.84,1.0), deskMat,  1.36, 0.42, 1.9);
-  // Chair
   addMesh(new THREE.BoxGeometry(0.55,0.055,0.55), new THREE.MeshLambertMaterial({ color: 0x0d0d0d }), 0, 0.56, 2.5);
   addMesh(new THREE.BoxGeometry(0.55,0.65,0.055), new THREE.MeshLambertMaterial({ color: 0x0d0d0d }), 0, 0.90, 2.75);
 
-  // Blackboard
   buildBlackboard();
 
-  // Ceiling lamp
   addMesh(new THREE.CylinderGeometry(0.012,0.012,0.6,6), new THREE.MeshLambertMaterial({ color: 0x1e1e1e }), 0, 3.1,-1);
   addMesh(new THREE.ConeGeometry(0.28,0.32,8,1,true), new THREE.MeshLambertMaterial({ color: 0x1a1a20, side: THREE.BackSide }), 0, 2.65,-1);
 
-  // Pipes on ceiling
   for (let i = 0; i < 3; i++) {
     const p = new THREE.Mesh(new THREE.CylinderGeometry(0.055,0.055,11,8), new THREE.MeshLambertMaterial({ color: 0x1a1a24 }));
     p.rotation.z = Math.PI/2; p.position.set(0, 3.25, -2+i*1.8); scene.add(p);
   }
 
-  // Bookshelf
   addMesh(new THREE.BoxGeometry(1.1,2.0,0.22), new THREE.MeshLambertMaterial({ color: 0x0d0808 }), 2.8, 1.0,-5.88);
   for (let r = 0; r < 4; r++) for (let b = 0; b < 4; b++) {
     const bk = new THREE.Mesh(new THREE.BoxGeometry(0.19,0.28,0.14), new THREE.MeshLambertMaterial({ color:[0x1a0808,0x081808,0x08081a,0x181808][b%4] }));
     bk.position.set(2.8-0.27+b*0.19, 0.18+r*0.37,-5.79); scene.add(bk);
   }
 
-  // Corridor glimpses
   addMesh(new THREE.BoxGeometry(1.6,2.8,3.5), new THREE.MeshLambertMaterial({ color: 0x040407 }), -5.8,1.4, 0);
   addMesh(new THREE.BoxGeometry(1.6,2.8,3.5), new THREE.MeshLambertMaterial({ color: 0x040407 }),  5.8,1.4, 0);
 
-  // Build doors
   buildDoor3D(-4.5, 'left');
   buildDoor3D( 4.5, 'right');
-
-  // Build vent
   buildVent3D();
-
-  // Small desk monitor (decorative)
   buildDeskMonitor();
-
-  // Big camera screen
   buildBigCameraScreen();
 }
 
@@ -401,24 +342,20 @@ function buildDeskMonitor() {
 function buildDoor3D(x, side) {
   const sign = x < 0 ? 1 : -1;
   const frameMat = new THREE.MeshLambertMaterial({ color: 0x181820 });
-  // Frame
   addMesh(new THREE.BoxGeometry(1.05,0.12,0.16), frameMat, x, 2.3, 0);
   addMesh(new THREE.BoxGeometry(0.12,2.3,0.16), frameMat, x-0.47, 1.15, 0);
   addMesh(new THREE.BoxGeometry(0.12,2.3,0.16), frameMat, x+0.47, 1.15, 0);
 
-  // Door panel — slides vertically
   const door = new THREE.Mesh(new THREE.BoxGeometry(0.90,2.25,0.08), new THREE.MeshLambertMaterial({ color: 0x080308 }));
-  door.position.set(x, -0.5, 0); // starts open (below ground)
+  door.position.set(x, -0.5, 0);
   scene.add(door);
   doorMeshes[side] = door;
 
-  // Door status light
   const dl = new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8), new THREE.MeshBasicMaterial({ color: 0x111111 }));
   dl.position.set(x + sign*0.40, 2.18, 0.12);
   scene.add(dl);
   doorLights[side] = dl;
 
-  // Interactable button on wall beside frame
   const btn = new THREE.Mesh(
     new THREE.BoxGeometry(0.28, 0.12, 0.06),
     new THREE.MeshLambertMaterial({ color: 0x1a1a44 })
@@ -428,7 +365,6 @@ function buildDoor3D(x, side) {
   btn.userData._origColor = 0x1a1a44;
   scene.add(btn); interactables.push(btn);
 
-  // Button label canvas
   const lc = document.createElement('canvas'); lc.width=128; lc.height=48;
   const lctx = lc.getContext('2d');
   lctx.fillStyle='#1a1a44'; lctx.fillRect(0,0,128,48);
@@ -442,22 +378,18 @@ function buildDoor3D(x, side) {
 function buildVent3D() {
   const ventMat = new THREE.MeshLambertMaterial({ color: 0x3a2a10 });
   addMesh(new THREE.BoxGeometry(0.72,0.58,0.07), ventMat, 0, 2.85,-5.96);
-  // Grate bars
   for (let i=-3;i<=3;i++) addMesh(new THREE.BoxGeometry(0.64,0.020,0.020), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }), 0, 2.85+i*0.08,-5.93);
   for (let i=-2;i<=2;i++) addMesh(new THREE.BoxGeometry(0.020,0.52,0.020), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }), i*0.14, 2.85,-5.93);
 
-  // Vent cover panel (shown when closed)
   ventPanelMesh = new THREE.Mesh(new THREE.BoxGeometry(0.70,0.56,0.05), new THREE.MeshLambertMaterial({ color: 0x221808 }));
   ventPanelMesh.position.set(0, 2.85,-5.93);
   ventPanelMesh.visible = false;
   scene.add(ventPanelMesh);
 
-  // Status light
   ventStatusLight = new THREE.Mesh(new THREE.SphereGeometry(0.04,6,6), new THREE.MeshBasicMaterial({ color: 0x111111 }));
   ventStatusLight.position.set(0.30, 3.06,-5.93);
   scene.add(ventStatusLight);
 
-  // Vent button
   const vb = new THREE.Mesh(
     new THREE.BoxGeometry(0.22,0.09,0.05),
     new THREE.MeshLambertMaterial({ color: 0x1a1a44 })
@@ -477,8 +409,6 @@ function updateDoorAnimations(dt) {
     const mesh = doorMeshes[side];
     if (!mesh) return;
     anim.open += (anim.target - anim.open) * Math.min(1, anim.speed * dt);
-    // open=1: door at y=-0.5 (below floor, open)
-    // open=0: door at y=1.15 (in frame, closed)
     mesh.position.y = -0.5 + (1 - anim.open) * 1.65;
     const dl = doorLights[side];
     if (dl) {
@@ -487,7 +417,6 @@ function updateDoorAnimations(dt) {
       dl.material.color.setHex(closed ? 0x00e050 : (atDoor ? 0xff2200 : 0x111111));
     }
   });
-  // Vent
   if (ventPanelMesh) {
     ventAnim.open += (ventAnim.target - ventAnim.open) * Math.min(1, ventAnim.speed * dt);
     const isClosed = ventAnim.open < 0.92;
@@ -506,8 +435,6 @@ function updateDoorAnimations(dt) {
 let bigScreenCanvas, bigScreenCtx, bigScreenTex, bigScreenMesh;
 let windUpBtnMesh = null;
 const BIG_W = 1024, BIG_H = 640;
-
-// Track which cam buttons exist for highlighting
 const camBtnMeshes = {};
 
 function buildBigCameraScreen() {
@@ -520,22 +447,18 @@ function buildBigCameraScreen() {
   bigScreenTex.magFilter = THREE.LinearFilter;
   bigScreenTex.generateMipmaps = false;
 
-  // Bezel
   const bezel = new THREE.Mesh(
     new THREE.BoxGeometry(4.0, 2.6, 0.07),
     new THREE.MeshLambertMaterial({ color: 0x080810 })
   );
   bezel.position.set(0, 2.3,-5.96); scene.add(bezel);
 
-  // Screen surface — slightly proud of bezel
   bigScreenMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(3.8, 2.4),
     new THREE.MeshBasicMaterial({ map: bigScreenTex })
   );
   bigScreenMesh.position.set(0, 2.3,-5.92); scene.add(bigScreenMesh);
 
-  // ── CAM BUTTONS (7 total: CAM1-CAM6 + VENT placeholder) ──
-  // Positioned in a row below the screen
   const camDefs = [
     { id:0, label:'CAM 1' },
     { id:1, label:'CAM 2' },
@@ -559,7 +482,6 @@ function buildBigCameraScreen() {
     scene.add(btn); interactables.push(btn);
     camBtnMeshes[c.id] = btn;
 
-    // Label
     const lc = document.createElement('canvas'); lc.width=128; lc.height=48;
     const lctx = lc.getContext('2d');
     lctx.fillStyle='#0a1a0a'; lctx.fillRect(0,0,128,48);
@@ -573,7 +495,6 @@ function buildBigCameraScreen() {
     lm.position.set(startX + i*(btnW+gap), 1.08,-5.89); scene.add(lm);
   });
 
-  // ── LURE BUTTON ──
   const lureBtn = new THREE.Mesh(
     new THREE.BoxGeometry(0.46, 0.15, 0.055),
     new THREE.MeshLambertMaterial({ color: 0x0a2a0a })
@@ -584,7 +505,6 @@ function buildBigCameraScreen() {
   scene.add(lureBtn); interactables.push(lureBtn);
   makeLabelPlane('LOKKEN', 0x0a2a0a, '#88dd44', 1.82, 1.08,-5.89, 0.44, 0.13);
 
-  // ── ALARM BUTTON ──
   const alarmBtn = new THREE.Mesh(
     new THREE.BoxGeometry(0.46, 0.15, 0.055),
     new THREE.MeshLambertMaterial({ color: 0x2a0a0a })
@@ -595,7 +515,6 @@ function buildBigCameraScreen() {
   scene.add(alarmBtn); interactables.push(alarmBtn);
   makeLabelPlane('ALARM', 0x2a0a0a, '#ff4444', 2.32, 1.08,-5.89, 0.44, 0.13);
 
-  // ── WIND UP BUTTON (only shown for CAM6) ──
   windUpBtnMesh = new THREE.Mesh(
     new THREE.BoxGeometry(0.7, 0.15, 0.055),
     new THREE.MeshLambertMaterial({ color: 0x2a2200 })
@@ -636,25 +555,18 @@ function highlightCamBtn(activeId) {
     m.material.color.setHex(isActive ? 0x1a5a1a : 0x0a1a0a);
     m.userData._origColor = isActive ? 0x1a5a1a : 0x0a1a0a;
   });
-  // Show/hide wind up button
   if (windUpBtnMesh) {
     windUpBtnMesh.visible = (activeId === MUSIC_CAM_ID && G && G.cfg.tomActive);
   }
-  // Wind label
   scene.children.forEach(m => {
     if (m.userData._windLabel) m.visible = (activeId === MUSIC_CAM_ID && G && G.cfg.tomActive);
   });
 }
 
-// ── Draw the big screen canvas ──────────────────────
 function drawBigScreen() {
   const ctx = bigScreenCtx, W = BIG_W, H = BIG_H;
   ctx.clearRect(0,0,W,H);
-
-  // BG
   ctx.fillStyle = '#030808'; ctx.fillRect(0,0,W,H);
-
-  // Header
   ctx.fillStyle = '#081808'; ctx.fillRect(0,0,W,44);
   ctx.fillStyle = '#22aa44'; ctx.font = 'bold 18px monospace'; ctx.textAlign = 'left';
   ctx.fillText('SECURITY MONITOR — FNAG SYSTEMS', 12, 28);
@@ -662,7 +574,6 @@ function drawBigScreen() {
   ctx.fillStyle = '#116622'; ctx.textAlign = 'right';
   ctx.fillText(ts, W-12, 28);
 
-  // Camera feed area
   const fx=10, fy=50, fw=600, fh=380;
   ctx.strokeStyle='#1a4a1a'; ctx.lineWidth=2; ctx.strokeRect(fx,fy,fw,fh);
 
@@ -678,34 +589,26 @@ function drawBigScreen() {
     ctx.fillStyle='#050a05'; ctx.fillRect(fx,fy,fw,fh);
   }
 
-  // Cam tint + scanlines
   ctx.fillStyle='rgba(0,18,4,0.28)'; ctx.fillRect(fx,fy,fw,fh);
   ctx.fillStyle='rgba(0,0,0,0.06)';
   for(let y=fy;y<fy+fh;y+=3) ctx.fillRect(fx,y,fw,1);
 
-  // Cam label
   const cn = CAMS[camId];
   ctx.fillStyle='rgba(0,255,80,0.65)'; ctx.font='bold 14px monospace'; ctx.textAlign='left';
   ctx.fillText(cn ? cn.name+' — '+cn.room : '---', fx+10, fy+20);
   ctx.fillStyle='rgba(0,255,60,0.35)'; ctx.font='11px monospace';
   ctx.fillText(ts, fx+10, fy+fh-8);
 
-  // Vignette on feed
   const vg=ctx.createRadialGradient(fx+fw/2,fy+fh/2,fh*0.18,fx+fw/2,fy+fh/2,fh*0.72);
   vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.6)');
   ctx.fillStyle=vg; ctx.fillRect(fx,fy,fw,fh);
 
-  // Draw animatronic ON THE FEED (only if in this cam room)
   drawAnimatronicsOnFeed(ctx, camId, fx, fy, fw, fh);
 
-  // ── RIGHT PANEL ──────────────────────────────────
   const rpX=fx+fw+14, rpY=fy, rpW=W-rpX-8;
-
-  // Night label
   ctx.fillStyle='#cc0000'; ctx.font='bold 14px monospace'; ctx.textAlign='left';
   ctx.fillText(G&&G.cfg?G.cfg.label:'FNAG VR', rpX, rpY+16);
 
-  // Clock
   ctx.fillStyle='#0a0a18'; ctx.fillRect(rpX,rpY+22,rpW,62);
   ctx.strokeStyle='#222266'; ctx.lineWidth=1; ctx.strokeRect(rpX,rpY+22,rpW,62);
   ctx.fillStyle='#5555aa'; ctx.font='10px monospace'; ctx.textAlign='center';
@@ -713,7 +616,6 @@ function drawBigScreen() {
   ctx.fillStyle='#e8920a'; ctx.font='bold 24px monospace';
   ctx.fillText(G&&G.running?gameTimeStr:'12:00 AM', rpX+rpW/2, rpY+76);
 
-  // O2 meter
   const o2Y = rpY+96;
   ctx.fillStyle='#0a0a18'; ctx.fillRect(rpX,o2Y,rpW,78);
   ctx.strokeStyle='#222244'; ctx.lineWidth=1; ctx.strokeRect(rpX,o2Y,rpW,78);
@@ -730,7 +632,6 @@ function drawBigScreen() {
   ctx.font='bold 16px monospace'; ctx.textAlign='center';
   ctx.fillText(Math.round(o2pct)+'%', rpX+rpW/2, o2Y+58);
 
-  // Music box meter (if active)
   if (G&&G.cfg&&G.cfg.tomActive) {
     const mbY = o2Y+88;
     ctx.fillStyle='#0a0a14'; ctx.fillRect(rpX,mbY,rpW,70);
@@ -743,11 +644,9 @@ function drawBigScreen() {
     ctx.fillStyle=mbg; ctx.fillRect(bx,mbY+20,bw*(mbpct/100),13);
     ctx.fillStyle='#ddcc00'; ctx.font='bold 14px monospace'; ctx.textAlign='center';
     ctx.fillText(Math.round(mbpct)+'%', rpX+rpW/2, mbY+52);
-    // Wind indicator
     if(G.isWindingUp){ ctx.fillStyle='#ffee44'; ctx.font='11px monospace'; ctx.fillText('⚙ OPWINDEN', rpX+rpW/2, mbY+66);}
   }
 
-  // ── MINI CAM THUMBNAILS ──────────────────────────
   const thY=fy+fh+8, thH=H-thY-8;
   ctx.fillStyle='#080810'; ctx.fillRect(8,thY,W-16,thH);
   ctx.strokeStyle='#1a1a2a'; ctx.lineWidth=1; ctx.strokeRect(8,thY,W-16,thH);
@@ -762,7 +661,6 @@ function drawBigScreen() {
     ctx.fillText(c.name, tx+thW/2, ty+13);
     ctx.fillStyle='#1a4a1a'; ctx.font='9px monospace';
     ctx.fillText(c.room.substring(0,8), tx+thW/2, ty+24);
-    // Monster indicator dot
     const hasMon = G&&(
       (G.cfg&&G.cfg.gijsActive&&G.mPos===c.id) ||
       (G.cfg&&G.cfg.hoboActive&&G.hoboPos===c.id) ||
@@ -776,8 +674,6 @@ function drawBigScreen() {
   bigScreenTex.needsUpdate = true;
 }
 
-// Draw animatronic overlays directly onto the camera feed in the big screen
-// This replaces the old 2D HTML overlay images
 const camAnimOverlays = {};
 function loadCamOverlayImg(key, src) {
   if (camAnimOverlays[key]) return;
@@ -788,7 +684,6 @@ function loadCamOverlayImg(key, src) {
 function drawAnimatronicsOnFeed(ctx, camId, fx, fy, fw, fh) {
   if (!G || !G.running) return;
 
-  // Pre-load overlay images
   loadCamOverlayImg('gijs',    FILES.gijsCam);
   loadCamOverlayImg('hobo',    FILES.hoboGijsCam);
   loadCamOverlayImg('jeffrey', FILES.jeffreyCam);
@@ -807,34 +702,18 @@ function drawAnimatronicsOnFeed(ctx, camId, fx, fy, fw, fh) {
     ctx.drawImage(img, x, y, w, h);
   }
 
-  // Gijs
-  if (G.cfg.gijsActive && G.mPos===camId && camId!==MUSIC_CAM_ID) {
-    drawOverlay(camAnimOverlays['gijs'], false, 0.88);
-  }
-  // Hobo
-  if (G.cfg.hoboActive && G.hoboPos===camId && camId!==MUSIC_CAM_ID) {
-    drawOverlay(camAnimOverlays['hobo'], true, 0.80);
-  }
-  // Jeffrey
-  if (G.jeffreyActive && G.jeffreyPos===camId && camId!==MUSIC_CAM_ID) {
-    drawOverlay(camAnimOverlays['jeffrey'], false, 0.86);
-  }
-  // Chapo
-  if (G.chapoActive && camId===CHAPO_CAM_ID && !G.chapoAlarm) {
-    drawOverlay(camAnimOverlays['chapo'], false, 0.78);
-  }
-  // Diddy
-  if (G.diddyActive && G.diddyPos===camId && camId!==MUSIC_CAM_ID) {
-    drawOverlay(camAnimOverlays['diddy'], false, 0.92);
-  }
-  // Tom (music room)
+  if (G.cfg.gijsActive && G.mPos===camId && camId!==MUSIC_CAM_ID) drawOverlay(camAnimOverlays['gijs'], false, 0.88);
+  if (G.cfg.hoboActive && G.hoboPos===camId && camId!==MUSIC_CAM_ID) drawOverlay(camAnimOverlays['hobo'], true, 0.80);
+  if (G.jeffreyActive && G.jeffreyPos===camId && camId!==MUSIC_CAM_ID) drawOverlay(camAnimOverlays['jeffrey'], false, 0.86);
+  if (G.chapoActive && camId===CHAPO_CAM_ID && !G.chapoAlarm) drawOverlay(camAnimOverlays['chapo'], false, 0.78);
+  if (G.diddyActive && G.diddyPos===camId && camId!==MUSIC_CAM_ID) drawOverlay(camAnimOverlays['diddy'], false, 0.92);
+
   if (G.cfg.tomActive && camId===MUSIC_CAM_ID) {
     if (camAnimOverlays['tom'] && camAnimOverlays['tom'].complete) {
       const d = Math.max(0,(100-G.musicBox)/100);
       ctx.globalAlpha = 0.3 + d*0.7;
       drawOverlay(camAnimOverlays['tom'], false, 0.92);
       ctx.globalAlpha = 1.0;
-      // Danger overlay
       if (d > 0.3) {
         const dg = ctx.createRadialGradient(fx+fw/2,fy+fh/2,fh*0.2,fx+fw/2,fy+fh/2,fh*0.7);
         dg.addColorStop(0,'rgba(0,0,0,0)'); dg.addColorStop(1,`rgba(180,0,0,${d*0.4})`);
@@ -842,7 +721,6 @@ function drawAnimatronicsOnFeed(ctx, camId, fx, fy, fw, fh) {
       }
     }
   }
-  // Maduro
   if (G.maduroPos===camId) {
     if (camAnimOverlays['maduro'] && camAnimOverlays['maduro'].complete) {
       ctx.globalAlpha = 0.7;
@@ -850,14 +728,12 @@ function drawAnimatronicsOnFeed(ctx, camId, fx, fy, fw, fh) {
       ctx.globalAlpha = 1.0;
     }
   }
-  // Mark (vent cam)
   if (G.markInVent && !G.ventClosed) {
     if (camAnimOverlays['mark'] && camAnimOverlays['mark'].complete) {
       const mh = fh * 0.46, mw = camAnimOverlays['mark'].naturalWidth * (mh/camAnimOverlays['mark'].naturalHeight);
       ctx.drawImage(camAnimOverlays['mark'], fx+fw/2-mw/2, fy, mw, mh);
     }
   }
-  // Maduro camera disabled overlay
   if (G.maduroDisabled && G.maduroDisabled[camId] > 0) {
     ctx.fillStyle='rgba(0,0,0,0.85)'; ctx.fillRect(fx,fy,fw,fh);
     ctx.fillStyle='#ff0000'; ctx.font='bold 28px monospace'; ctx.textAlign='center';
@@ -868,7 +744,6 @@ function drawAnimatronicsOnFeed(ctx, camId, fx, fy, fw, fh) {
     ctx.fillStyle='#330000'; ctx.font='12px monospace';
     ctx.fillText(`HERVERBINDING IN ${sec}s`, fx+fw/2, fy+fh/2+38);
   }
-  // Chapo alarm overlay
   if (G.chapoAlarm) {
     ctx.fillStyle='rgba(180,0,0,0.15)'; ctx.fillRect(fx,fy,fw,fh);
     ctx.strokeStyle='#ff2200'; ctx.lineWidth=4; ctx.strokeRect(fx+2,fy+2,fw-4,fh-4);
@@ -876,7 +751,7 @@ function drawAnimatronicsOnFeed(ctx, camId, fx, fy, fw, fh) {
 }
 
 // ══════════════════════════════════════════════════════
-//  SECTION 8 — VR JUMPSCARE (3D plane attached to camera)
+//  SECTION 8 — VR JUMPSCARE
 // ══════════════════════════════════════════════════════
 let jsPlane=null, jsPlaneActive=false, jsPlaneTimer=0;
 
@@ -927,9 +802,9 @@ function updateJsPlane(dt) {
 }
 
 // ══════════════════════════════════════════════════════
-//  SECTION 9 — VR MENU (3D floating panel)
+//  SECTION 9 — VR MENU
 // ══════════════════════════════════════════════════════
-let vrMenuState = 'hidden'; // 'hidden' | 'visible'
+let vrMenuState = 'hidden';
 const vrMenuGroup = new THREE.Group(); scene.add(vrMenuGroup); vrMenuGroup.visible = false;
 
 const vrMenuCanvas = document.createElement('canvas'); vrMenuCanvas.width=1024; vrMenuCanvas.height=768;
@@ -941,7 +816,6 @@ const vrMenuMesh  = new THREE.Mesh(
 );
 vrMenuMesh.position.set(0, 0, 0); vrMenuGroup.add(vrMenuMesh);
 
-// Night select buttons (3D)
 const vrNightBtns = [];
 function buildVRMenuButtons() {
   const rows=[
@@ -989,6 +863,7 @@ function redrawVRMenu(){
 }
 
 function handleVRMenuClick(action){
+  if(action==='restart'){ restartGame(); return; }
   if(action.startsWith('night:')){ selectNight(parseInt(action.split(':')[1])); redrawVRMenu(); }
   else if(action==='start'&&selectedNight>0){ hideVRMenu(); startGame(); }
 }
@@ -1014,10 +889,8 @@ renderer.setAnimationLoop(time => {
   const dt = Math.min((time - lastT) / 1000, 0.1); lastT = time;
   flickT += dt;
 
-  // Lamp flicker
   lampGlow.intensity = 0.6 + Math.sin(flickT*0.7)*0.06 + (Math.random()<0.003 ? Math.random()*0.35-0.17 : 0);
 
-  // Alarm pulse
   if (G && G.chapoAlarm) alarmSphereMat.opacity = 0.05+Math.sin(time*0.009)*0.05;
   else if (!jsPlaneActive) alarmSphereMat.opacity = 0;
 
@@ -1105,7 +978,6 @@ function getAudioCtx() {
 }
 
 function initAudio() {
-  // Resume AudioContext (needed for WebXR)
   const ac = getAudioCtx();
   if (ac && ac.state === 'suspended') ac.resume().catch(()=>{});
 
@@ -1197,10 +1069,8 @@ function mkState() {
 }
 
 // ══════════════════════════════════════════════════════
-//  SECTION 15 — VR IN-WORLD HUD (floating near player)
+//  SECTION 15 — VR IN-WORLD HUD
 // ══════════════════════════════════════════════════════
-// In VR-only mode, all UI is 3D in-world. We draw a small HUD panel
-// that floats slightly to the left/below of view.
 let vrHudCanvas, vrHudCtx, vrHudTex, vrHudMesh;
 const VR_HUD_W=512, VR_HUD_H=128;
 
@@ -1225,30 +1095,23 @@ function drawVRHud() {
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle='rgba(2,2,10,0.82)'; ctx.fillRect(0,0,W,H);
   ctx.strokeStyle='#2a2a44'; ctx.lineWidth=1; ctx.strokeRect(1,1,W-2,H-2);
-  // Time
   ctx.fillStyle='#e8920a'; ctx.font='bold 28px monospace'; ctx.textAlign='left';
   ctx.fillText(gameTimeStr, 10, 38);
-  // O2
   const o2pct=Math.max(0,Math.round(G.o2));
   ctx.fillStyle=o2pct<=10?'#ff3300':o2pct<=30?'#ffaa00':'#55bbff';
   ctx.font='bold 18px monospace';
   ctx.fillText(`O₂: ${o2pct}%`, 10, 68);
-  // Music box
   if(G.cfg.tomActive){
     ctx.fillStyle='#ddcc00'; ctx.font='16px monospace';
     ctx.fillText(`🎵 ${Math.round(G.musicBox)}%`, 10, 94);
   }
-  // Night label
   ctx.fillStyle='#442222'; ctx.font='13px monospace'; ctx.textAlign='right';
   ctx.fillText(G.cfg.label, W-10, 38);
-  // Door status
   ctx.fillStyle=G.lfClosed?'#00e050':'#441111'; ctx.font='11px monospace'; ctx.textAlign='right';
   ctx.fillText('L:'+(G.lfClosed?'●':'○')+'  R:'+(G.rtClosed?'●':'○')+'  V:'+(G.ventClosed?'●':'○'), W-10, 68);
-
   vrHudTex.needsUpdate = true;
 }
 
-// Death / win screens in VR (floating panel)
 let vrDeathCanvas, vrDeathCtx, vrDeathTex, vrDeathMesh;
 function buildVRDeathPanel() {
   vrDeathCanvas=document.createElement('canvas'); vrDeathCanvas.width=768; vrDeathCanvas.height=512;
@@ -1267,7 +1130,6 @@ function showVRDeathScreen(msg) {
   ctx.fillStyle='#880000'; ctx.font='bold 64px monospace'; ctx.textAlign='center';
   ctx.fillText('GAME OVER', W/2, 90);
   ctx.fillStyle='#4a3030'; ctx.font='22px monospace';
-  // Strip HTML tags
   const clean = msg.replace(/<[^>]+>/g,' ');
   const words=clean.split(' '); let line='', y=160, lh=34;
   words.forEach(w=>{
@@ -1283,7 +1145,6 @@ function showVRDeathScreen(msg) {
 
 function hideVRDeathScreen() { if(vrDeathMesh) vrDeathMesh.visible=false; }
 
-// Restart button (3D, visible after death)
 let vrRestartBtn = null;
 function buildVRRestartBtn() {
   vrRestartBtn = new THREE.Mesh(
@@ -1560,7 +1421,6 @@ function triggerMaduroDisable(camId){
   play('shock');G.maduroPos=-1;G.maduroWatchMs=0;
   if(!G.maduroDisabled)G.maduroDisabled={};
   G.maduroDisabled[camId]=MADURO_DISABLE_MS;
-  // Auto switch away
   setTimeout(()=>{
     if(!G.dead&&!G.won&&G.camOpen&&G.curCam===camId){
       const other=CAMS.find(c=>c.id!==camId&&!(G.maduroDisabled&&G.maduroDisabled[c.id]>0));
@@ -1627,7 +1487,6 @@ function triggerDiddyJS()  {if(!G||G.dead)return;doJumpscare(FILES.diddyJS,'Didd
 function triggerWin(){
   if(!G||G.won||G.dead)return;
   G.won=true; killTimers(); stopAll(); play('win');
-  // Show win panel
   const ctx=vrDeathCtx, W=768, H=512;
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle='rgba(0,10,2,0.95)'; ctx.fillRect(0,0,W,H);
@@ -1658,7 +1517,6 @@ function gameTick(){
   G.o2=Math.max(0,G.o2-drain);
   if(G.o2<=0&&!G.o2Dead)oxygenDepleted();
   tickMusicBox(); tickJeffrey(); tickChapo(); tickMaduro();
-  // VR HUD update
   drawVRHud();
 }
 
@@ -1704,7 +1562,6 @@ function startGame(){
   G = mkState(); G.nightStart=Date.now(); G.running=true;
   gameTimeStr='12:00 AM';
 
-  // Reset door/vent
   doorAnim.left.open=1;  doorAnim.left.target=1;
   doorAnim.right.open=1; doorAnim.right.target=1;
   ventAnim.open=1; ventAnim.target=1;
@@ -1713,14 +1570,12 @@ function startGame(){
   if(ventPanelMesh){ ventPanelMesh.visible=false; ventPanelMesh.rotation.x=0; }
 
   initAudio();
-  // Ensure AudioContext is resumed in VR
   const ac=getAudioCtx();
   if(ac&&ac.state==='suspended') ac.resume().then(()=>{ play('ambience'); }).catch(()=>{play('ambience');});
   else play('ambience');
 
   if(G.cfg.tomActive&&SFX.muziek){SFX.muziek.volume=0.15;SFX.muziek.play().catch(()=>{});}
 
-  // VR HUD visible
   if(vrHudMesh) vrHudMesh.visible=true;
   highlightCamBtn(0);
 
@@ -1739,9 +1594,6 @@ function startGame(){
   if(G.diddyActive)   setTimeout(scheduleDiddyMove,8000);
 
   drawBigScreen(); drawVRHud();
-
-  // Preload all animatronic overlay images
-  Object.keys(camAnimOverlays).forEach(k=>{}); // already loads on first draw
 }
 window.startGame=startGame;
 
@@ -1770,42 +1622,12 @@ function restartGame(){
 window.restartGame=restartGame;
 
 // ══════════════════════════════════════════════════════
-//  SECTION 28 — VR MENU CLICK HANDLER (restart)
-// ══════════════════════════════════════════════════════
-// Patch onTriggerPress to handle restart action
-const _origHandleVRMenuClick = handleVRMenuClick;
-// Override to include restart
-window._handleVRMenuClickPatched = function(action) {
-  if (action === 'restart') { restartGame(); return; }
-  _origHandleVRMenuClick(action);
-};
-// Patch handleVRMenuClick used in onTriggerPress
-// (done inline in onTriggerPress check)
-
-// Patch onTriggerPress to check restart
-controllers.forEach((ctrl, i) => {
-  if (!ctrl) return;
-  ctrl.addEventListener('selectstart', () => {
-    if (vrMenuState === 'hidden' && G && G.dead) {
-      const hit = castFromController(i);
-      if (hit && hit.userData.vrMenuAction === 'restart') { restartGame(); }
-    }
-    if ((!G || !G.running) && !G?.dead) {
-      const hit = castFromController(i);
-      if (hit && hit.userData.vrMenuAction === 'restart') { restartGame(); }
-    }
-  });
-});
-
-// ══════════════════════════════════════════════════════
 //  SECTION 29 — WARN SCREEN & INITIAL FLOW
 // ══════════════════════════════════════════════════════
 document.getElementById('warnBtn').addEventListener('click', () => {
   document.getElementById('warnScreen').style.display='none';
-  // Enter VR and show VR menu
   if (xrSupported) {
     requestVRSession();
-    // Show VR menu after a brief delay to allow session to start
     setTimeout(showVRMenu, 800);
   }
 });
@@ -1815,7 +1637,6 @@ document.getElementById('warnBtn').addEventListener('click', () => {
 // ══════════════════════════════════════════════════════
 buildRoom();
 
-// Preload all images
 Object.values(FILES).forEach(src => {
   if (src.endsWith('.png') || src.endsWith('.jpg')) {
     const i = new Image(); i.src = src;
