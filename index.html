@@ -107,12 +107,13 @@ function onTriggerPress(idx){
 function onTriggerRelease(idx){if(idx===1){rightTriggerHeld=false;}if(idx===0)leftTriggerHeld=false;}
 function pollGamepads(dt){
   if(!G||!G.running)return;
-  if(rightTriggerHeld){
-    const hit=castFromController(1);
-    const aimingAtWind=hit&&hit.userData.action==='windUp';
-    if(aimingAtWind){if(!G.isWindingUp)startWindUp();if(G.camOpen&&G.curCam===MUSIC_CAM_ID){G.musicBox=Math.min(100,G.musicBox+20*dt);}}
-    else{if(G.isWindingUp)stopWindUp();}
-  }else{if(G.isWindingUp)stopWindUp();}
+  // Simpel: als camera 6 open is en rechter trigger ingedrukt = opwinden
+  if(rightTriggerHeld&&G.camOpen&&G.curCam===MUSIC_CAM_ID&&G.cfg.tomActive){
+    G.musicBox=Math.min(100,G.musicBox+20*dt);
+    if(!G.isWindingUp)startWindUp();
+  }else{
+    if(G.isWindingUp)stopWindUp();
+  }
 }
 
 const interactables=[];
@@ -527,29 +528,10 @@ function drawBigScreen(){
   ctx.fillStyle='#cc0000';ctx.font='bold 14px monospace';ctx.textAlign='left';
   ctx.fillText(G&&G.cfg?G.cfg.label:'FNAG VR',rpX,rpY+16);
 
-  // Chapo fase indicator (altijd zichtbaar als Chapo actief)
-  if(G&&G.chapoActive){
-    const ph=G.chapoPhase||0;
-    const phColors=['#222','#550000','#880000','#bb1100','#ee3300','#ff0000'];
-    const phY=rpY+28;
-    ctx.fillStyle='#0a0000';ctx.fillRect(rpX,phY,rpW,56);
-    ctx.strokeStyle=phColors[Math.min(ph,5)];ctx.lineWidth=1;ctx.strokeRect(rpX,phY,rpW,56);
-    ctx.fillStyle='#441500';ctx.font='10px monospace';ctx.textAlign='center';ctx.fillText('EL CHAPO',rpX+rpW/2,phY+13);
-    // Fase segmenten
-    const pbx=rpX+5,pby=phY+18,pbw=rpW-10,pbh=10;
-    ctx.fillStyle='#0a0000';ctx.fillRect(pbx,pby,pbw,pbh);
-    for(let p=0;p<CHAPO_PHASE_MAX;p++){
-      const sw2=(pbw/CHAPO_PHASE_MAX)-2;const sx2=pbx+p*(pbw/CHAPO_PHASE_MAX);
-      ctx.fillStyle=p<ph?phColors[Math.min(p+1,5)]:'#180000';ctx.fillRect(sx2+1,pby+1,sw2,pbh-2);
-    }
-    const pulse=0.5+0.5*Math.sin(now*0.008);
-    ctx.fillStyle=ph>=4?`rgba(255,${Math.floor(40*pulse)},0,${0.7+pulse*0.3})`:phColors[Math.min(ph,5)];
-    ctx.font='bold 12px monospace';ctx.textAlign='center';
-    ctx.fillText(ph>=5?'⚠ GEBRUIK ALARM!':`FASE ${ph} / ${CHAPO_PHASE_MAX}`,rpX+rpW/2,phY+44);
-  }
+  // Chapo fase indicator verwijderd uit camera paneel
 
   if(G&&G.cfg&&G.cfg.tomActive){
-    const mbY=rpY+(G&&G.chapoActive?88:22),bx=rpX+7,bw=rpW-14;
+    const mbY=rpY+22,bx=rpX+7,bw=rpW-14;
     ctx.fillStyle='#0a0a14';ctx.fillRect(rpX,mbY,rpW,70);ctx.strokeStyle='#2a2200';ctx.lineWidth=1;ctx.strokeRect(rpX,mbY,rpW,70);
     ctx.fillStyle='#5a4a00';ctx.font='10px monospace';ctx.textAlign='center';ctx.fillText('MUZIEKDOOS',rpX+rpW/2,mbY+14);
     const mbpct=G.musicBox||0;
