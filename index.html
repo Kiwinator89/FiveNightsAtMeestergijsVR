@@ -96,21 +96,27 @@ function onTriggerPress(idx){
   if(!G||!G.running)return;
   if(hit&&hit.userData.action){
     const a=hit.userData.action;
-    if(a==='windUp'){startWindUp();return;}
+    if(a==='windUp')return; // handled exclusively by pollGamepads hold
     handleVRAction(a);return;
   }
 }
 function onTriggerRelease(idx){
-  if(idx===1){rightTriggerHeld=false;stopWindUp();}
+  if(idx===1){rightTriggerHeld=false;} // stopWindUp handled by pollGamepads
   if(idx===0)leftTriggerHeld=false;
 }
 function pollGamepads(){
-  if(G&&G.running&&rightTriggerHeld){
+  if(!G||!G.running)return;
+  if(rightTriggerHeld){
     const hit=castFromController(1);
-    if(hit&&hit.userData.action==='windUp'){if(!G.isWindingUp)startWindUp();}
-    else if(G.isWindingUp)stopWindUp();
+    const aimingAtWind=hit&&hit.userData.action==='windUp';
+    if(aimingAtWind){
+      if(!G.isWindingUp)startWindUp();
+    } else {
+      if(G.isWindingUp)stopWindUp();
+    }
+  } else {
+    if(G.isWindingUp)stopWindUp();
   }
-  if(!rightTriggerHeld&&G&&G.isWindingUp)stopWindUp();
 }
 
 // ══════════════════════════════════════════════════════
@@ -675,9 +681,9 @@ function redrawVRMenu(){
   ctx.fillStyle='#cc0000';ctx.font='bold 48px monospace';ctx.textAlign='center';
   ctx.fillText('FIVE NIGHTS AT',512,70);ctx.fillText('MEESTER GIJS',512,128);
   ctx.fillStyle='#333';ctx.font='16px monospace';ctx.fillText('VR EDITION',512,165);
-  [{n:1,l:'NACHT 1',s:'Meester Gijs · Hobo Meester Gijs',y:242},{n:2,l:'NACHT 2',s:'+Tumor Tom +Joe Biden',y:310},
-   {n:3,l:'NACHT 3',s:'+Jeffrey · Biden',y:378},{n:4,l:'NACHT 4',s:'+El Chapo',y:446},
-   {n:5,l:'NACHT 5',s:'Meester Gijs zijn laatste test',y:514}].forEach(n=>{
+  [{n:1,l:'NACHT 1',s:'Gijs · Hobo',y:242},{n:2,l:'NACHT 2',s:'+Tom · Biden',y:310},
+   {n:3,l:'NACHT 3',s:'+Jeffrey · Biden',y:378},{n:4,l:'NACHT 4',s:'+Chapo · Biden',y:446},
+   {n:5,l:'NACHT 5',s:'ALLES + Biden',y:514}].forEach(n=>{
     const sel=selectedNight===n.n,hov=vrMenuHovered===('night:'+n.n);
     const bg=sel?'rgba(120,0,0,0.55)':hov?'rgba(60,0,0,0.45)':'rgba(20,0,0,0.3)';
     const brd=sel?'#cc0000':hov?'#660000':'#330000';
@@ -936,7 +942,7 @@ function tickMusicBox(){
 // ══════════════════════════════════════════════════════
 //  BIDEN AI
 // ══════════════════════════════════════════════════════
-const BIDEN_APPEAR_IV=10000,BIDEN_CHANCE=0.10,BIDEN_KILL_DELAY=7000;
+const BIDEN_APPEAR_IV=10000,BIDEN_CHANCE=0.10,BIDEN_KILL_DELAY=5000;
 
 function scheduleBiden(){
   if(G.bidenSpawnTimer)clearInterval(G.bidenSpawnTimer);
