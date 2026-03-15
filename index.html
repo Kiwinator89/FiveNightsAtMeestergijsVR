@@ -128,8 +128,6 @@ function pollGamepads(dt){
     const aimingAtWind=hit&&hit.userData.action==='windUp';
     if(aimingAtWind){
       if(!G.isWindingUp)startWindUp();
-      // Wind the music box directly here every frame using delta time
-      // 20 units per second (same as before: 8 per 400ms tick)
       if(G.camOpen&&G.curCam===MUSIC_CAM_ID){
         G.musicBox=Math.min(100,G.musicBox+20*dt);
       }
@@ -285,7 +283,6 @@ function buildDoor3D(x,side){
   lm.position.set(x+sign*0.72,1.2,0.27);scene.add(lm);
 }
 
-// ── WALL STATUS SCREEN (front wall z≈5.9, behind player) ──────────────
 function buildWallStatusScreen(){
   wallScreenCanvas=document.createElement('canvas');
   wallScreenCanvas.width=WALL_W;wallScreenCanvas.height=WALL_H;
@@ -293,11 +290,9 @@ function buildWallStatusScreen(){
   wallScreenTex=new THREE.CanvasTexture(wallScreenCanvas);
   wallScreenTex.minFilter=THREE.LinearFilter;wallScreenTex.magFilter=THREE.LinearFilter;wallScreenTex.generateMipmaps=false;
 
-  // Bezel box
   const bezel=new THREE.Mesh(new THREE.BoxGeometry(1.6,1.1,0.06),new THREE.MeshLambertMaterial({color:0x080810}));
   bezel.position.set(0,2.15,5.97);scene.add(bezel);
 
-  // Screen plane — faces into room (rotation.y = PI so it faces -Z)
   wallScreenMesh=new THREE.Mesh(
     new THREE.PlaneGeometry(1.48,0.98),
     new THREE.MeshBasicMaterial({map:wallScreenTex})
@@ -306,7 +301,6 @@ function buildWallStatusScreen(){
   wallScreenMesh.rotation.y=Math.PI;
   scene.add(wallScreenMesh);
 
-  // Glow light pointing into room
   const sg=new THREE.PointLight(0x000833,0.8,3.0);
   sg.position.set(0,2.15,5.4);scene.add(sg);
 
@@ -320,30 +314,25 @@ function drawWallStatusScreen(){
   ctx.fillStyle='#02020e';ctx.fillRect(0,0,W,H);
   ctx.strokeStyle='#111133';ctx.lineWidth=2;ctx.strokeRect(2,2,W-4,H-4);
 
-  // Header bar
   ctx.fillStyle='#0a0a22';ctx.fillRect(0,0,W,36);
   ctx.strokeStyle='#222266';ctx.lineWidth=1;ctx.strokeRect(0,0,W,36);
   ctx.fillStyle='#3333aa';ctx.font='bold 14px monospace';ctx.textAlign='center';
   ctx.fillText('FNAG — STATUS MONITOR',W/2,24);
 
-  // ── TIME ──
   const timeStr=(G&&G.running)?gameTimeStr:'12:00 AM';
   const timeColor=(G&&G.hour>=5)?'#ffee44':'#e8920a';
   ctx.fillStyle='#050514';ctx.fillRect(10,44,W-20,82);
   ctx.strokeStyle='#1a1a44';ctx.lineWidth=1;ctx.strokeRect(10,44,W-20,82);
   ctx.fillStyle='#333366';ctx.font='11px monospace';ctx.textAlign='center';ctx.fillText('TIJD',W/2,60);
-  // glow
   ctx.fillStyle='rgba(232,146,10,0.15)';ctx.font='bold 52px monospace';ctx.fillText(timeStr,W/2+2,116+2);
   ctx.fillStyle=timeColor;ctx.font='bold 52px monospace';ctx.fillText(timeStr,W/2,116);
 
-  // ── O2 ──
   const o2pct=(G&&G.running)?Math.max(0,Math.round(G.o2)):100;
   const o2color=o2pct<=10?'#ff2200':o2pct<=30?'#ff8800':'#2288ff';
   ctx.fillStyle='#050514';ctx.fillRect(10,134,W-20,108);
   ctx.strokeStyle='#1a1a44';ctx.lineWidth=1;ctx.strokeRect(10,134,W-20,108);
   ctx.fillStyle='#333366';ctx.font='11px monospace';ctx.textAlign='center';ctx.fillText('O₂ NIVEAU',W/2,150);
 
-  // Bar
   const bx=18,by=156,bw=W-36,bh=20;
   ctx.fillStyle='#040810';ctx.fillRect(bx,by,bw,bh);
   const gr=ctx.createLinearGradient(bx,0,bx+bw,0);
@@ -352,11 +341,9 @@ function drawWallStatusScreen(){
   ctx.fillStyle=gr;ctx.fillRect(bx,by,bw*(o2pct/100),bh);
   ctx.strokeStyle='rgba(80,80,140,0.4)';ctx.lineWidth=1;ctx.strokeRect(bx,by,bw,bh);
 
-  // Big percentage
   ctx.fillStyle=o2color;ctx.font='bold 34px monospace';ctx.textAlign='center';
   ctx.fillText(o2pct+'%',W/2,by+bh+36);
 
-  // Warning flash border
   if(o2pct<=30){
     ctx.strokeStyle=o2pct<=10?'#ff2200':'#ff8800';ctx.lineWidth=4;ctx.strokeRect(2,2,W-4,H-4);
     ctx.fillStyle=o2pct<=10?'#ff2200':'#ff8800';ctx.font='bold 11px monospace';ctx.textAlign='center';
@@ -366,7 +353,6 @@ function drawWallStatusScreen(){
   wallScreenTex.needsUpdate=true;
 }
 
-// ── DOOR ANIMATIONS ────────────────────────────────────
 function updateDoorAnimations(dt){
   ['left','right'].forEach(side=>{
     const anim=doorAnim[side],mesh=doorMeshes[side];if(!mesh)return;
@@ -378,7 +364,6 @@ function updateDoorAnimations(dt){
   });
 }
 
-// ── DIGITAL CLOCK (left wall) ────────────────────────
 let clockCanvas,clockCtx,clockTex,clockMesh;
 
 function buildDigitalClock(){
@@ -412,14 +397,11 @@ function drawDigitalClock(){
   clockTex.needsUpdate=true;
 }
 
-// ── BIDEN HALLWAY SPRITES ─────────────────────────────
 const bidenSprites={left:null,right:null};
 function buildBidenSprites(){
   const loader=new THREE.TextureLoader();
   loader.load(FILES.bidenHallway,tex=>{
     tex.minFilter=THREE.LinearFilter;tex.generateMipmaps=false;
-    // Doors are at z=0 in the front wall, player stands at z=2 looking toward -Z
-    // Biden stands just behind the door opening (z=-0.15), facing toward +Z (toward player)
     const matL=new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:0.05,side:THREE.DoubleSide});
     const meshL=new THREE.Mesh(new THREE.PlaneGeometry(0.88,2.1),matL);
     meshL.position.set(-4.5,1.05,-0.15);
@@ -442,7 +424,8 @@ function hideBidenSprites(){
   if(bidenSprites.right)bidenSprites.right.visible=false;
 }
 
-
+// ══════════════════════════════════════════════════════
+//  BIG CAMERA SCREEN
 // ══════════════════════════════════════════════════════
 let bigScreenCanvas,bigScreenCtx,bigScreenTex,bigScreenMesh;
 let windUpBtnMesh=null,lureBtnMesh=null,alarmBtnMesh=null;
@@ -574,7 +557,6 @@ function drawBigScreen(){
   ctx.fillStyle=vg;ctx.fillRect(fx,fy,fw,fh);
   drawAnimatronicsOnFeed(ctx,camId,fx,fy,fw,fh);
 
-  // Right panel — night label + music box only (O2 is on wall screen)
   const rpX=fx+fw+14,rpY=fy,rpW=W-rpX-8;
   ctx.fillStyle='#cc0000';ctx.font='bold 14px monospace';ctx.textAlign='left';
   ctx.fillText(G&&G.cfg?G.cfg.label:'FNAG VR',rpX,rpY+16);
@@ -619,7 +601,7 @@ function drawAnimatronicsOnFeed(ctx,camId,fx,fy,fw,fh){
   if(G.cfg.gijsActive&&G.mPos===camId&&camId!==MUSIC_CAM_ID)present.push({key:'gijs',scale:0.55,bottomPin:true});
   if(G.cfg.hoboActive&&G.hoboPos===camId&&camId!==MUSIC_CAM_ID)present.push({key:'hobo',scale:0.50,bottomPin:true});
   if(G.jeffreyActive&&G.jeffreyPos===camId&&camId!==MUSIC_CAM_ID)present.push({key:'jeffrey',scale:0.78,bottomPin:true});
-  if(G.chapoActive&&camId===CHAPO_CAM_ID&&!G.chapoAlarm)present.push({key:'chapo',scale:0.72});
+  if(G.chapoActive&&camId===CHAPO_CAM_ID&&!G.chapoAlarm)present.push({key:'chapo',scale:0.72,bottomPin:true});
   if(G.diddyActive&&G.diddyPos===camId&&camId!==MUSIC_CAM_ID)present.push({key:'diddy',scale:0.52,bottomPin:true});
   if(G.maduroPos===camId)present.push({key:'maduro',scale:0.55,alpha:0.7,bottomPin:true});
 
@@ -771,7 +753,7 @@ renderer.setAnimationLoop(time=>{
 });
 
 // ══════════════════════════════════════════════════════
-//  SECTION 11 — CONSTANTS
+//  SECTION 11 — FILE CONSTANTS
 // ══════════════════════════════════════════════════════
 const FILES={
   gijsCam:'Images/GijsCamera.png',gijsJS:'Images/GijsJumpscare.png',
@@ -914,15 +896,23 @@ function startWindUp(){if(!G||G.dead||G.won||!G.camOpen||G.curCam!==MUSIC_CAM_ID
 function stopWindUp(){if(!G)return;G.isWindingUp=false;stop('windUp');}window.stopWindUp=stopWindUp;
 
 // ══════════════════════════════════════════════════════
-//  AI SECTIONS 17-22
+//  AI — GIJS
 // ══════════════════════════════════════════════════════
 function scheduleGijsMove(){if(G.mMoveTimer)clearTimeout(G.mMoveTimer);if(G.dead||G.won||!G.cfg.gijsActive)return;const base=G.cfg.moveIval[Math.min(G.hour,5)];if(!isFinite(base))return;G.mMoveTimer=setTimeout(()=>{advanceGijs();scheduleGijsMove();},Math.max(500,base+Math.random()*4000-1500));}
 function advanceGijs(){if(G.dead||G.won||!G.cfg.gijsActive)return;if(G.mPos===POS.LD||G.mPos===POS.RD)return;if(Math.random()<0.2)play('laugh');let np=G.mPos;if(G.mPos===POS.C0)np=POS.C1;else if(G.mPos===POS.C1)np=POS.C2;else if(G.mPos===POS.C2){if(!G.mPath)G.mPath=Math.random()<.5?'left':'right';np=G.mPath==='left'?POS.C3:POS.C4;G.mPath=null;}else if(G.mPos===POS.C3)np=POS.LD;else if(G.mPos===POS.C4)np=POS.RD;G.mPos=np;if(np===POS.LD||np===POS.RD)gijsAtDoor(np);}
 function gijsAtDoor(pos){const closed=pos===POS.LD?G.lfClosed:G.rtClosed;if(!closed)armDoorTimer();if(G.mRetreatTimer)clearTimeout(G.mRetreatTimer);G.mRetreatTimer=setTimeout(retreatGijs,DOOR_RETREAT_MIN+Math.random()*(DOOR_RETREAT_MAX-DOOR_RETREAT_MIN));}
 function retreatGijs(){if(G.dead||G.won)return;if(G.mPos!==POS.LD&&G.mPos!==POS.RD)return;if(G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}G.mPos=[POS.C0,POS.C1,POS.C2][Math.floor(Math.random()*3)];play('footsteps');}
 function armDoorTimer(){if(G.mDoorTimer)clearTimeout(G.mDoorTimer);if(G.dead||G.won||!G.cfg.gijsActive)return;G.mDoorTimer=setTimeout(()=>{if(G.dead||G.won)return;if(G.mPos===POS.LD&&!G.lfClosed)triggerGijsJS();if(G.mPos===POS.RD&&!G.rtClosed)triggerGijsJS();},GRACE_MS);}
+
+// ══════════════════════════════════════════════════════
+//  AI — HOBO
+// ══════════════════════════════════════════════════════
 function scheduleHoboMove(){if(G.hoboMoveTimer)clearTimeout(G.hoboMoveTimer);if(G.dead||G.won||!G.cfg.hoboActive)return;const delay=G.cfg.hoboMinMs+Math.random()*(G.cfg.hoboMaxMs-G.cfg.hoboMinMs);if(!isFinite(delay))return;G.hoboMoveTimer=setTimeout(()=>{moveHobo();scheduleHoboMove();},delay);}
 function moveHobo(){if(G.dead||G.won||!G.cfg.hoboActive)return;const cams=[0,1,2,3,4];let np,att=0;do{np=cams[Math.floor(Math.random()*cams.length)];att++;}while(np===G.hoboPos&&att<20);G.hoboPos=np;}
+
+// ══════════════════════════════════════════════════════
+//  AI — JEFFREY / CHAPO / DIDDY / MADURO
+// ══════════════════════════════════════════════════════
 function tickJeffrey(){if(!G.jeffreyActive||G.dead||G.won)return;if(G.camOpen&&G.curCam===G.jeffreyPos&&!(G.maduroDisabled&&G.maduroDisabled[G.curCam]>0))return;G.jeffreyTimer-=TICK_MS/1000;if(G.jeffreyTimer<=0){G.jeffreyStep++;if(G.jeffreyStep>=JEFFREY_PATH.length){triggerJeffreyJS();return;}G.jeffreyPos=JEFFREY_PATH[G.jeffreyStep];G.jeffreyTimer=JEFFREY_SWITCH_S;play('jeffreyLgh');}}
 function tickChapo(){if(!G.chapoActive||G.dead||G.won||G.chapoAlarm)return;if(!(G.camOpen&&G.curCam===CHAPO_CAM_ID&&!(G.maduroDisabled&&G.maduroDisabled[CHAPO_CAM_ID]>0)))G.chapoTimer-=TICK_MS/1000;if(G.chapoTimer<=0)triggerChapoAlarm();}
 function triggerChapoAlarm(){G.chapoAlarm=true;play('alarm');G.chapoKillTimer=setTimeout(()=>{if(!G.dead&&!G.won&&G.chapoAlarm)triggerChapoJS();},CHAPO_KILL_DELAY);}
@@ -935,11 +925,13 @@ function maduroSpawn(id){G.maduroPos=id;G.maduroWatchMs=0;}
 function maduroDespawn(){if(G.maduroPos<0)return;G.maduroPos=-1;G.maduroWatchMs=0;}
 function tickMaduro(){if(G.dead||G.won)return;if(!G.maduroDisabled)G.maduroDisabled={};Object.keys(G.maduroDisabled).forEach(cId=>{if(G.maduroDisabled[cId]>0)G.maduroDisabled[cId]-=TICK_MS;if(G.maduroDisabled[cId]<0)G.maduroDisabled[cId]=0;});if(G.maduroPos>=0&&G.camOpen&&G.curCam===G.maduroPos&&!(G.maduroDisabled[G.curCam]>0)){G.maduroWatchMs+=TICK_MS;if(G.maduroWatchMs>=MADURO_WATCH_LIM)triggerMaduroDisable(G.maduroPos);}else if(G.maduroPos>=0)G.maduroWatchMs=0;}
 function triggerMaduroDisable(camId){play('shock');G.maduroPos=-1;G.maduroWatchMs=0;if(!G.maduroDisabled)G.maduroDisabled={};G.maduroDisabled[camId]=MADURO_DISABLE_MS;setTimeout(()=>{if(!G.dead&&!G.won&&G.camOpen&&G.curCam===camId){const other=CAMS.find(c=>c.id!==camId&&!(G.maduroDisabled&&G.maduroDisabled[c.id]>0));if(other)switchCam(other.id);}},2200);}
+
+// ══════════════════════════════════════════════════════
+//  AI — MUSIC BOX / TOM
+// ══════════════════════════════════════════════════════
 function tickMusicBox(){
   if(!G.cfg.tomActive||G.dead||G.won)return;
-  // Auto-stop winding if player switched away from music cam or closed cameras
   if(G.isWindingUp&&(!G.camOpen||G.curCam!==MUSIC_CAM_ID)){stopWindUp();}
-  // Drain only — winding increment is handled per-frame in pollGamepads
   if(!G.isWindingUp){
     const drain=MB_DRAIN_BASE+MB_DRAIN_SCALE*Math.min(G.hour,5);
     G.musicBox=Math.max(0,G.musicBox-drain);
@@ -949,7 +941,7 @@ function tickMusicBox(){
 }
 
 // ══════════════════════════════════════════════════════
-//  BIDEN AI
+//  AI — BIDEN
 // ══════════════════════════════════════════════════════
 const BIDEN_APPEAR_IV=10000,BIDEN_CHANCE=0.10,BIDEN_KILL_DELAY=5000;
 
@@ -970,7 +962,6 @@ function bidenArrive(side){
   G.bidenDoor=side;
   play('bidenArrival');
   showBidenSprite(side);
-  // Start kill timer — player has BIDEN_KILL_DELAY ms to close the door
   if(G.bidenKillTimer)clearTimeout(G.bidenKillTimer);
   G.bidenKillTimer=setTimeout(()=>{
     if(G.dead||G.won||G.bidenDoor===null)return;
@@ -980,7 +971,6 @@ function bidenArrive(side){
 }
 
 function bidenDismiss(){
-  // Called when the relevant door is closed while Biden is present
   if(!G||G.bidenDoor===null)return;
   if(G.bidenKillTimer){clearTimeout(G.bidenKillTimer);G.bidenKillTimer=null;}
   G.bidenDoor=null;
@@ -1034,17 +1024,14 @@ const endingGroup=new THREE.Group();scene.add(endingGroup);endingGroup.visible=f
 
 function buildEndingScene(){
   endingActive=true;
-  // Hide all room objects
   scene.children.forEach(obj=>{if(obj!==endingGroup&&obj!==camera)obj.visible=false;});
   endingGroup.visible=true;
 
-  // ── SKY ──
   endingGroup.add(new THREE.Mesh(
     new THREE.SphereGeometry(80,16,16),
     new THREE.MeshBasicMaterial({color:0x02040f,side:THREE.BackSide})
   ));
 
-  // ── STARS ──
   const starGeo=new THREE.BufferGeometry();
   const starPos=new Float32Array(1800*3);
   for(let i=0;i<1800;i++){
@@ -1058,13 +1045,11 @@ function buildEndingScene(){
   starGeo.setAttribute('position',new THREE.BufferAttribute(starPos,3));
   endingGroup.add(new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xffffff,size:0.28,sizeAttenuation:true})));
 
-  // ── MOON ──
   const moonMesh=new THREE.Mesh(new THREE.SphereGeometry(2.2,16,16),new THREE.MeshBasicMaterial({color:0xdde8ff}));
   moonMesh.position.set(28,36,-55);endingGroup.add(moonMesh);
   const halo=new THREE.Mesh(new THREE.SphereGeometry(3.4,12,12),new THREE.MeshBasicMaterial({color:0x7788bb,transparent:true,opacity:0.10,side:THREE.BackSide}));
   halo.position.copy(moonMesh.position);endingGroup.add(halo);
 
-  // ── GROUND HILL ──
   const hillGeo=new THREE.PlaneGeometry(160,80,60,30);
   const hPos=hillGeo.attributes.position;
   for(let i=0;i<hPos.count;i++){
@@ -1080,11 +1065,9 @@ function buildEndingScene(){
   hillMesh.rotation.x=-Math.PI/2;hillMesh.position.set(0,-1.6,0);
   endingGroup.add(hillMesh);
 
-  // ── LIGHTS ──
   endingGroup.add(new THREE.AmbientLight(0x0a0f1a,0.9));
   const mLight=new THREE.DirectionalLight(0x2a3a55,0.6);mLight.position.set(28,36,-55);endingGroup.add(mLight);
 
-  // ── ENEMY SILHOUETTES ──
   const sils=[
     {key:'gijsJS',x:-26},{key:'hoboGijsJS',x:-16},{key:'tomJS',x:-7},
     {key:'jeffreyJS',x:2},{key:'chapoJS',x:11},{key:'diddyJS',x:20},{key:'bidenJS',x:30}
@@ -1099,13 +1082,11 @@ function buildEndingScene(){
       mesh.position.set(s.x,-0.1,-26);
       endingGroup.add(mesh);
     },undefined,()=>{
-      // fallback plain silhouette
       const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1.3,3.0),new THREE.MeshBasicMaterial({color:0x000000}));
       mesh.position.set(s.x,-0.1,-26);endingGroup.add(mesh);
     });
   });
 
-  // ── TEXT (attached to camera, fades in) ──
   const txtCanvas=document.createElement('canvas');txtCanvas.width=1024;txtCanvas.height=320;
   const txtCtx=txtCanvas.getContext('2d');
   txtCtx.clearRect(0,0,1024,320);
@@ -1133,10 +1114,8 @@ function buildEndingScene(){
   txtMesh.userData._endingText=true;
   camera.add(txtMesh);
 
-  // Position camera on hilltop looking at horizon
   camera.position.set(0,0.2,3.5);
 
-  // Fade in text after 3s
   setTimeout(()=>{
     let op=0;
     const fadeTxt=setInterval(()=>{
@@ -1147,7 +1126,6 @@ function buildEndingScene(){
     },30);
   },3000);
 
-  // Show restart after 10s
   setTimeout(()=>{
     if(!endingActive)return;
     if(vrRestartBtn){
@@ -1205,7 +1183,6 @@ function startGame(){
   doorAnim.left.open=1;doorAnim.left.target=1;doorAnim.right.open=1;doorAnim.right.target=1;
   if(doorMeshes.left)doorMeshes.left.position.y=-0.5;if(doorMeshes.right)doorMeshes.right.position.y=-0.5;
   initAudio();
-  // Stop menu music if playing
   if(window._menuAudio){window._menuAudio.pause();window._menuAudio.currentTime=0;window._menuAudio=null;}
   const ac=getAudioCtx();
   if(ac&&ac.state==='suspended')ac.resume().then(()=>{play('ambience');}).catch(()=>{play('ambience');});
@@ -1242,7 +1219,6 @@ window.restartGame=restartGame;
 document.getElementById('warnBtn').addEventListener('click',()=>{
   document.getElementById('warnScreen').style.display='none';
   if(xrSupported){requestVRSession();setTimeout(showVRMenu,800);}
-  // Start menu music — a simple Audio element so it works before full initAudio()
   const menuAudio=new Audio('Audio/Music.mp3');
   menuAudio.loop=true;menuAudio.volume=0.55;
   menuAudio.play().catch(()=>{});
