@@ -671,9 +671,9 @@ function redrawVRMenu(){
   ctx.fillStyle='#cc0000';ctx.font='bold 48px monospace';ctx.textAlign='center';
   ctx.fillText('FIVE NIGHTS AT',512,70);ctx.fillText('MEESTER GIJS',512,128);
   ctx.fillStyle='#333';ctx.font='16px monospace';ctx.fillText('VR EDITION',512,165);
-  [{n:1,l:'NACHT 1',s:'Gijs · Hobo',y:242},{n:2,l:'NACHT 2',s:'+Tom',y:310},
-   {n:3,l:'NACHT 3',s:'+Jeffrey',y:378},{n:4,l:'NACHT 4',s:'+Chapo',y:446},
-   {n:5,l:'NACHT 5',s:'ALLES',y:514}].forEach(n=>{
+  [{n:1,l:'NACHT 1',s:'Meester Gijs · Hobo Meester Gijs',y:242},{n:2,l:'NACHT 2',s:'+Tumor Tom +Joe Biden',y:310},
+   {n:3,l:'NACHT 3',s:'+Jeffrey Epstein',y:378},{n:4,l:'NACHT 4',s:'+El Chapo',y:446},
+   {n:5,l:'NACHT 5',s:'Meester GIjs zijn laatste test../',y:514}].forEach(n=>{
     const sel=selectedNight===n.n,hov=vrMenuHovered===('night:'+n.n);
     const bg=sel?'rgba(120,0,0,0.55)':hov?'rgba(60,0,0,0.45)':'rgba(20,0,0,0.3)';
     const brd=sel?'#cc0000':hov?'#660000':'#330000';
@@ -916,7 +916,7 @@ function tickMusicBox(){if(!G.cfg.tomActive||G.dead||G.won)return;if(G.isWinding
 // ══════════════════════════════════════════════════════
 //  BIDEN AI
 // ══════════════════════════════════════════════════════
-const BIDEN_APPEAR_IV=10000,BIDEN_CHANCE=0.10,BIDEN_KILL_DELAY=5000;
+const BIDEN_APPEAR_IV=5000,BIDEN_CHANCE=0.10,BIDEN_KILL_DELAY=5000;
 
 function scheduleBiden(){
   if(G.bidenSpawnTimer)clearInterval(G.bidenSpawnTimer);
