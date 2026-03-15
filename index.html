@@ -704,8 +704,8 @@ function redrawVRMenu(){
   ctx.fillStyle='#cc0000';ctx.font='bold 48px monospace';ctx.textAlign='center';
   ctx.fillText('FIVE NIGHTS AT',512,70);ctx.fillText('MEESTER GIJS',512,128);
   ctx.fillStyle='#333';ctx.font='16px monospace';ctx.fillText('VR EDITION',512,165);
-  [{n:1,l:'NACHT 1',s:'Meester Gijs · Hobo Meester Gijs',y:242},{n:2,l:'NACHT 2',s:'+Tumor Tom · Biden',y:310},
-   {n:3,l:'NACHT 3',s:'+Jeffrey Epstein · Biden',y:378},{n:4,l:'NACHT 4',s:'+El Chapo · Biden',y:446},
+  [{n:1,l:'NACHT 1',s:'Meester Gijs · Hobo Meester Gijs',y:242},{n:2,l:'NACHT 2',s:'+Tumor Tom +Biden',y:310},
+   {n:3,l:'NACHT 3',s:'+Jeffrey Epstein',y:378},{n:4,l:'NACHT 4',s:'+El Chapo',y:446},
    {n:5,l:'NACHT 5',s:'MEESTERGIJS ZIJN LAATSTE LES',y:514}].forEach(n=>{
     const sel=selectedNight===n.n,hov=vrMenuHovered===('night:'+n.n);
     const bg=sel?'rgba(120,0,0,0.55)':hov?'rgba(60,0,0,0.45)':'rgba(20,0,0,0.3)';
