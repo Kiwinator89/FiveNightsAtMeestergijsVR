@@ -107,10 +107,16 @@ function onTriggerPress(idx){
 function onTriggerRelease(idx){if(idx===1){rightTriggerHeld=false;}if(idx===0)leftTriggerHeld=false;}
 function pollGamepads(dt){
   if(!G||!G.running)return;
-  // Simpel: als camera 6 open is en rechter trigger ingedrukt = opwinden
   if(rightTriggerHeld&&G.camOpen&&G.curCam===MUSIC_CAM_ID&&G.cfg.tomActive){
-    G.musicBox=Math.min(100,G.musicBox+20*dt);
-    if(!G.isWindingUp)startWindUp();
+    // Kijk of speler naar de windUp knop wijst
+    const hit=castFromController(1)||castFromController(0);
+    const aimingAtWind=hit&&hit.userData.action==='windUp';
+    if(aimingAtWind){
+      if(!G.isWindingUp)startWindUp();
+      G.musicBox=Math.min(100,G.musicBox+20*dt);
+    }else{
+      if(G.isWindingUp)stopWindUp();
+    }
   }else{
     if(G.isWindingUp)stopWindUp();
   }
@@ -354,20 +360,21 @@ function buildBigCameraScreen(){
   alarmLabelTex=new THREE.CanvasTexture(alarmLabelCanvas);alarmLabelTex.minFilter=THREE.LinearFilter;alarmLabelTex.generateMipmaps=false;
   const alm=new THREE.Mesh(new THREE.PlaneGeometry(0.42,0.11),new THREE.MeshBasicMaterial({map:alarmLabelTex,transparent:true}));
   alm.position.set(2.32,1.08,-5.89);scene.add(alm);
-  windUpBtnMesh=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.15,0.055),new THREE.MeshLambertMaterial({color:0x2a2200}));
+  windUpBtnMesh=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.22,0.055),new THREE.MeshLambertMaterial({color:0x2a2200}));
   windUpBtnMesh.position.set(0,0.90,-5.92);windUpBtnMesh.userData.action='windUp';windUpBtnMesh.userData._origColor=0x2a2200;
   windUpBtnMesh.visible=false;scene.add(windUpBtnMesh);interactables.push(windUpBtnMesh);
   const wlc=document.createElement('canvas');wlc.width=256;wlc.height=48;
   const wlctx=wlc.getContext('2d');wlctx.fillStyle='#2a2200';wlctx.fillRect(0,0,256,48);
   wlctx.fillStyle='#ffee44';wlctx.font='bold 18px monospace';wlctx.textAlign='center';wlctx.fillText('🔧 HOUD: OPWINDEN',128,30);
-  const wlm=new THREE.Mesh(new THREE.PlaneGeometry(0.68,0.13),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(wlc),transparent:true}));
-  wlm.position.set(0,0.90,-5.89);wlm.userData._windLabel=true;scene.add(wlm);wlm.visible=false;
+  const wlm=new THREE.Mesh(new THREE.PlaneGeometry(1.16,0.20),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(wlc),transparent:true}));
+  wlm.position.set(0,0.90,-5.89);wlm.userData._windLabel=true;wlm.userData.action='windUp';wlm.userData._origColor=0x000000;
+  scene.add(wlm);wlm.visible=false;interactables.push(wlm);
   drawBigScreen();
 }
 function highlightCamBtn(activeId){
   Object.keys(camBtnMeshes).forEach(id=>{const m=camBtnMeshes[id];if(!m)return;const isActive=parseInt(id)===activeId;m.material.color.setHex(isActive?0x1a5a1a:0x0a1a0a);m.userData._origColor=isActive?0x1a5a1a:0x0a1a0a;});
   if(windUpBtnMesh)windUpBtnMesh.visible=(activeId===MUSIC_CAM_ID&&G&&G.cfg.tomActive);
-  scene.children.forEach(m=>{if(m.userData._windLabel)m.visible=(activeId===MUSIC_CAM_ID&&G&&G.cfg.tomActive);});
+  scene.children.forEach(m=>{if(m.userData._windLabel){m.visible=(activeId===MUSIC_CAM_ID&&G&&G.cfg.tomActive);}});
 }
 function updateCooldownButtons(){
   if(!lureLabelCanvas||!alarmLabelCanvas)return;
