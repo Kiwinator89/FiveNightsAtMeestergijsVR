@@ -646,8 +646,8 @@ const vrMenuMesh=new THREE.Mesh(new THREE.PlaneGeometry(2.8,2.1),new THREE.MeshB
 vrMenuMesh.position.set(0,0,0);vrMenuGroup.add(vrMenuMesh);
 const vrNightBtns=[];
 function buildVRMenuButtons(){
-  [{label:'NACHT 1',night:1,y:0.55},{label:'NACHT 2',night:2,y:0.33},{label:'NACHT 3',night:3,y:0.11},
-   {label:'NACHT 4',night:4,y:-0.11},{label:'NACHT 5',night:5,y:-0.33},{label:'▶ START',night:0,y:-0.65}].forEach(b=>{
+  [{label:'NACHT 1',night:1,y:0.66},{label:'NACHT 2',night:2,y:0.44},{label:'NACHT 3',night:3,y:0.22},
+   {label:'NACHT 4',night:4,y:0.00},{label:'NACHT 5',night:5,y:-0.22},{label:'NACHT 6',night:6,y:-0.44},{label:'▶ START',night:0,y:-0.72}].forEach(b=>{
     const m=new THREE.Mesh(new THREE.PlaneGeometry(2.2,0.20),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
     m.position.set(0,b.y,0.02);m.userData.vrMenuAction=b.night===0?'start':'night:'+b.night;m.userData._origColor=0x000000;
     vrMenuGroup.add(m);interactables.push(m);vrNightBtns.push(m);
@@ -661,9 +661,10 @@ function redrawVRMenu(){
   ctx.fillStyle='#cc0000';ctx.font='bold 48px monospace';ctx.textAlign='center';
   ctx.fillText('FIVE NIGHTS AT',512,70);ctx.fillText('MEESTER GIJS',512,128);
   ctx.fillStyle='#333';ctx.font='16px monospace';ctx.fillText('VR EDITION',512,165);
-  [{n:1,l:'NACHT 1',s:'Meester Gijs · Hobo Meester Gijs',y:242},{n:2,l:'NACHT 2',s:'+Tumor Tom +Biden',y:310},
-   {n:3,l:'NACHT 3',s:'+Jeffrey Epstein',y:378},{n:4,l:'NACHT 4',s:'+El Chapo',y:446},
-   {n:5,l:'NACHT 5',s:'MEESTERGIJS ZIJN LAATSTE LES',y:514}].forEach(n=>{
+  [{n:1,l:'NACHT 1',s:'Meester Gijs · Hobo Meester Gijs',y:210},{n:2,l:'NACHT 2',s:'+Tumor Tom +Biden',y:268},
+   {n:3,l:'NACHT 3',s:'+Jeffrey Epstein',y:326},{n:4,l:'NACHT 4',s:'+El Chapo',y:384},
+   {n:5,l:'NACHT 5',s:'MEESTERGIJS ZIJN LAATSTE LES',y:442},
+   {n:6,l:'NACHT 6',s:'⚠ DE ECHTE LAATSTE LES ⚠',y:500}].forEach(n=>{
     const sel=selectedNight===n.n,hov=vrMenuHovered===('night:'+n.n);
     const bg=sel?'rgba(120,0,0,0.55)':hov?'rgba(60,0,0,0.45)':'rgba(20,0,0,0.3)';
     const brd=sel?'#cc0000':hov?'#660000':'#330000';
@@ -674,10 +675,10 @@ function redrawVRMenu(){
     ctx.fillStyle=sel?'#aa5544':hov?'#774433':'#221111';ctx.font='17px monospace';ctx.fillText(n.s,420,n.y+8);
   });
   const sh=vrMenuHovered==='start';
-  ctx.fillStyle=selectedNight>0?(sh?'#007700':'#005500'):'#001100';ctx.fillRect(170,600,684,58);
-  ctx.strokeStyle=selectedNight>0?(sh?'#00ff44':'#00aa00'):'#002200';ctx.lineWidth=2;ctx.strokeRect(170,600,684,58);
-  ctx.fillStyle=selectedNight>0?(sh?'#44ff88':'#00ff66'):'#004400';ctx.font='bold 26px monospace';ctx.textAlign='center';
-  ctx.fillText(selectedNight>0?`▶ NACHT ${selectedNight} STARTEN`:'SELECTEER EEN NACHT',512,638);
+  ctx.fillStyle=selectedNight>0?(sh?'#007700':'#005500'):'#001100';ctx.fillRect(170,566,684,50);
+  ctx.strokeStyle=selectedNight>0?(sh?'#00ff44':'#00aa00'):'#002200';ctx.lineWidth=2;ctx.strokeRect(170,566,684,50);
+  ctx.fillStyle=selectedNight>0?(sh?'#44ff88':'#00ff66'):'#004400';ctx.font='bold 24px monospace';ctx.textAlign='center';
+  ctx.fillText(selectedNight>0?`▶ NACHT ${selectedNight} STARTEN`:'SELECTEER EEN NACHT',512,598);
   vrMenuTex.needsUpdate=true;
 }
 function handleVRMenuClick(action){
@@ -726,6 +727,7 @@ const NIGHT_CHARS={
   3:['gijs','hobo','tom','biden','jeffrey'],
   4:['gijs','hobo','tom','biden','jeffrey','chapo'],
   5:['gijs','hobo','tom','biden','jeffrey','chapo','diddy'],
+  6:['gijs','hobo','tom','biden','jeffrey','chapo','diddy'],
 };
 
 function drawBriefing(){
@@ -810,7 +812,12 @@ renderer.setAnimationLoop(time=>{
   lampGlow.intensity=0.6+Math.sin(flickT*0.7)*0.06+(Math.random()<0.003?Math.random()*0.35-0.17:0);
   if(G&&G.chapoAlarm)alarmSphereMat.opacity=0.05+Math.sin(time*0.009)*0.05;
   else if(G&&(G.chapoPhase||0)>=4){const p=(G.chapoPhase-3)/2;alarmSphereMat.opacity=0.01+p*0.03*Math.abs(Math.sin(time*0.006));}
-  else if(!jsPlaneActive)alarmSphereMat.opacity=0;
+  else if(!jsPlaneActive&&!night6EndingActive)alarmSphereMat.opacity=0;
+  // Night 6 ending — pulserende rode sfeer + Warning pulse
+  if(night6EndingActive){
+    alarmSphereMat.opacity=0.45+0.1*Math.sin(time*0.008);
+    camera.children.forEach(c=>{if(c.userData&&c.userData._pulse)c.material.opacity=0.75+0.25*Math.abs(Math.sin(time*0.004));});
+  }
   if(G&&G.running){
     updateDoorAnimations(dt);
     bigScreenTimer+=dt;if(bigScreenTimer>=BIG_SCREEN_IV){bigScreenTimer=0;drawBigScreen();}
@@ -843,6 +850,7 @@ const FILES={
   footsteps:'Audio/Footsteps.mp3',muziek:'Audio/Muziek.mp3',windUp:'Audio/WindUp.mp3',
   alarm:'Audio/Alarm.mp3',shock:'Audio/Shock.mp3',cameraAlarm:'Audio/CameraAlarm.mp3',
   fiveAM:'Audio/5AM.mp3',night5:'Audio/Night5.mp3',menuMusic:'Audio/Music.mp3',
+  warning:'Images/Warning.png',
 };
 const NIGHT_CFGS={
   1:{label:'Nacht 1',gijsActive:true,hoboActive:true,tomActive:false,jeffreyActive:false,chapoActive:false,diddyActive:false,maduroChance:.02,moveIval:[38000,28000,20000,14000,9000,6000],hoboMinMs:7000,hoboMaxMs:25000},
@@ -850,6 +858,7 @@ const NIGHT_CFGS={
   3:{label:'Nacht 3',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:false,diddyActive:false,bidenActive:true,maduroChance:.04,moveIval:[24000,17000,12000,8500,5500,3500],hoboMinMs:4500,hoboMaxMs:16000},
   4:{label:'Nacht 4',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:true,diddyActive:false,bidenActive:true,maduroChance:.05,moveIval:[20000,14000,9500,6500,4500,3000],hoboMinMs:3500,hoboMaxMs:13000},
   5:{label:'Nacht 5',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:true,diddyActive:true,bidenActive:true,maduroChance:.05,moveIval:[20000,14000,9500,6500,4500,3000],hoboMinMs:3500,hoboMaxMs:13000},
+  6:{label:'Nacht 6',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:true,diddyActive:true,bidenActive:true,maduroChance:.09,moveIval:[12000,8000,5500,3800,2500,1800],hoboMinMs:1800,hoboMaxMs:7000,jeffreySwitchS:40,chapoPhaseTickS:6,bidenKillDelay:3000,diddyMoveBase:[14000,10000,7500,5000,3200,2000]},
 };
 
 const SFX={};let audioCtx=null;
@@ -884,7 +893,7 @@ function mkState(){
     mPos:cfg.gijsActive?POS.C0:-1,mPath:null,mDoorTimer:null,mMoveTimer:null,mRetreatTimer:null,
     hoboPos:cfg.hoboActive?0:-1,hoboMoveTimer:null,musicBox:100,isWindingUp:false,
     maduroPos:-1,maduroWatchMs:0,maduroDisabled:{},maduroTimer:null,
-    jeffreyStep:0,jeffreyPos:JEFFREY_PATH[0],jeffreyTimer:JEFFREY_SWITCH_S,jeffreyActive:cfg.jeffreyActive,
+    jeffreyStep:0,jeffreyPos:JEFFREY_PATH[0],jeffreyTimer:cfg.jeffreySwitchS||JEFFREY_SWITCH_S,jeffreyActive:cfg.jeffreyActive,
     // ── Chapo fase systeem ──────────────────────────
     chapoPhase:0,       // 0=onzichtbaar ... 5=alarm triggert
     chapoPhaseTimer:0,  // sec richting volgende fase
@@ -966,7 +975,7 @@ function retreatGijs(){if(G.dead||G.won)return;if(G.mPos!==POS.LD&&G.mPos!==POS.
 function armDoorTimer(){if(G.mDoorTimer)clearTimeout(G.mDoorTimer);if(G.dead||G.won||!G.cfg.gijsActive)return;G.mDoorTimer=setTimeout(()=>{if(G.dead||G.won)return;if(G.mPos===POS.LD&&!G.lfClosed)triggerGijsJS();if(G.mPos===POS.RD&&!G.rtClosed)triggerGijsJS();},GRACE_MS);}
 function scheduleHoboMove(){if(G.hoboMoveTimer)clearTimeout(G.hoboMoveTimer);if(G.dead||G.won||!G.cfg.hoboActive)return;const delay=G.cfg.hoboMinMs+Math.random()*(G.cfg.hoboMaxMs-G.cfg.hoboMinMs);if(!isFinite(delay))return;G.hoboMoveTimer=setTimeout(()=>{moveHobo();scheduleHoboMove();},delay);}
 function moveHobo(){if(G.dead||G.won||!G.cfg.hoboActive)return;const cams=[0,1,2,3,4];let np,att=0;do{np=cams[Math.floor(Math.random()*cams.length)];att++;}while(np===G.hoboPos&&att<20);G.hoboPos=np;}
-function tickJeffrey(){if(!G.jeffreyActive||G.dead||G.won)return;if(G.camOpen&&G.curCam===G.jeffreyPos&&!(G.maduroDisabled&&G.maduroDisabled[G.curCam]>0))return;G.jeffreyTimer-=TICK_MS/1000;if(G.jeffreyTimer<=0){G.jeffreyStep++;if(G.jeffreyStep>=JEFFREY_PATH.length){triggerJeffreyJS();return;}G.jeffreyPos=JEFFREY_PATH[G.jeffreyStep];G.jeffreyTimer=JEFFREY_SWITCH_S;play('jeffreyLgh');}}
+function tickJeffrey(){if(!G.jeffreyActive||G.dead||G.won)return;if(G.camOpen&&G.curCam===G.jeffreyPos&&!(G.maduroDisabled&&G.maduroDisabled[G.curCam]>0))return;G.jeffreyTimer-=TICK_MS/1000;if(G.jeffreyTimer<=0){G.jeffreyStep++;if(G.jeffreyStep>=JEFFREY_PATH.length){triggerJeffreyJS();return;}G.jeffreyPos=JEFFREY_PATH[G.jeffreyStep];G.jeffreyTimer=G.cfg.jeffreySwitchS||JEFFREY_SWITCH_S;play('jeffreyLgh');}}
 
 // ══════════════════════════════════════════════════════
 //  CHAPO AI — FASE SYSTEEM
@@ -981,7 +990,8 @@ function tickChapo(){
   if(playerWatching)return;
   if(G.chapoPhase>=CHAPO_PHASE_MAX)return;
   G.chapoPhaseTimer+=TICK_MS/1000;
-  if(G.chapoPhaseTimer>=CHAPO_PHASE_TICK_S){
+  const phaseTickS=G.cfg.chapoPhaseTickS||CHAPO_PHASE_TICK_S;
+  if(G.chapoPhaseTimer>=phaseTickS){
     G.chapoPhase++;
     G.chapoPhaseTimer=0;
     if(G.chapoPhase>=CHAPO_PHASE_MAX)triggerChapoAlarm();
@@ -990,7 +1000,7 @@ function tickChapo(){
 function triggerChapoAlarm(){G.chapoAlarm=true;play('alarm');G.chapoKillTimer=setTimeout(()=>{if(!G.dead&&!G.won&&G.chapoAlarm)triggerChapoJS();},CHAPO_KILL_DELAY_MS);}
 function resetChapo(){if(G.chapoKillTimer){clearTimeout(G.chapoKillTimer);G.chapoKillTimer=null;}if(G.chapoAlarm){stop('alarm');G.chapoAlarm=false;}G.chapoPhase=0;G.chapoPhaseTimer=0;}
 
-function scheduleDiddyMove(){if(G.diddyMoveTimer)clearTimeout(G.diddyMoveTimer);if(G.dead||G.won||!G.diddyActive)return;const base=DIDDY_MOVE_BASE[Math.min(G.hour,5)];if(!isFinite(base))return;G.diddyMoveTimer=setTimeout(()=>{advanceDiddy();scheduleDiddyMove();},Math.max(500,base+Math.random()*3000-1000));}
+function scheduleDiddyMove(){if(G.diddyMoveTimer)clearTimeout(G.diddyMoveTimer);if(G.dead||G.won||!G.diddyActive)return;const baseArr=G.cfg.diddyMoveBase||DIDDY_MOVE_BASE;const base=baseArr[Math.min(G.hour,5)];if(!isFinite(base))return;G.diddyMoveTimer=setTimeout(()=>{advanceDiddy();scheduleDiddyMove();},Math.max(500,base+Math.random()*3000-1000));}
 function advanceDiddy(){if(G.dead||G.won||!G.diddyActive)return;if(G.diddyPos===POS.LD||G.diddyPos===POS.RD){triggerDiddyJS();return;}let np=G.diddyPos;if(G.diddyPos===POS.C0)np=POS.C1;else if(G.diddyPos===POS.C1)np=POS.C2;else if(G.diddyPos===POS.C2){if(!G.diddyPath)G.diddyPath=Math.random()<.5?'left':'right';np=G.diddyPath==='left'?POS.C3:POS.C4;G.diddyPath=null;}else if(G.diddyPos===POS.C3)np=POS.LD;else if(G.diddyPos===POS.C4)np=POS.RD;G.diddyPos=np;if(np===POS.LD||np===POS.RD){if(G.diddyMoveTimer)clearTimeout(G.diddyMoveTimer);G.diddyMoveTimer=setTimeout(()=>{if(!G.dead&&!G.won)triggerDiddyJS();},2500);}}
 function resetDiddy(){if(G.diddyMoveTimer)clearTimeout(G.diddyMoveTimer);G.diddyPos=POS.C0;G.diddyPath=null;scheduleDiddyMove();}
 function scheduleMaduro(){if(G.maduroTimer)clearInterval(G.maduroTimer);G.maduroTimer=setInterval(()=>{if(G.dead||G.won||G.maduroPos>=0)return;if(Math.random()<G.cfg.maduroChance){const av=MADURO_CAMS.filter(id=>!(G.maduroDisabled&&G.maduroDisabled[id]>0));if(av.length)maduroSpawn(av[Math.floor(Math.random()*av.length)]);}},MADURO_APPEAR_IV);}
@@ -1013,7 +1023,8 @@ function scheduleBiden(){
 function bidenArrive(side){
   if(G.dead||G.won)return;G.bidenDoor=side;play('bidenArrival');showBidenSprite(side);
   if(G.bidenKillTimer)clearTimeout(G.bidenKillTimer);
-  G.bidenKillTimer=setTimeout(()=>{if(G.dead||G.won||G.bidenDoor===null)return;const closed=(side==='left')?G.lfClosed:G.rtClosed;if(!closed)triggerBidenJS();},BIDEN_KILL_DELAY);
+  const killDelay=G.cfg.bidenKillDelay||BIDEN_KILL_DELAY;
+  G.bidenKillTimer=setTimeout(()=>{if(G.dead||G.won||G.bidenDoor===null)return;const closed=(side==='left')?G.lfClosed:G.rtClosed;if(!closed)triggerBidenJS();},killDelay);
 }
 function bidenDismiss(){if(!G||G.bidenDoor===null)return;if(G.bidenKillTimer){clearTimeout(G.bidenKillTimer);G.bidenKillTimer=null;}G.bidenDoor=null;hideBidenSprites();}
 function triggerBidenJS(){hideBidenSprites();doJumpscare(FILES.bidenJS,'Biden heeft je gevonden. "Come on, man."');}
@@ -1033,7 +1044,8 @@ function triggerDiddyJS(){if(!G||G.dead)return;doJumpscare(FILES.diddyJS,'Diddy 
 
 function triggerWin(){
   if(!G||G.won||G.dead)return;G.won=true;killTimers();stopAll();
-  if(G.night===5){play('night5');buildEndingScene();}
+  if(G.night===6){buildNight6Ending();}
+  else if(G.night===5){play('night5');buildEndingScene();}
   else{
     play('win');
     const ctx=vrDeathCtx,W=768,H=512;ctx.clearRect(0,0,W,H);
@@ -1098,6 +1110,66 @@ function teardownEndingScene(){
   endingGroup.visible=false;scene.children.forEach(obj=>{obj.visible=true;});
 }
 
+// ══════════════════════════════════════════════════════
+//  NACHT 6 ENDING — volledig rood, Warning.png, Alarm looped
+// ══════════════════════════════════════════════════════
+let night6EndingActive=false;
+function buildNight6Ending(){
+  night6EndingActive=true;
+
+  // Volledig rode sfeer — alarmSphereMat maximaal rood
+  alarmSphereMat.color.setHex(0xff0000);
+  alarmSphereMat.opacity=0.55;
+
+  // Extra rode punt-lichten om alles rood te kleuren
+  const r1=new THREE.PointLight(0xff0000,3.5,20);r1.position.set(0,2,0);scene.add(r1);
+  const r2=new THREE.PointLight(0xff0000,2.0,20);r2.position.set(0,2,-5);scene.add(r2);
+  const r3=new THREE.PointLight(0xff2200,1.5,12);r3.position.set(0,3,2);scene.add(r3);
+
+  // Loop alarm geluid
+  if(SFX.alarm){SFX.alarm.loop=true;SFX.alarm.volume=1.0;SFX.alarm.currentTime=0;SFX.alarm.play().catch(()=>{});}
+
+  // Warning.png plane — groot, voor de camera
+  new THREE.TextureLoader().load(FILES.warning,tex=>{
+    tex.minFilter=THREE.LinearFilter;tex.generateMipmaps=false;
+    const aspect=(tex.image&&tex.image.naturalWidth>0)?(tex.image.naturalWidth/tex.image.naturalHeight):1;
+    const warnW=2.2,warnH=warnW/aspect;
+    const warnMesh=new THREE.Mesh(
+      new THREE.PlaneGeometry(warnW,warnH),
+      new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false})
+    );
+    warnMesh.position.set(0,0.1,-2.8);
+    warnMesh.userData._n6warn=true;
+    camera.add(warnMesh);
+
+    // Pulserende opacity animatie via render loop flag
+    warnMesh.userData._pulse=true;
+  },undefined,()=>{
+    // Fallback als Warning.png niet gevonden: grote rode tekst plane
+    const fc=document.createElement('canvas');fc.width=512;fc.height=256;
+    const fctx=fc.getContext('2d');
+    fctx.fillStyle='#ff0000';fctx.font='bold 96px monospace';fctx.textAlign='center';
+    fctx.fillText('⚠ WARNING ⚠',256,160);
+    const fallbackTex=new THREE.CanvasTexture(fc);
+    const fallbackMesh=new THREE.Mesh(new THREE.PlaneGeometry(2.2,1.1),new THREE.MeshBasicMaterial({map:fallbackTex,transparent:true,depthWrite:false}));
+    fallbackMesh.position.set(0,0.1,-2.8);fallbackMesh.userData._n6warn=true;fallbackMesh.userData._pulse=true;
+    camera.add(fallbackMesh);
+  });
+
+  // Restart knop na 5s
+  setTimeout(()=>{
+    if(!night6EndingActive)return;
+    if(vrRestartBtn){vrRestartBtn.visible=true;if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=true;if(!interactables.includes(vrRestartBtn))interactables.push(vrRestartBtn);}
+  },5000);
+}
+
+function teardownNight6Ending(){
+  night6EndingActive=false;
+  camera.children.filter(c=>c.userData&&c.userData._n6warn).forEach(c=>camera.remove(c));
+  alarmSphereMat.color.setHex(0x440000);alarmSphereMat.opacity=0;
+  if(SFX.alarm){SFX.alarm.pause();SFX.alarm.currentTime=0;}
+}
+
 function gameTick(){
   if(!G||G.dead||G.won)return;
   let drain=O2_DRAIN_BASE;
@@ -1144,7 +1216,7 @@ function startGame(){
   if(G.cfg.gijsActive)setTimeout(scheduleGijsMove,5000);
   if(G.cfg.hoboActive)scheduleHoboMove();
   scheduleMaduro();
-  if(G.jeffreyActive){G.jeffreyStep=0;G.jeffreyPos=JEFFREY_PATH[0];G.jeffreyTimer=JEFFREY_SWITCH_S;}
+  if(G.jeffreyActive){G.jeffreyStep=0;G.jeffreyPos=JEFFREY_PATH[0];G.jeffreyTimer=G.cfg.jeffreySwitchS||JEFFREY_SWITCH_S;}
   if(G.diddyActive)setTimeout(scheduleDiddyMove,8000);
   if(G.cfg.bidenActive)scheduleBiden();
   drawBigScreen();drawWallStatusScreen();updateCooldownButtons();
@@ -1154,6 +1226,7 @@ window.startGame=startGame;
 function restartGame(){
   killTimers();stopAll();
   if(endingActive)teardownEndingScene();
+  if(night6EndingActive)teardownNight6Ending();
   hideBriefing();
   if(G){G.running=false;G.dead=false;G.won=false;}G=null;
   gameTimeStr='12:00 AM';alarmSphereMat.opacity=0;
