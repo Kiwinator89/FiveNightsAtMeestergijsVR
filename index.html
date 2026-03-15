@@ -29,6 +29,23 @@ body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
 import * as THREE from 'three';
 
 // ══════════════════════════════════════════════════════
+//  CONSTANTS (hoisted to top so all functions can use them)
+// ══════════════════════════════════════════════════════
+const NIGHT_MS=6*60*1000,TICK_MS=400;
+const O2_DRAIN_BASE=0.015,O2_DOOR_TICK=0.10,O2_CAM_TICK=0.02;
+const LURE_CD_S=30,GRACE_MS=4200;
+const DOOR_RETREAT_MIN=14000,DOOR_RETREAT_MAX=25000;
+const MB_DRAIN_BASE=0.4,MB_DRAIN_SCALE=0.1,MB_WIND_RATE=8;
+const MUSIC_CAM_ID=5,CHAPO_KILL_DELAY=6000,ALARM_CD_S=20;
+const MADURO_APPEAR_IV=2000,MADURO_WATCH_LIM=500,MADURO_DISABLE_MS=8000;
+const JEFFREY_PATH=[0,1,2,3,4],JEFFREY_SWITCH_S=55;
+const CHAPO_ATTACK_S=60,CHAPO_CAM_ID=3;
+const DIDDY_MOVE_BASE=[26000,20000,18000,13000,9000,7500];
+const MADURO_CAMS=[0,1,2,3,4];
+const POS={C0:0,C1:1,C2:2,C3:3,C4:4,LD:5,RD:6};
+const CAMS=[{id:0,name:'CAM 1',room:'STOOKKAMER'},{id:1,name:'CAM 2',room:'OPSLAGRUIMTE'},{id:2,name:'CAM 3',room:'KLASLOKAAL'},{id:3,name:'CAM 4',room:'LINKER GANG'},{id:4,name:'CAM 5',room:'RECHTER GANG'},{id:5,name:'CAM 6',room:'MUZIEKKAMER'}];
+
+// ══════════════════════════════════════════════════════
 //  SECTION 1 — RENDERER & WEBXR
 // ══════════════════════════════════════════════════════
 const canvas3d=document.getElementById('threeCanvas');
@@ -782,19 +799,6 @@ const FILES={
   menuMusic:'Audio/Music.mp3',
 };
 
-const NIGHT_MS=6*60*1000,TICK_MS=400;
-const O2_DRAIN_BASE=0.015,O2_DOOR_TICK=0.10,O2_CAM_TICK=0.02;
-const LURE_CD_S=30,GRACE_MS=4200;
-const DOOR_RETREAT_MIN=14000,DOOR_RETREAT_MAX=25000;
-const MB_DRAIN_BASE=0.4,MB_DRAIN_SCALE=0.1,MB_WIND_RATE=8;
-const MUSIC_CAM_ID=5,CHAPO_KILL_DELAY=6000,ALARM_CD_S=20;
-const MADURO_APPEAR_IV=2000,MADURO_WATCH_LIM=500,MADURO_DISABLE_MS=8000;
-const JEFFREY_PATH=[0,1,2,3,4],JEFFREY_SWITCH_S=55;
-const CHAPO_ATTACK_S=60,CHAPO_CAM_ID=3;
-const DIDDY_MOVE_BASE=[26000,20000,18000,13000,9000,7500];
-const MADURO_CAMS=[0,1,2,3,4];
-const POS={C0:0,C1:1,C2:2,C3:3,C4:4,LD:5,RD:6};
-const CAMS=[{id:0,name:'CAM 1',room:'STOOKKAMER'},{id:1,name:'CAM 2',room:'OPSLAGRUIMTE'},{id:2,name:'CAM 3',room:'KLASLOKAAL'},{id:3,name:'CAM 4',room:'LINKER GANG'},{id:4,name:'CAM 5',room:'RECHTER GANG'},{id:5,name:'CAM 6',room:'MUZIEKKAMER'}];
 const NIGHT_CFGS={
   1:{label:'Nacht 1',gijsActive:true,hoboActive:true,tomActive:false,jeffreyActive:false,chapoActive:false,diddyActive:false,maduroChance:.02,moveIval:[38000,28000,20000,14000,9000,6000],hoboMinMs:7000,hoboMaxMs:25000},
   2:{label:'Nacht 2',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:false,chapoActive:false,diddyActive:false,bidenActive:true,maduroChance:.03,moveIval:[30000,22000,15000,10000,7000,4500],hoboMinMs:6000,hoboMaxMs:20000},
