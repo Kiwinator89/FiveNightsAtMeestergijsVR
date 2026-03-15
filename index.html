@@ -35,7 +35,7 @@ const NIGHT_MS=6*60*1000,TICK_MS=400;
 const O2_DRAIN_BASE=0.015,O2_DOOR_TICK=0.10,O2_CAM_TICK=0.02;
 const LURE_CD_S=30,GRACE_MS=4200;
 const DOOR_RETREAT_MIN=14000,DOOR_RETREAT_MAX=25000;
-const MB_DRAIN_BASE=0.4,MB_DRAIN_SCALE=0.1,MB_WIND_RATE=8;
+const MB_DRAIN_BASE=0.5,MB_DRAIN_SCALE=0.2,MB_WIND_RATE=4;
 const MUSIC_CAM_ID=5,CHAPO_KILL_DELAY=6000,ALARM_CD_S=20;
 const MADURO_APPEAR_IV=2000,MADURO_WATCH_LIM=500,MADURO_DISABLE_MS=8000;
 const JEFFREY_PATH=[0,1,2,3,4],JEFFREY_SWITCH_S=55;
@@ -704,7 +704,7 @@ function redrawVRMenu(){
   ctx.fillStyle='#cc0000';ctx.font='bold 48px monospace';ctx.textAlign='center';
   ctx.fillText('FIVE NIGHTS AT',512,70);ctx.fillText('MEESTER GIJS',512,128);
   ctx.fillStyle='#333';ctx.font='16px monospace';ctx.fillText('VR EDITION',512,165);
-  [{n:1,l:'NACHT 1',s:'Meester Gijs · Hobo Meester Gijs',y:242},{n:2,l:'NACHT 2',s:'+Tumor Tom +Biden',y:310},
+  [{n:1,l:'NACHT 1',s:'Meester Gijs · Hobo Meester Gijs',y:242},{n:2,l:'NACHT 2',s:'+Tumor Tom +Joe Biden',y:310},
    {n:3,l:'NACHT 3',s:'+Jeffrey Epstein',y:378},{n:4,l:'NACHT 4',s:'+El Chapo',y:446},
    {n:5,l:'NACHT 5',s:'MEESTERGIJS ZIJN LAATSTE LES',y:514}].forEach(n=>{
     const sel=selectedNight===n.n,hov=vrMenuHovered===('night:'+n.n);
@@ -951,7 +951,7 @@ function tickMusicBox(){
 // ══════════════════════════════════════════════════════
 //  BIDEN AI
 // ══════════════════════════════════════════════════════
-const BIDEN_APPEAR_IV=10000,BIDEN_CHANCE=0.10,BIDEN_KILL_DELAY=5000;
+const BIDEN_APPEAR_IV=10000,BIDEN_CHANCE=0.10,BIDEN_KILL_DELAY=7000;
 
 function scheduleBiden(){
   if(G.bidenSpawnTimer)clearInterval(G.bidenSpawnTimer);
