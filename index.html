@@ -223,7 +223,7 @@ function buildRoom(){
 }
 
 function buildBlackboard(){
-  addMesh(new THREE.BoxGeometry(2.2,1.3,0.055),new THREE.MeshLambertMaterial({color:0x6a3a20}),-2.5,2.1,-5.97);
+  addMesh(new THREE.BoxGeometry(2.2,1.3,0.055),new THREE.MeshLambertMaterial({color:0x6a3a20}),-2.5,2.1,-5.92);
   const bc=document.createElement('canvas');bc.width=512;bc.height=256;
   const ctx=bc.getContext('2d');
   ctx.fillStyle='#111a0e';ctx.fillRect(0,0,512,256);
@@ -232,7 +232,7 @@ function buildBlackboard(){
   ctx.strokeStyle='#cc0000';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(30,148);ctx.lineTo(482,148);ctx.stroke();
   ctx.fillStyle='#cc0000';ctx.font='bold 34px monospace';ctx.fillText('★ 1/10 ★',256,205);
   const m=new THREE.Mesh(new THREE.PlaneGeometry(2.1,1.2),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(bc),transparent:true}));
-  m.position.set(-2.5,2.1,-5.94);scene.add(m);
+  m.position.set(-2.5,2.1,-5.888);scene.add(m);
 }
 
 function buildDoor3D(x,side){
@@ -675,9 +675,9 @@ function redrawVRMenu(){
   ctx.fillStyle='#cc0000';ctx.font='bold 48px monospace';ctx.textAlign='center';
   ctx.fillText('FIVE NIGHTS AT',512,70);ctx.fillText('MEESTER GIJS',512,128);
   ctx.fillStyle='#333';ctx.font='16px monospace';ctx.fillText('VR EDITION',512,165);
-  [{n:1,l:'NACHT 1',s:'Gijs · Hobo',y:242},{n:2,l:'NACHT 2',s:'+Tom · Biden',y:310},
-   {n:3,l:'NACHT 3',s:'+Jeffrey · Biden',y:378},{n:4,l:'NACHT 4',s:'+Chapo · Biden',y:446},
-   {n:5,l:'NACHT 5',s:'ALLES + Biden',y:514}].forEach(n=>{
+  [{n:1,l:'NACHT 1',s:'Meester Gijs · Hobo Meester Gijs',y:242},{n:2,l:'NACHT 2',s:'+Tumor Tom +Joe Biden',y:310},
+   {n:3,l:'NACHT 3',s:'+Jeffrey · Biden',y:378},{n:4,l:'NACHT 4',s:'+El Chapo',y:446},
+   {n:5,l:'NACHT 5',s:'Meester Gijs zijn laatste test',y:514}].forEach(n=>{
     const sel=selectedNight===n.n,hov=vrMenuHovered===('night:'+n.n);
     const bg=sel?'rgba(120,0,0,0.55)':hov?'rgba(60,0,0,0.45)':'rgba(20,0,0,0.3)';
     const brd=sel?'#cc0000':hov?'#660000':'#330000';
@@ -767,6 +767,7 @@ const FILES={
   alarm:'Audio/Alarm.mp3',shock:'Audio/Shock.mp3',
   cameraAlarm:'Audio/CameraAlarm.mp3',fiveAM:'Audio/5AM.mp3',
   night5:'Audio/Night5.mp3',
+  menuMusic:'Audio/Music.mp3',
 };
 
 const NIGHT_MS=6*60*1000,TICK_MS=400;
@@ -807,6 +808,7 @@ function initAudio(){
    ['cameraAlarm',FILES.cameraAlarm,false,0.9],['fiveAM',FILES.fiveAM,false,1.0],
    ['bidenArrival',FILES.bidenArrival,false,1.0],
    ['night5',FILES.night5,false,1.0],
+   ['menuMusic',FILES.menuMusic,true,0.55],
   ].forEach(([k,src,loop,vol])=>{const a=new Audio(src);a.loop=loop;a.volume=vol;a.preload='auto';SFX[k]=a;});
 }
 function play(k){try{const ac=getAudioCtx();if(ac&&ac.state==='suspended')ac.resume().catch(()=>{});const a=SFX[k];if(!a)return;a.currentTime=0;a.play().catch(()=>{});}catch(e){}}
@@ -1188,6 +1190,8 @@ function startGame(){
   doorAnim.left.open=1;doorAnim.left.target=1;doorAnim.right.open=1;doorAnim.right.target=1;
   if(doorMeshes.left)doorMeshes.left.position.y=-0.5;if(doorMeshes.right)doorMeshes.right.position.y=-0.5;
   initAudio();
+  // Stop menu music if playing
+  if(window._menuAudio){window._menuAudio.pause();window._menuAudio.currentTime=0;window._menuAudio=null;}
   const ac=getAudioCtx();
   if(ac&&ac.state==='suspended')ac.resume().then(()=>{play('ambience');}).catch(()=>{play('ambience');});
   else play('ambience');
@@ -1223,6 +1227,11 @@ window.restartGame=restartGame;
 document.getElementById('warnBtn').addEventListener('click',()=>{
   document.getElementById('warnScreen').style.display='none';
   if(xrSupported){requestVRSession();setTimeout(showVRMenu,800);}
+  // Start menu music — a simple Audio element so it works before full initAudio()
+  const menuAudio=new Audio('Audio/Music.mp3');
+  menuAudio.loop=true;menuAudio.volume=0.55;
+  menuAudio.play().catch(()=>{});
+  window._menuAudio=menuAudio;
 });
 
 buildRoom();
