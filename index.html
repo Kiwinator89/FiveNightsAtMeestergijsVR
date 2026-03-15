@@ -383,8 +383,33 @@ function drawDigitalClock(){
   clockTex.needsUpdate=true;
 }
 
-// ══════════════════════════════════════════════════════
-//  SECTION 7 — BIG CAMERA MONITOR
+// ── BIDEN HALLWAY SPRITES ─────────────────────────────
+const bidenSprites={left:null,right:null};
+function buildBidenSprites(){
+  const loader=new THREE.TextureLoader();
+  loader.load(FILES.bidenHallway,tex=>{
+    tex.minFilter=THREE.LinearFilter;tex.generateMipmaps=false;
+    // Left door hallway — visible from inside room at left door opening
+    const matL=new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:0.05,side:THREE.FrontSide});
+    const meshL=new THREE.Mesh(new THREE.PlaneGeometry(0.88,2.1),matL);
+    meshL.position.set(-4.5,1.05,0.55);meshL.visible=false;scene.add(meshL);bidenSprites.left=meshL;
+    // Right door hallway
+    const matR=new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:0.05,side:THREE.FrontSide});
+    const meshR=new THREE.Mesh(new THREE.PlaneGeometry(0.88,2.1),matR);
+    meshR.position.set(4.5,1.05,0.55);meshR.visible=false;scene.add(meshR);bidenSprites.right=meshR;
+  },undefined,()=>{});
+}
+
+function showBidenSprite(side){
+  if(bidenSprites.left)bidenSprites.left.visible=(side==='left');
+  if(bidenSprites.right)bidenSprites.right.visible=(side==='right');
+}
+function hideBidenSprites(){
+  if(bidenSprites.left)bidenSprites.left.visible=false;
+  if(bidenSprites.right)bidenSprites.right.visible=false;
+}
+
+
 // ══════════════════════════════════════════════════════
 let bigScreenCanvas,bigScreenCtx,bigScreenTex,bigScreenMesh;
 let windUpBtnMesh=null,lureBtnMesh=null,alarmBtnMesh=null;
@@ -724,6 +749,8 @@ const FILES={
   chapoCam:'Images/ChapoCamera.png',chapoJS:'Images/ChapoJumpscare.png',
   maduroCam:'Images/MaduroCamera.png',maduroJS:'Images/MaduroJumpscare.png',
   diddyCam:'Images/DiddyCamera.png',diddyJS:'Images/DiddyJumpscare.png',
+  bidenHallway:'Images/BidenHallway.png',bidenJS:'Images/BidenJumpscare.png',
+  bidenArrival:'Audio/BidenArrival.mp3',
   camBg0:'Images/StookKamer.png',camBg1:'Images/VoorraadKamer.png',
   camBg2:'Images/KlasLokaal.png',camBg3:'Images/LinkerGang.png',
   camBg4:'Images/RechterGang.png',camBg5:'Images/MuziekKamer.png',
@@ -752,10 +779,10 @@ const POS={C0:0,C1:1,C2:2,C3:3,C4:4,LD:5,RD:6};
 const CAMS=[{id:0,name:'CAM 1',room:'STOOKKAMER'},{id:1,name:'CAM 2',room:'OPSLAGRUIMTE'},{id:2,name:'CAM 3',room:'KLASLOKAAL'},{id:3,name:'CAM 4',room:'LINKER GANG'},{id:4,name:'CAM 5',room:'RECHTER GANG'},{id:5,name:'CAM 6',room:'MUZIEKKAMER'}];
 const NIGHT_CFGS={
   1:{label:'Nacht 1',gijsActive:true,hoboActive:true,tomActive:false,jeffreyActive:false,chapoActive:false,diddyActive:false,maduroChance:.02,moveIval:[38000,28000,20000,14000,9000,6000],hoboMinMs:7000,hoboMaxMs:25000},
-  2:{label:'Nacht 2',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:false,chapoActive:false,diddyActive:false,maduroChance:.03,moveIval:[30000,22000,15000,10000,7000,4500],hoboMinMs:6000,hoboMaxMs:20000},
-  3:{label:'Nacht 3',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:false,diddyActive:false,maduroChance:.04,moveIval:[24000,17000,12000,8500,5500,3500],hoboMinMs:4500,hoboMaxMs:16000},
-  4:{label:'Nacht 4',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:true,diddyActive:false,maduroChance:.05,moveIval:[20000,14000,9500,6500,4500,3000],hoboMinMs:3500,hoboMaxMs:13000},
-  5:{label:'Nacht 5',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:true,diddyActive:true,maduroChance:.05,moveIval:[20000,14000,9500,6500,4500,3000],hoboMinMs:3500,hoboMaxMs:13000},
+  2:{label:'Nacht 2',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:false,chapoActive:false,diddyActive:false,bidenActive:true,maduroChance:.03,moveIval:[30000,22000,15000,10000,7000,4500],hoboMinMs:6000,hoboMaxMs:20000},
+  3:{label:'Nacht 3',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:false,diddyActive:false,bidenActive:true,maduroChance:.04,moveIval:[24000,17000,12000,8500,5500,3500],hoboMinMs:4500,hoboMaxMs:16000},
+  4:{label:'Nacht 4',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:true,diddyActive:false,bidenActive:true,maduroChance:.05,moveIval:[20000,14000,9500,6500,4500,3000],hoboMinMs:3500,hoboMaxMs:13000},
+  5:{label:'Nacht 5',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:true,diddyActive:true,bidenActive:true,maduroChance:.05,moveIval:[20000,14000,9500,6500,4500,3000],hoboMinMs:3500,hoboMaxMs:13000},
 };
 
 // ══════════════════════════════════════════════════════
@@ -773,6 +800,7 @@ function initAudio(){
    ['muziek',FILES.muziek,true,0.45],['windUp',FILES.windUp,true,0.7],
    ['alarm',FILES.alarm,true,0.9],['shock',FILES.shock,false,0.95],
    ['cameraAlarm',FILES.cameraAlarm,false,0.9],['fiveAM',FILES.fiveAM,false,1.0],
+   ['bidenArrival',FILES.bidenArrival,false,1.0],
   ].forEach(([k,src,loop,vol])=>{const a=new Audio(src);a.loop=loop;a.volume=vol;a.preload='auto';SFX[k]=a;});
 }
 function play(k){try{const ac=getAudioCtx();if(ac&&ac.state==='suspended')ac.resume().catch(()=>{});const a=SFX[k];if(!a)return;a.currentTime=0;a.play().catch(()=>{});}catch(e){}}
@@ -805,7 +833,8 @@ function mkState(){
     diddyPos:POS.C0,diddyMoveTimer:null,diddyActive:cfg.diddyActive,diddyPath:null,
     alarmReady:true,alarmCD:0,alarmCDTimer:null,camOpen:false,curCam:0,
     lureReady:false,lureCD:LURE_CD_S,lureCDTimer:null,
-    tickTimer:null,timeTimer:null,dead:false,won:false,fiveAMDone:false};
+    tickTimer:null,timeTimer:null,dead:false,won:false,fiveAMDone:false,
+    bidenDoor:null,bidenKillTimer:null,bidenSpawnTimer:null};
 }
 
 let vrDeathCanvas,vrDeathCtx,vrDeathTex,vrDeathMesh;
@@ -850,8 +879,8 @@ function toggleCam(){if(!G||G.dead||G.won)return;G.camOpen=!G.camOpen;if(!G.camO
 function switchCam(id){if(!G||G.dead||G.won)return;if(G.maduroDisabled&&G.maduroDisabled[id]>0)return;if(id!==G.curCam)play('camSwitch');if(G.maduroPos===G.curCam&&id!==G.curCam)maduroDespawn();G.curCam=id;G.maduroWatchMs=0;if(SFX.muziek)SFX.muziek.volume=id===MUSIC_CAM_ID?0.55:0.15;highlightCamBtn(id);}window.switchCam=switchCam;
 function toggleDoor(side){
   if(!G||G.dead||G.won)return;
-  if(side==='left'){G.lfClosed=!G.lfClosed;doorAnim.left.target=G.lfClosed?0:1;if(G.lfClosed)play('doorClose');if(G.lfClosed&&G.mPos===POS.LD&&G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}else if(!G.lfClosed&&G.cfg.gijsActive&&G.mPos===POS.LD)armDoorTimer();}
-  else{G.rtClosed=!G.rtClosed;doorAnim.right.target=G.rtClosed?0:1;if(G.rtClosed)play('doorClose');if(G.rtClosed&&G.mPos===POS.RD&&G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}else if(!G.rtClosed&&G.cfg.gijsActive&&G.mPos===POS.RD)armDoorTimer();}
+  if(side==='left'){G.lfClosed=!G.lfClosed;doorAnim.left.target=G.lfClosed?0:1;if(G.lfClosed)play('doorClose');if(G.lfClosed&&G.bidenDoor==='left')bidenDismiss();if(G.lfClosed&&G.mPos===POS.LD&&G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}else if(!G.lfClosed&&G.cfg.gijsActive&&G.mPos===POS.LD)armDoorTimer();}
+  else{G.rtClosed=!G.rtClosed;doorAnim.right.target=G.rtClosed?0:1;if(G.rtClosed)play('doorClose');if(G.rtClosed&&G.bidenDoor==='right')bidenDismiss();if(G.rtClosed&&G.mPos===POS.RD&&G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}else if(!G.rtClosed&&G.cfg.gijsActive&&G.mPos===POS.RD)armDoorTimer();}
 }window.toggleDoor=toggleDoor;
 
 function inLureRange(){if(!G||!G.camOpen)return false;const adj={0:[1],1:[0,2],2:[1,3,4],3:[2,5],4:[2,6],5:[3],6:[4]};const gR=G.cfg.gijsActive&&G.curCam!==MUSIC_CAM_ID&&(G.mPos===G.curCam||(adj[G.mPos]||[]).includes(G.curCam));const hR=G.cfg.hoboActive&&G.curCam!==MUSIC_CAM_ID&&G.hoboPos===G.curCam;const dR=G.diddyActive&&G.curCam!==MUSIC_CAM_ID&&G.diddyPos===G.curCam;return gR||hR||dR;}
@@ -883,6 +912,50 @@ function maduroDespawn(){if(G.maduroPos<0)return;G.maduroPos=-1;G.maduroWatchMs=
 function tickMaduro(){if(G.dead||G.won)return;if(!G.maduroDisabled)G.maduroDisabled={};Object.keys(G.maduroDisabled).forEach(cId=>{if(G.maduroDisabled[cId]>0)G.maduroDisabled[cId]-=TICK_MS;if(G.maduroDisabled[cId]<0)G.maduroDisabled[cId]=0;});if(G.maduroPos>=0&&G.camOpen&&G.curCam===G.maduroPos&&!(G.maduroDisabled[G.curCam]>0)){G.maduroWatchMs+=TICK_MS;if(G.maduroWatchMs>=MADURO_WATCH_LIM)triggerMaduroDisable(G.maduroPos);}else if(G.maduroPos>=0)G.maduroWatchMs=0;}
 function triggerMaduroDisable(camId){play('shock');G.maduroPos=-1;G.maduroWatchMs=0;if(!G.maduroDisabled)G.maduroDisabled={};G.maduroDisabled[camId]=MADURO_DISABLE_MS;setTimeout(()=>{if(!G.dead&&!G.won&&G.camOpen&&G.curCam===camId){const other=CAMS.find(c=>c.id!==camId&&!(G.maduroDisabled&&G.maduroDisabled[c.id]>0));if(other)switchCam(other.id);}},2200);}
 function tickMusicBox(){if(!G.cfg.tomActive||G.dead||G.won)return;if(G.isWindingUp&&G.camOpen&&G.curCam===MUSIC_CAM_ID)G.musicBox=Math.min(100,G.musicBox+MB_WIND_RATE);else{const drain=MB_DRAIN_BASE+MB_DRAIN_SCALE*Math.min(G.hour,5);G.musicBox=Math.max(0,G.musicBox-drain);if(G.musicBox<=0)triggerTomJS();}if(SFX.muziek)SFX.muziek.playbackRate=G.musicBox>50?1:G.musicBox>25?0.82:G.musicBox>10?0.62:0.4;}
+
+// ══════════════════════════════════════════════════════
+//  BIDEN AI
+// ══════════════════════════════════════════════════════
+const BIDEN_APPEAR_IV=10000,BIDEN_CHANCE=0.10,BIDEN_KILL_DELAY=5000;
+
+function scheduleBiden(){
+  if(G.bidenSpawnTimer)clearInterval(G.bidenSpawnTimer);
+  if(G.dead||G.won||!G.cfg.bidenActive)return;
+  G.bidenSpawnTimer=setInterval(()=>{
+    if(G.dead||G.won||G.bidenDoor!==null)return;
+    if(Math.random()<BIDEN_CHANCE){
+      const side=Math.random()<0.5?'left':'right';
+      bidenArrive(side);
+    }
+  },BIDEN_APPEAR_IV);
+}
+
+function bidenArrive(side){
+  if(G.dead||G.won)return;
+  G.bidenDoor=side;
+  play('bidenArrival');
+  showBidenSprite(side);
+  // Start kill timer — player has BIDEN_KILL_DELAY ms to close the door
+  if(G.bidenKillTimer)clearTimeout(G.bidenKillTimer);
+  G.bidenKillTimer=setTimeout(()=>{
+    if(G.dead||G.won||G.bidenDoor===null)return;
+    const closed=(side==='left')?G.lfClosed:G.rtClosed;
+    if(!closed)triggerBidenJS();
+  },BIDEN_KILL_DELAY);
+}
+
+function bidenDismiss(){
+  // Called when the relevant door is closed while Biden is present
+  if(!G||G.bidenDoor===null)return;
+  if(G.bidenKillTimer){clearTimeout(G.bidenKillTimer);G.bidenKillTimer=null;}
+  G.bidenDoor=null;
+  hideBidenSprites();
+}
+
+function triggerBidenJS(){
+  hideBidenSprites();
+  doJumpscare(FILES.bidenJS,'Biden heeft je gevonden. "Come on, man."');
+}
 
 // ══════════════════════════════════════════════════════
 //  SECTION 25 — JUMPSCARE & DEATH
@@ -934,7 +1007,8 @@ function tickTime(){
 function killTimers(){
   if(!G)return;
   [G.tickTimer,G.timeTimer,G.mMoveTimer,G.mDoorTimer,G.mRetreatTimer,G.lureCDTimer,
-   G.hoboMoveTimer,G.chapoKillTimer,G.maduroTimer,G.diddyMoveTimer,G.alarmCDTimer
+   G.hoboMoveTimer,G.chapoKillTimer,G.maduroTimer,G.diddyMoveTimer,G.alarmCDTimer,
+   G.bidenKillTimer,G.bidenSpawnTimer
   ].forEach(t=>{if(t){try{clearInterval(t);clearTimeout(t);}catch(e){}}});
 }
 
@@ -964,6 +1038,7 @@ function startGame(){
   scheduleMaduro();
   if(G.jeffreyActive){G.jeffreyStep=0;G.jeffreyPos=JEFFREY_PATH[0];G.jeffreyTimer=JEFFREY_SWITCH_S;}
   if(G.diddyActive)setTimeout(scheduleDiddyMove,8000);
+  if(G.cfg.bidenActive)scheduleBiden();
   drawBigScreen();drawWallStatusScreen();updateCooldownButtons();
 }
 window.startGame=startGame;
@@ -986,6 +1061,7 @@ document.getElementById('warnBtn').addEventListener('click',()=>{
 });
 
 buildRoom();
+buildBidenSprites();
 Object.values(FILES).forEach(src=>{if(src.endsWith('.png')||src.endsWith('.jpg')){const i=new Image();i.src=src;}});
 CAMS.forEach(c=>loadCamBg(c.id,()=>{}));
 </script>
