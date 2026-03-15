@@ -766,6 +766,7 @@ const FILES={
   muziek:'Audio/Muziek.mp3',windUp:'Audio/WindUp.mp3',
   alarm:'Audio/Alarm.mp3',shock:'Audio/Shock.mp3',
   cameraAlarm:'Audio/CameraAlarm.mp3',fiveAM:'Audio/5AM.mp3',
+  night5:'Audio/Night5.mp3',
 };
 
 const NIGHT_MS=6*60*1000,TICK_MS=400;
@@ -805,6 +806,7 @@ function initAudio(){
    ['alarm',FILES.alarm,true,0.9],['shock',FILES.shock,false,0.95],
    ['cameraAlarm',FILES.cameraAlarm,false,0.9],['fiveAM',FILES.fiveAM,false,1.0],
    ['bidenArrival',FILES.bidenArrival,false,1.0],
+   ['night5',FILES.night5,false,1.0],
   ].forEach(([k,src,loop,vol])=>{const a=new Audio(src);a.loop=loop;a.volume=vol;a.preload='auto';SFX[k]=a;});
 }
 function play(k){try{const ac=getAudioCtx();if(ac&&ac.state==='suspended')ac.resume().catch(()=>{});const a=SFX[k];if(!a)return;a.currentTime=0;a.play().catch(()=>{});}catch(e){}}
@@ -990,15 +992,161 @@ function triggerChapoJS(){if(!G||G.dead)return;stop('alarm');doJumpscare(FILES.c
 function triggerDiddyJS(){if(!G||G.dead)return;doJumpscare(FILES.diddyJS,'Diddy heeft je gevonden.');}
 
 function triggerWin(){
-  if(!G||G.won||G.dead)return;G.won=true;killTimers();stopAll();play('win');
-  const ctx=vrDeathCtx,W=768,H=512;ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='rgba(0,10,2,0.95)';ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#22dd55';ctx.font='bold 72px monospace';ctx.textAlign='center';ctx.fillText('6:00 AM',W/2,100);
-  ctx.fillStyle='#226633';ctx.font='24px monospace';ctx.fillText('OVERLEEFD',W/2,150);
-  ctx.fillStyle='#3a6a3a';ctx.font='18px monospace';ctx.fillText('"Most students don\'t make it past 3 AM."',W/2,220);
-  ctx.fillStyle='#226622';ctx.font='18px monospace';ctx.fillText('Kijk naar de OPNIEUW knop',W/2,H-60);
-  vrDeathTex.needsUpdate=true;vrDeathMesh.visible=true;
-  if(vrRestartBtn){vrRestartBtn.visible=true;if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=true;if(!interactables.includes(vrRestartBtn))interactables.push(vrRestartBtn);}
+  if(!G||G.won||G.dead)return;G.won=true;killTimers();stopAll();
+  if(G.night===5){
+    play('night5');
+    buildEndingScene();
+  } else {
+    play('win');
+    const ctx=vrDeathCtx,W=768,H=512;ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='rgba(0,10,2,0.95)';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#22dd55';ctx.font='bold 72px monospace';ctx.textAlign='center';ctx.fillText('6:00 AM',W/2,100);
+    ctx.fillStyle='#226633';ctx.font='24px monospace';ctx.fillText('OVERLEEFD',W/2,150);
+    ctx.fillStyle='#3a6a3a';ctx.font='18px monospace';ctx.fillText('"Most students don\'t make it past 3 AM."',W/2,220);
+    ctx.fillStyle='#226622';ctx.font='18px monospace';ctx.fillText('Kijk naar de OPNIEUW knop',W/2,H-60);
+    vrDeathTex.needsUpdate=true;vrDeathMesh.visible=true;
+    if(vrRestartBtn){vrRestartBtn.visible=true;if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=true;if(!interactables.includes(vrRestartBtn))interactables.push(vrRestartBtn);}
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  NIGHT 5 ENDING SCENE
+// ══════════════════════════════════════════════════════
+let endingActive=false;
+const endingGroup=new THREE.Group();scene.add(endingGroup);endingGroup.visible=false;
+
+function buildEndingScene(){
+  endingActive=true;
+  // Hide all room objects
+  scene.children.forEach(obj=>{if(obj!==endingGroup&&obj!==camera)obj.visible=false;});
+  endingGroup.visible=true;
+
+  // ── SKY ──
+  endingGroup.add(new THREE.Mesh(
+    new THREE.SphereGeometry(80,16,16),
+    new THREE.MeshBasicMaterial({color:0x02040f,side:THREE.BackSide})
+  ));
+
+  // ── STARS ──
+  const starGeo=new THREE.BufferGeometry();
+  const starPos=new Float32Array(1800*3);
+  for(let i=0;i<1800;i++){
+    const theta=Math.random()*Math.PI*2;
+    const phi=Math.acos(Math.random()*0.96);
+    const r=65+Math.random()*10;
+    starPos[i*3]=r*Math.sin(phi)*Math.cos(theta);
+    starPos[i*3+1]=r*Math.abs(Math.cos(phi));
+    starPos[i*3+2]=r*Math.sin(phi)*Math.sin(theta);
+  }
+  starGeo.setAttribute('position',new THREE.BufferAttribute(starPos,3));
+  endingGroup.add(new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xffffff,size:0.28,sizeAttenuation:true})));
+
+  // ── MOON ──
+  const moonMesh=new THREE.Mesh(new THREE.SphereGeometry(2.2,16,16),new THREE.MeshBasicMaterial({color:0xdde8ff}));
+  moonMesh.position.set(28,36,-55);endingGroup.add(moonMesh);
+  const halo=new THREE.Mesh(new THREE.SphereGeometry(3.4,12,12),new THREE.MeshBasicMaterial({color:0x7788bb,transparent:true,opacity:0.10,side:THREE.BackSide}));
+  halo.position.copy(moonMesh.position);endingGroup.add(halo);
+
+  // ── GROUND HILL ──
+  const hillGeo=new THREE.PlaneGeometry(160,80,60,30);
+  const hPos=hillGeo.attributes.position;
+  for(let i=0;i<hPos.count;i++){
+    const x=hPos.getX(i),z=hPos.getY(i);
+    const dist=Math.sqrt(x*x+(z+8)*(z+8));
+    const y=Math.max(0,2.6*Math.exp(-dist*dist/900))
+             +0.35*Math.sin(x*0.17)*Math.cos(z*0.13)
+             +0.18*Math.sin(x*0.4+1.0)*Math.sin(z*0.28);
+    hPos.setZ(i,y);
+  }
+  hillGeo.computeVertexNormals();
+  const hillMesh=new THREE.Mesh(hillGeo,new THREE.MeshLambertMaterial({color:0x081505}));
+  hillMesh.rotation.x=-Math.PI/2;hillMesh.position.set(0,-1.6,0);
+  endingGroup.add(hillMesh);
+
+  // ── LIGHTS ──
+  endingGroup.add(new THREE.AmbientLight(0x0a0f1a,0.9));
+  const mLight=new THREE.DirectionalLight(0x2a3a55,0.6);mLight.position.set(28,36,-55);endingGroup.add(mLight);
+
+  // ── ENEMY SILHOUETTES ──
+  const sils=[
+    {key:'gijsJS',x:-26},{key:'hoboGijsJS',x:-16},{key:'tomJS',x:-7},
+    {key:'jeffreyJS',x:2},{key:'chapoJS',x:11},{key:'diddyJS',x:20},{key:'bidenJS',x:30}
+  ];
+  sils.forEach((s,idx)=>{
+    new THREE.TextureLoader().load(FILES[s.key],tex=>{
+      if(!endingActive)return;
+      const aspect=(tex.image&&tex.image.naturalWidth&&tex.image.naturalHeight)?(tex.image.naturalWidth/tex.image.naturalHeight):0.45;
+      const h=3.0,w=h*aspect;
+      const mat=new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:0.08,color:0x000000});
+      const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);
+      mesh.position.set(s.x,-0.1,-26);
+      endingGroup.add(mesh);
+    },undefined,()=>{
+      // fallback plain silhouette
+      const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1.3,3.0),new THREE.MeshBasicMaterial({color:0x000000}));
+      mesh.position.set(s.x,-0.1,-26);endingGroup.add(mesh);
+    });
+  });
+
+  // ── TEXT (attached to camera, fades in) ──
+  const txtCanvas=document.createElement('canvas');txtCanvas.width=1024;txtCanvas.height=320;
+  const txtCtx=txtCanvas.getContext('2d');
+  txtCtx.clearRect(0,0,1024,320);
+  const lines=[
+    {t:'Je bent een van de weinige die ontsnapt is uit de kelder.',bold:false,size:21},
+    {t:'',bold:false,size:21},
+    {t:'Er is niks meer om te bereiken.',bold:true,size:24},
+    {t:'Je hebt nu eindelijk rust.',bold:true,size:24},
+  ];
+  let ly=60;
+  lines.forEach(l=>{
+    txtCtx.font=(l.bold?'bold ':'')+l.size+'px Georgia, serif';
+    txtCtx.fillStyle=l.bold?'rgba(210,225,255,0.95)':'rgba(160,180,220,0.80)';
+    txtCtx.textAlign='center';
+    txtCtx.fillText(l.t,512,ly);
+    ly+=l.size+18;
+  });
+  const txtTex=new THREE.CanvasTexture(txtCanvas);
+  txtTex.minFilter=THREE.LinearFilter;txtTex.generateMipmaps=false;
+  const txtMesh=new THREE.Mesh(
+    new THREE.PlaneGeometry(3.0,0.94),
+    new THREE.MeshBasicMaterial({map:txtTex,transparent:true,opacity:0,depthWrite:false})
+  );
+  txtMesh.position.set(0,-0.5,-3.5);
+  txtMesh.userData._endingText=true;
+  camera.add(txtMesh);
+
+  // Position camera on hilltop looking at horizon
+  camera.position.set(0,0.2,3.5);
+
+  // Fade in text after 3s
+  setTimeout(()=>{
+    let op=0;
+    const fadeTxt=setInterval(()=>{
+      if(!endingActive){clearInterval(fadeTxt);return;}
+      op=Math.min(1,op+0.008);
+      txtMesh.material.opacity=op;
+      if(op>=1)clearInterval(fadeTxt);
+    },30);
+  },3000);
+
+  // Show restart after 10s
+  setTimeout(()=>{
+    if(!endingActive)return;
+    if(vrRestartBtn){
+      vrRestartBtn.visible=true;
+      if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=true;
+      if(!interactables.includes(vrRestartBtn))interactables.push(vrRestartBtn);
+    }
+  },10000);
+}
+
+function teardownEndingScene(){
+  endingActive=false;
+  camera.children.filter(c=>c.userData&&c.userData._endingText).forEach(c=>camera.remove(c));
+  while(endingGroup.children.length)endingGroup.remove(endingGroup.children[0]);
+  endingGroup.visible=false;
+  scene.children.forEach(obj=>{obj.visible=true;});
 }
 
 // ══════════════════════════════════════════════════════
@@ -1061,6 +1209,7 @@ window.startGame=startGame;
 
 function restartGame(){
   killTimers();stopAll();
+  if(endingActive)teardownEndingScene();
   if(G){G.running=false;G.dead=false;G.won=false;}G=null;
   gameTimeStr='12:00 AM';alarmSphereMat.opacity=0;
   doorAnim.left.open=1;doorAnim.left.target=1;doorAnim.right.open=1;doorAnim.right.target=1;
