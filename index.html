@@ -29,6 +29,23 @@ body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
 import * as THREE from 'three';
 
 // ══════════════════════════════════════════════════════
+//  CONSTANTS (hoisted to top so all functions can use them)
+// ══════════════════════════════════════════════════════
+const NIGHT_MS=6*60*1000,TICK_MS=400;
+const O2_DRAIN_BASE=0.015,O2_DOOR_TICK=0.10,O2_CAM_TICK=0.02;
+const LURE_CD_S=30,GRACE_MS=4200;
+const DOOR_RETREAT_MIN=14000,DOOR_RETREAT_MAX=25000;
+const MB_DRAIN_BASE=0.4,MB_DRAIN_SCALE=0.1,MB_WIND_RATE=8;
+const MUSIC_CAM_ID=5,CHAPO_KILL_DELAY=6000,ALARM_CD_S=20;
+const MADURO_APPEAR_IV=2000,MADURO_WATCH_LIM=500,MADURO_DISABLE_MS=8000;
+const JEFFREY_PATH=[0,1,2,3,4],JEFFREY_SWITCH_S=55;
+const CHAPO_ATTACK_S=60,CHAPO_CAM_ID=3;
+const DIDDY_MOVE_BASE=[26000,20000,18000,13000,9000,7500];
+const MADURO_CAMS=[0,1,2,3,4];
+const POS={C0:0,C1:1,C2:2,C3:3,C4:4,LD:5,RD:6};
+const CAMS=[{id:0,name:'CAM 1',room:'STOOKKAMER'},{id:1,name:'CAM 2',room:'OPSLAGRUIMTE'},{id:2,name:'CAM 3',room:'KLASLOKAAL'},{id:3,name:'CAM 4',room:'LINKER GANG'},{id:4,name:'CAM 5',room:'RECHTER GANG'},{id:5,name:'CAM 6',room:'MUZIEKKAMER'}];
+
+// ══════════════════════════════════════════════════════
 //  SECTION 1 — RENDERER & WEBXR
 // ══════════════════════════════════════════════════════
 const canvas3d=document.getElementById('threeCanvas');
@@ -96,26 +113,31 @@ function onTriggerPress(idx){
   if(!G||!G.running)return;
   if(hit&&hit.userData.action){
     const a=hit.userData.action;
-    if(a==='windUp'){startWindUp();return;}
+    if(a==='windUp')return; // handled exclusively by pollGamepads hold
     handleVRAction(a);return;
   }
 }
 function onTriggerRelease(idx){
-  if(idx===1){rightTriggerHeld=false;stopWindUp();}
+  if(idx===1){rightTriggerHeld=false;} // stopWindUp handled by pollGamepads
   if(idx===0)leftTriggerHeld=false;
 }
 function pollGamepads(dt){
-  if(!G||!G.running||G.dead||G.won)return;
-  const hit=castFromController(1);
-  const onWindBtn=hit&&hit.userData.action==='windUp';
-  if(rightTriggerHeld&&onWindBtn&&G.camOpen&&G.curCam===MUSIC_CAM_ID){
-    if(!G.isWindingUp){
-      G.isWindingUp=true;
-      if(SFX.windUp){SFX.windUp.currentTime=0;SFX.windUp.play().catch(()=>{});}
+  if(!G||!G.running)return;
+  if(rightTriggerHeld){
+    const hit=castFromController(1);
+    const aimingAtWind=hit&&hit.userData.action==='windUp';
+    if(aimingAtWind){
+      if(!G.isWindingUp)startWindUp();
+      // Wind the music box directly here every frame using delta time
+      // 20 units per second (same as before: 8 per 400ms tick)
+      if(G.camOpen&&G.curCam===MUSIC_CAM_ID){
+        G.musicBox=Math.min(100,G.musicBox+20*dt);
+      }
+    } else {
+      if(G.isWindingUp)stopWindUp();
     }
-    G.musicBox=Math.min(100,G.musicBox+MB_WIND_RATE*dt);
   } else {
-    if(G.isWindingUp){G.isWindingUp=false;stop('windUp');}
+    if(G.isWindingUp)stopWindUp();
   }
 }
 
@@ -229,7 +251,7 @@ function buildRoom(){
 }
 
 function buildBlackboard(){
-  addMesh(new THREE.BoxGeometry(2.2,1.3,0.055),new THREE.MeshLambertMaterial({color:0x6a3a20}),-2.5,2.1,-5.97);
+  addMesh(new THREE.BoxGeometry(2.2,1.3,0.055),new THREE.MeshLambertMaterial({color:0x6a3a20}),-4.0,2.1,-5.92);
   const bc=document.createElement('canvas');bc.width=512;bc.height=256;
   const ctx=bc.getContext('2d');
   ctx.fillStyle='#111a0e';ctx.fillRect(0,0,512,256);
@@ -238,7 +260,7 @@ function buildBlackboard(){
   ctx.strokeStyle='#cc0000';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(30,148);ctx.lineTo(482,148);ctx.stroke();
   ctx.fillStyle='#cc0000';ctx.font='bold 34px monospace';ctx.fillText('★ 1/10 ★',256,205);
   const m=new THREE.Mesh(new THREE.PlaneGeometry(2.1,1.2),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(bc),transparent:true}));
-  m.position.set(-2.5,2.1,-5.94);scene.add(m);
+  m.position.set(-4.0,2.1,-5.888);scene.add(m);
 }
 
 function buildDoor3D(x,side){
@@ -390,8 +412,37 @@ function drawDigitalClock(){
   clockTex.needsUpdate=true;
 }
 
-// ══════════════════════════════════════════════════════
-//  SECTION 7 — BIG CAMERA MONITOR
+// ── BIDEN HALLWAY SPRITES ─────────────────────────────
+const bidenSprites={left:null,right:null};
+function buildBidenSprites(){
+  const loader=new THREE.TextureLoader();
+  loader.load(FILES.bidenHallway,tex=>{
+    tex.minFilter=THREE.LinearFilter;tex.generateMipmaps=false;
+    // Doors are at z=0 in the front wall, player stands at z=2 looking toward -Z
+    // Biden stands just behind the door opening (z=-0.15), facing toward +Z (toward player)
+    const matL=new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:0.05,side:THREE.DoubleSide});
+    const meshL=new THREE.Mesh(new THREE.PlaneGeometry(0.88,2.1),matL);
+    meshL.position.set(-4.5,1.05,-0.15);
+    meshL.rotation.y=Math.PI/2;
+    meshL.visible=false;scene.add(meshL);bidenSprites.left=meshL;
+    const matR=new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:0.05,side:THREE.DoubleSide});
+    const meshR=new THREE.Mesh(new THREE.PlaneGeometry(0.88,2.1),matR);
+    meshR.position.set(4.5,1.05,-0.15);
+    meshR.rotation.y=-Math.PI/2;
+    meshR.visible=false;scene.add(meshR);bidenSprites.right=meshR;
+  },undefined,()=>{});
+}
+
+function showBidenSprite(side){
+  if(bidenSprites.left)bidenSprites.left.visible=(side==='left');
+  if(bidenSprites.right)bidenSprites.right.visible=(side==='right');
+}
+function hideBidenSprites(){
+  if(bidenSprites.left)bidenSprites.left.visible=false;
+  if(bidenSprites.right)bidenSprites.right.visible=false;
+}
+
+
 // ══════════════════════════════════════════════════════
 let bigScreenCanvas,bigScreenCtx,bigScreenTex,bigScreenMesh;
 let windUpBtnMesh=null,lureBtnMesh=null,alarmBtnMesh=null;
@@ -567,10 +618,10 @@ function drawAnimatronicsOnFeed(ctx,camId,fx,fy,fw,fh){
   const present=[];
   if(G.cfg.gijsActive&&G.mPos===camId&&camId!==MUSIC_CAM_ID)present.push({key:'gijs',scale:0.55,bottomPin:true});
   if(G.cfg.hoboActive&&G.hoboPos===camId&&camId!==MUSIC_CAM_ID)present.push({key:'hobo',scale:0.50,bottomPin:true});
-  if(G.jeffreyActive&&G.jeffreyPos===camId&&camId!==MUSIC_CAM_ID)present.push({key:'jeffrey',scale:0.78});
+  if(G.jeffreyActive&&G.jeffreyPos===camId&&camId!==MUSIC_CAM_ID)present.push({key:'jeffrey',scale:0.78,bottomPin:true});
   if(G.chapoActive&&camId===CHAPO_CAM_ID&&!G.chapoAlarm)present.push({key:'chapo',scale:0.72});
   if(G.diddyActive&&G.diddyPos===camId&&camId!==MUSIC_CAM_ID)present.push({key:'diddy',scale:0.52,bottomPin:true});
-  if(G.maduroPos===camId)present.push({key:'maduro',scale:0.55,alpha:0.7});
+  if(G.maduroPos===camId)present.push({key:'maduro',scale:0.55,alpha:0.7,bottomPin:true});
 
   const n=present.length;
   if(n>0){
@@ -653,9 +704,9 @@ function redrawVRMenu(){
   ctx.fillStyle='#cc0000';ctx.font='bold 48px monospace';ctx.textAlign='center';
   ctx.fillText('FIVE NIGHTS AT',512,70);ctx.fillText('MEESTER GIJS',512,128);
   ctx.fillStyle='#333';ctx.font='16px monospace';ctx.fillText('VR EDITION',512,165);
-  [{n:1,l:'NACHT 1',s:'Gijs · Hobo',y:242},{n:2,l:'NACHT 2',s:'+Tom',y:310},
-   {n:3,l:'NACHT 3',s:'+Jeffrey',y:378},{n:4,l:'NACHT 4',s:'+Chapo',y:446},
-   {n:5,l:'NACHT 5',s:'ALLES',y:514}].forEach(n=>{
+  [{n:1,l:'NACHT 1',s:'Meester Gijs · Hobo Meester Gijs',y:242},{n:2,l:'NACHT 2',s:'+Tumor Tom +Biden',y:310},
+   {n:3,l:'NACHT 3',s:'+Jeffrey Epstein',y:378},{n:4,l:'NACHT 4',s:'+El Chapo',y:446},
+   {n:5,l:'NACHT 5',s:'MEESTERGIJS ZIJN LAATSTE LES',y:514}].forEach(n=>{
     const sel=selectedNight===n.n,hov=vrMenuHovered===('night:'+n.n);
     const bg=sel?'rgba(120,0,0,0.55)':hov?'rgba(60,0,0,0.45)':'rgba(20,0,0,0.3)';
     const brd=sel?'#cc0000':hov?'#660000':'#330000';
@@ -731,6 +782,8 @@ const FILES={
   chapoCam:'Images/ChapoCamera.png',chapoJS:'Images/ChapoJumpscare.png',
   maduroCam:'Images/MaduroCamera.png',maduroJS:'Images/MaduroJumpscare.png',
   diddyCam:'Images/DiddyCamera.png',diddyJS:'Images/DiddyJumpscare.png',
+  bidenHallway:'Images/BidenHallway.png',bidenJS:'Images/BidenJumpscare.png',
+  bidenArrival:'Audio/BidenArrival.mp3',
   camBg0:'Images/StookKamer.png',camBg1:'Images/VoorraadKamer.png',
   camBg2:'Images/KlasLokaal.png',camBg3:'Images/LinkerGang.png',
   camBg4:'Images/RechterGang.png',camBg5:'Images/MuziekKamer.png',
@@ -742,27 +795,16 @@ const FILES={
   muziek:'Audio/Muziek.mp3',windUp:'Audio/WindUp.mp3',
   alarm:'Audio/Alarm.mp3',shock:'Audio/Shock.mp3',
   cameraAlarm:'Audio/CameraAlarm.mp3',fiveAM:'Audio/5AM.mp3',
+  night5:'Audio/Night5.mp3',
+  menuMusic:'Audio/Music.mp3',
 };
 
-const NIGHT_MS=6*60*1000,TICK_MS=400;
-const O2_DRAIN_BASE=0.015,O2_DOOR_TICK=0.10,O2_CAM_TICK=0.02;
-const LURE_CD_S=30,GRACE_MS=4200;
-const DOOR_RETREAT_MIN=14000,DOOR_RETREAT_MAX=25000;
-const MB_DRAIN_BASE=0.5,MB_DRAIN_SCALE=0.2,MB_WIND_RATE=4;
-const MUSIC_CAM_ID=5,CHAPO_KILL_DELAY=6000,ALARM_CD_S=20;
-const MADURO_APPEAR_IV=2000,MADURO_WATCH_LIM=500,MADURO_DISABLE_MS=8000;
-const JEFFREY_PATH=[0,1,2,3,4],JEFFREY_SWITCH_S=55;
-const CHAPO_ATTACK_S=60,CHAPO_CAM_ID=3;
-const DIDDY_MOVE_BASE=[26000,20000,18000,13000,9000,7500];
-const MADURO_CAMS=[0,1,2,3,4];
-const POS={C0:0,C1:1,C2:2,C3:3,C4:4,LD:5,RD:6};
-const CAMS=[{id:0,name:'CAM 1',room:'STOOKKAMER'},{id:1,name:'CAM 2',room:'OPSLAGRUIMTE'},{id:2,name:'CAM 3',room:'KLASLOKAAL'},{id:3,name:'CAM 4',room:'LINKER GANG'},{id:4,name:'CAM 5',room:'RECHTER GANG'},{id:5,name:'CAM 6',room:'MUZIEKKAMER'}];
 const NIGHT_CFGS={
   1:{label:'Nacht 1',gijsActive:true,hoboActive:true,tomActive:false,jeffreyActive:false,chapoActive:false,diddyActive:false,maduroChance:.02,moveIval:[38000,28000,20000,14000,9000,6000],hoboMinMs:7000,hoboMaxMs:25000},
-  2:{label:'Nacht 2',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:false,chapoActive:false,diddyActive:false,maduroChance:.03,moveIval:[30000,22000,15000,10000,7000,4500],hoboMinMs:6000,hoboMaxMs:20000},
-  3:{label:'Nacht 3',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:false,diddyActive:false,maduroChance:.04,moveIval:[24000,17000,12000,8500,5500,3500],hoboMinMs:4500,hoboMaxMs:16000},
-  4:{label:'Nacht 4',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:true,diddyActive:false,maduroChance:.05,moveIval:[20000,14000,9500,6500,4500,3000],hoboMinMs:3500,hoboMaxMs:13000},
-  5:{label:'Nacht 5',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:true,diddyActive:true,maduroChance:.05,moveIval:[20000,14000,9500,6500,4500,3000],hoboMinMs:3500,hoboMaxMs:13000},
+  2:{label:'Nacht 2',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:false,chapoActive:false,diddyActive:false,bidenActive:true,maduroChance:.03,moveIval:[30000,22000,15000,10000,7000,4500],hoboMinMs:6000,hoboMaxMs:20000},
+  3:{label:'Nacht 3',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:false,diddyActive:false,bidenActive:true,maduroChance:.04,moveIval:[24000,17000,12000,8500,5500,3500],hoboMinMs:4500,hoboMaxMs:16000},
+  4:{label:'Nacht 4',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:true,diddyActive:false,bidenActive:true,maduroChance:.05,moveIval:[20000,14000,9500,6500,4500,3000],hoboMinMs:3500,hoboMaxMs:13000},
+  5:{label:'Nacht 5',gijsActive:true,hoboActive:true,tomActive:true,jeffreyActive:true,chapoActive:true,diddyActive:true,bidenActive:true,maduroChance:.05,moveIval:[20000,14000,9500,6500,4500,3000],hoboMinMs:3500,hoboMaxMs:13000},
 };
 
 // ══════════════════════════════════════════════════════
@@ -780,6 +822,9 @@ function initAudio(){
    ['muziek',FILES.muziek,true,0.45],['windUp',FILES.windUp,true,0.7],
    ['alarm',FILES.alarm,true,0.9],['shock',FILES.shock,false,0.95],
    ['cameraAlarm',FILES.cameraAlarm,false,0.9],['fiveAM',FILES.fiveAM,false,1.0],
+   ['bidenArrival',FILES.bidenArrival,false,1.0],
+   ['night5',FILES.night5,false,1.0],
+   ['menuMusic',FILES.menuMusic,true,0.55],
   ].forEach(([k,src,loop,vol])=>{const a=new Audio(src);a.loop=loop;a.volume=vol;a.preload='auto';SFX[k]=a;});
 }
 function play(k){try{const ac=getAudioCtx();if(ac&&ac.state==='suspended')ac.resume().catch(()=>{});const a=SFX[k];if(!a)return;a.currentTime=0;a.play().catch(()=>{});}catch(e){}}
@@ -812,7 +857,8 @@ function mkState(){
     diddyPos:POS.C0,diddyMoveTimer:null,diddyActive:cfg.diddyActive,diddyPath:null,
     alarmReady:true,alarmCD:0,alarmCDTimer:null,camOpen:false,curCam:0,
     lureReady:false,lureCD:LURE_CD_S,lureCDTimer:null,
-    tickTimer:null,timeTimer:null,dead:false,won:false,fiveAMDone:false};
+    tickTimer:null,timeTimer:null,dead:false,won:false,fiveAMDone:false,
+    bidenDoor:null,bidenKillTimer:null,bidenSpawnTimer:null};
 }
 
 let vrDeathCanvas,vrDeathCtx,vrDeathTex,vrDeathMesh;
@@ -857,15 +903,15 @@ function toggleCam(){if(!G||G.dead||G.won)return;G.camOpen=!G.camOpen;if(!G.camO
 function switchCam(id){if(!G||G.dead||G.won)return;if(G.maduroDisabled&&G.maduroDisabled[id]>0)return;if(id!==G.curCam)play('camSwitch');if(G.maduroPos===G.curCam&&id!==G.curCam)maduroDespawn();G.curCam=id;G.maduroWatchMs=0;if(SFX.muziek)SFX.muziek.volume=id===MUSIC_CAM_ID?0.55:0.15;highlightCamBtn(id);}window.switchCam=switchCam;
 function toggleDoor(side){
   if(!G||G.dead||G.won)return;
-  if(side==='left'){G.lfClosed=!G.lfClosed;doorAnim.left.target=G.lfClosed?0:1;if(G.lfClosed)play('doorClose');if(G.lfClosed&&G.mPos===POS.LD&&G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}else if(!G.lfClosed&&G.cfg.gijsActive&&G.mPos===POS.LD)armDoorTimer();}
-  else{G.rtClosed=!G.rtClosed;doorAnim.right.target=G.rtClosed?0:1;if(G.rtClosed)play('doorClose');if(G.rtClosed&&G.mPos===POS.RD&&G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}else if(!G.rtClosed&&G.cfg.gijsActive&&G.mPos===POS.RD)armDoorTimer();}
+  if(side==='left'){G.lfClosed=!G.lfClosed;doorAnim.left.target=G.lfClosed?0:1;if(G.lfClosed)play('doorClose');if(G.lfClosed&&G.bidenDoor==='left')bidenDismiss();if(G.lfClosed&&G.mPos===POS.LD&&G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}else if(!G.lfClosed&&G.cfg.gijsActive&&G.mPos===POS.LD)armDoorTimer();}
+  else{G.rtClosed=!G.rtClosed;doorAnim.right.target=G.rtClosed?0:1;if(G.rtClosed)play('doorClose');if(G.rtClosed&&G.bidenDoor==='right')bidenDismiss();if(G.rtClosed&&G.mPos===POS.RD&&G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}else if(!G.rtClosed&&G.cfg.gijsActive&&G.mPos===POS.RD)armDoorTimer();}
 }window.toggleDoor=toggleDoor;
 
 function inLureRange(){if(!G||!G.camOpen)return false;const adj={0:[1],1:[0,2],2:[1,3,4],3:[2,5],4:[2,6],5:[3],6:[4]};const gR=G.cfg.gijsActive&&G.curCam!==MUSIC_CAM_ID&&(G.mPos===G.curCam||(adj[G.mPos]||[]).includes(G.curCam));const hR=G.cfg.hoboActive&&G.curCam!==MUSIC_CAM_ID&&G.hoboPos===G.curCam;const dR=G.diddyActive&&G.curCam!==MUSIC_CAM_ID&&G.diddyPos===G.curCam;return gR||hR||dR;}
 function useLure(){if(!G||!G.lureReady||!inLureRange()||G.dead||G.won)return;if(G.cfg.hoboActive&&G.hoboPos===G.curCam&&G.curCam!==MUSIC_CAM_ID){triggerHoboJS();return;}play('lure');if(G.diddyActive&&G.diddyPos===G.curCam&&G.curCam!==MUSIC_CAM_ID){if(G.diddyMoveTimer)clearTimeout(G.diddyMoveTimer);G.diddyPos=Math.max(0,G.diddyPos-1);G.diddyPath=null;scheduleDiddyMove();}const pb={5:3,6:4,4:2,3:2,2:1,1:0,0:0};const np=pb[G.mPos];if(np!==undefined){G.mPos=np;if(G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}if(G.mRetreatTimer){clearTimeout(G.mRetreatTimer);G.mRetreatTimer=null;}}G.lureReady=false;G.lureCD=LURE_CD_S;clearInterval(G.lureCDTimer);G.lureCDTimer=setInterval(()=>{G.lureCD--;if(G.lureCD<=0){G.lureReady=true;G.lureCD=0;clearInterval(G.lureCDTimer);}},1000);}window.useLure=useLure;
 function useCameraAlarm(){if(!G||!G.alarmReady||G.dead||G.won)return;play('cameraAlarm');if(G.chapoActive&&(G.curCam===CHAPO_CAM_ID||G.chapoAlarm))resetChapo();if(G.diddyActive&&G.diddyPos===G.curCam&&G.curCam!==MUSIC_CAM_ID)resetDiddy();G.alarmReady=false;G.alarmCD=ALARM_CD_S;clearInterval(G.alarmCDTimer);G.alarmCDTimer=setInterval(()=>{G.alarmCD--;if(G.alarmCD<=0){G.alarmReady=true;G.alarmCD=0;clearInterval(G.alarmCDTimer);}},1000);}window.useCameraAlarm=useCameraAlarm;
 function startWindUp(){if(!G||G.dead||G.won||!G.camOpen||G.curCam!==MUSIC_CAM_ID||G.isWindingUp)return;G.isWindingUp=true;if(SFX.windUp){SFX.windUp.currentTime=0;SFX.windUp.play().catch(()=>{});}}window.startWindUp=startWindUp;
-function stopWindUp(){if(!G||!G.isWindingUp)return;G.isWindingUp=false;stop('windUp');}window.stopWindUp=stopWindUp;
+function stopWindUp(){if(!G)return;G.isWindingUp=false;stop('windUp');}window.stopWindUp=stopWindUp;
 
 // ══════════════════════════════════════════════════════
 //  AI SECTIONS 17-22
@@ -889,7 +935,62 @@ function maduroSpawn(id){G.maduroPos=id;G.maduroWatchMs=0;}
 function maduroDespawn(){if(G.maduroPos<0)return;G.maduroPos=-1;G.maduroWatchMs=0;}
 function tickMaduro(){if(G.dead||G.won)return;if(!G.maduroDisabled)G.maduroDisabled={};Object.keys(G.maduroDisabled).forEach(cId=>{if(G.maduroDisabled[cId]>0)G.maduroDisabled[cId]-=TICK_MS;if(G.maduroDisabled[cId]<0)G.maduroDisabled[cId]=0;});if(G.maduroPos>=0&&G.camOpen&&G.curCam===G.maduroPos&&!(G.maduroDisabled[G.curCam]>0)){G.maduroWatchMs+=TICK_MS;if(G.maduroWatchMs>=MADURO_WATCH_LIM)triggerMaduroDisable(G.maduroPos);}else if(G.maduroPos>=0)G.maduroWatchMs=0;}
 function triggerMaduroDisable(camId){play('shock');G.maduroPos=-1;G.maduroWatchMs=0;if(!G.maduroDisabled)G.maduroDisabled={};G.maduroDisabled[camId]=MADURO_DISABLE_MS;setTimeout(()=>{if(!G.dead&&!G.won&&G.camOpen&&G.curCam===camId){const other=CAMS.find(c=>c.id!==camId&&!(G.maduroDisabled&&G.maduroDisabled[c.id]>0));if(other)switchCam(other.id);}},2200);}
-function tickMusicBox(){if(!G.cfg.tomActive||G.dead||G.won)return;if(!G.isWindingUp){const drain=MB_DRAIN_BASE+MB_DRAIN_SCALE*Math.min(G.hour,5);G.musicBox=Math.max(0,G.musicBox-drain);if(G.musicBox<=0)triggerTomJS();}if(SFX.muziek)SFX.muziek.playbackRate=G.musicBox>50?1:G.musicBox>25?0.82:G.musicBox>10?0.62:0.4;}
+function tickMusicBox(){
+  if(!G.cfg.tomActive||G.dead||G.won)return;
+  // Auto-stop winding if player switched away from music cam or closed cameras
+  if(G.isWindingUp&&(!G.camOpen||G.curCam!==MUSIC_CAM_ID)){stopWindUp();}
+  // Drain only — winding increment is handled per-frame in pollGamepads
+  if(!G.isWindingUp){
+    const drain=MB_DRAIN_BASE+MB_DRAIN_SCALE*Math.min(G.hour,5);
+    G.musicBox=Math.max(0,G.musicBox-drain);
+    if(G.musicBox<=0)triggerTomJS();
+  }
+  if(SFX.muziek)SFX.muziek.playbackRate=G.musicBox>50?1:G.musicBox>25?0.82:G.musicBox>10?0.62:0.4;
+}
+
+// ══════════════════════════════════════════════════════
+//  BIDEN AI
+// ══════════════════════════════════════════════════════
+const BIDEN_APPEAR_IV=10000,BIDEN_CHANCE=0.10,BIDEN_KILL_DELAY=5000;
+
+function scheduleBiden(){
+  if(G.bidenSpawnTimer)clearInterval(G.bidenSpawnTimer);
+  if(G.dead||G.won||!G.cfg.bidenActive)return;
+  G.bidenSpawnTimer=setInterval(()=>{
+    if(G.dead||G.won||G.bidenDoor!==null)return;
+    if(Math.random()<BIDEN_CHANCE){
+      const side=Math.random()<0.5?'left':'right';
+      bidenArrive(side);
+    }
+  },BIDEN_APPEAR_IV);
+}
+
+function bidenArrive(side){
+  if(G.dead||G.won)return;
+  G.bidenDoor=side;
+  play('bidenArrival');
+  showBidenSprite(side);
+  // Start kill timer — player has BIDEN_KILL_DELAY ms to close the door
+  if(G.bidenKillTimer)clearTimeout(G.bidenKillTimer);
+  G.bidenKillTimer=setTimeout(()=>{
+    if(G.dead||G.won||G.bidenDoor===null)return;
+    const closed=(side==='left')?G.lfClosed:G.rtClosed;
+    if(!closed)triggerBidenJS();
+  },BIDEN_KILL_DELAY);
+}
+
+function bidenDismiss(){
+  // Called when the relevant door is closed while Biden is present
+  if(!G||G.bidenDoor===null)return;
+  if(G.bidenKillTimer){clearTimeout(G.bidenKillTimer);G.bidenKillTimer=null;}
+  G.bidenDoor=null;
+  hideBidenSprites();
+}
+
+function triggerBidenJS(){
+  hideBidenSprites();
+  doJumpscare(FILES.bidenJS,'Biden heeft je gevonden. "Come on, man."');
+}
 
 // ══════════════════════════════════════════════════════
 //  SECTION 25 — JUMPSCARE & DEATH
@@ -908,15 +1009,161 @@ function triggerChapoJS(){if(!G||G.dead)return;stop('alarm');doJumpscare(FILES.c
 function triggerDiddyJS(){if(!G||G.dead)return;doJumpscare(FILES.diddyJS,'Diddy heeft je gevonden.');}
 
 function triggerWin(){
-  if(!G||G.won||G.dead)return;G.won=true;killTimers();stopAll();play('win');
-  const ctx=vrDeathCtx,W=768,H=512;ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='rgba(0,10,2,0.95)';ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#22dd55';ctx.font='bold 72px monospace';ctx.textAlign='center';ctx.fillText('6:00 AM',W/2,100);
-  ctx.fillStyle='#226633';ctx.font='24px monospace';ctx.fillText('OVERLEEFD',W/2,150);
-  ctx.fillStyle='#3a6a3a';ctx.font='18px monospace';ctx.fillText('"Most students don\'t make it past 3 AM."',W/2,220);
-  ctx.fillStyle='#226622';ctx.font='18px monospace';ctx.fillText('Kijk naar de OPNIEUW knop',W/2,H-60);
-  vrDeathTex.needsUpdate=true;vrDeathMesh.visible=true;
-  if(vrRestartBtn){vrRestartBtn.visible=true;if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=true;if(!interactables.includes(vrRestartBtn))interactables.push(vrRestartBtn);}
+  if(!G||G.won||G.dead)return;G.won=true;killTimers();stopAll();
+  if(G.night===5){
+    play('night5');
+    buildEndingScene();
+  } else {
+    play('win');
+    const ctx=vrDeathCtx,W=768,H=512;ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='rgba(0,10,2,0.95)';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#22dd55';ctx.font='bold 72px monospace';ctx.textAlign='center';ctx.fillText('6:00 AM',W/2,100);
+    ctx.fillStyle='#226633';ctx.font='24px monospace';ctx.fillText('OVERLEEFD',W/2,150);
+    ctx.fillStyle='#3a6a3a';ctx.font='18px monospace';ctx.fillText('"Most students don\'t make it past 3 AM."',W/2,220);
+    ctx.fillStyle='#226622';ctx.font='18px monospace';ctx.fillText('Kijk naar de OPNIEUW knop',W/2,H-60);
+    vrDeathTex.needsUpdate=true;vrDeathMesh.visible=true;
+    if(vrRestartBtn){vrRestartBtn.visible=true;if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=true;if(!interactables.includes(vrRestartBtn))interactables.push(vrRestartBtn);}
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  NIGHT 5 ENDING SCENE
+// ══════════════════════════════════════════════════════
+let endingActive=false;
+const endingGroup=new THREE.Group();scene.add(endingGroup);endingGroup.visible=false;
+
+function buildEndingScene(){
+  endingActive=true;
+  // Hide all room objects
+  scene.children.forEach(obj=>{if(obj!==endingGroup&&obj!==camera)obj.visible=false;});
+  endingGroup.visible=true;
+
+  // ── SKY ──
+  endingGroup.add(new THREE.Mesh(
+    new THREE.SphereGeometry(80,16,16),
+    new THREE.MeshBasicMaterial({color:0x02040f,side:THREE.BackSide})
+  ));
+
+  // ── STARS ──
+  const starGeo=new THREE.BufferGeometry();
+  const starPos=new Float32Array(1800*3);
+  for(let i=0;i<1800;i++){
+    const theta=Math.random()*Math.PI*2;
+    const phi=Math.acos(Math.random()*0.96);
+    const r=65+Math.random()*10;
+    starPos[i*3]=r*Math.sin(phi)*Math.cos(theta);
+    starPos[i*3+1]=r*Math.abs(Math.cos(phi));
+    starPos[i*3+2]=r*Math.sin(phi)*Math.sin(theta);
+  }
+  starGeo.setAttribute('position',new THREE.BufferAttribute(starPos,3));
+  endingGroup.add(new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xffffff,size:0.28,sizeAttenuation:true})));
+
+  // ── MOON ──
+  const moonMesh=new THREE.Mesh(new THREE.SphereGeometry(2.2,16,16),new THREE.MeshBasicMaterial({color:0xdde8ff}));
+  moonMesh.position.set(28,36,-55);endingGroup.add(moonMesh);
+  const halo=new THREE.Mesh(new THREE.SphereGeometry(3.4,12,12),new THREE.MeshBasicMaterial({color:0x7788bb,transparent:true,opacity:0.10,side:THREE.BackSide}));
+  halo.position.copy(moonMesh.position);endingGroup.add(halo);
+
+  // ── GROUND HILL ──
+  const hillGeo=new THREE.PlaneGeometry(160,80,60,30);
+  const hPos=hillGeo.attributes.position;
+  for(let i=0;i<hPos.count;i++){
+    const x=hPos.getX(i),z=hPos.getY(i);
+    const dist=Math.sqrt(x*x+(z+8)*(z+8));
+    const y=Math.max(0,2.6*Math.exp(-dist*dist/900))
+             +0.35*Math.sin(x*0.17)*Math.cos(z*0.13)
+             +0.18*Math.sin(x*0.4+1.0)*Math.sin(z*0.28);
+    hPos.setZ(i,y);
+  }
+  hillGeo.computeVertexNormals();
+  const hillMesh=new THREE.Mesh(hillGeo,new THREE.MeshLambertMaterial({color:0x081505}));
+  hillMesh.rotation.x=-Math.PI/2;hillMesh.position.set(0,-1.6,0);
+  endingGroup.add(hillMesh);
+
+  // ── LIGHTS ──
+  endingGroup.add(new THREE.AmbientLight(0x0a0f1a,0.9));
+  const mLight=new THREE.DirectionalLight(0x2a3a55,0.6);mLight.position.set(28,36,-55);endingGroup.add(mLight);
+
+  // ── ENEMY SILHOUETTES ──
+  const sils=[
+    {key:'gijsJS',x:-26},{key:'hoboGijsJS',x:-16},{key:'tomJS',x:-7},
+    {key:'jeffreyJS',x:2},{key:'chapoJS',x:11},{key:'diddyJS',x:20},{key:'bidenJS',x:30}
+  ];
+  sils.forEach((s,idx)=>{
+    new THREE.TextureLoader().load(FILES[s.key],tex=>{
+      if(!endingActive)return;
+      const aspect=(tex.image&&tex.image.naturalWidth&&tex.image.naturalHeight)?(tex.image.naturalWidth/tex.image.naturalHeight):0.45;
+      const h=3.0,w=h*aspect;
+      const mat=new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:0.08,color:0x000000});
+      const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);
+      mesh.position.set(s.x,-0.1,-26);
+      endingGroup.add(mesh);
+    },undefined,()=>{
+      // fallback plain silhouette
+      const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1.3,3.0),new THREE.MeshBasicMaterial({color:0x000000}));
+      mesh.position.set(s.x,-0.1,-26);endingGroup.add(mesh);
+    });
+  });
+
+  // ── TEXT (attached to camera, fades in) ──
+  const txtCanvas=document.createElement('canvas');txtCanvas.width=1024;txtCanvas.height=320;
+  const txtCtx=txtCanvas.getContext('2d');
+  txtCtx.clearRect(0,0,1024,320);
+  const lines=[
+    {t:'Je bent een van de weinige die ontsnapt is uit de kelder.',bold:false,size:21},
+    {t:'',bold:false,size:21},
+    {t:'Er is niks meer om te bereiken.',bold:true,size:24},
+    {t:'Je hebt nu eindelijk rust.',bold:true,size:24},
+  ];
+  let ly=60;
+  lines.forEach(l=>{
+    txtCtx.font=(l.bold?'bold ':'')+l.size+'px Georgia, serif';
+    txtCtx.fillStyle=l.bold?'rgba(210,225,255,0.95)':'rgba(160,180,220,0.80)';
+    txtCtx.textAlign='center';
+    txtCtx.fillText(l.t,512,ly);
+    ly+=l.size+18;
+  });
+  const txtTex=new THREE.CanvasTexture(txtCanvas);
+  txtTex.minFilter=THREE.LinearFilter;txtTex.generateMipmaps=false;
+  const txtMesh=new THREE.Mesh(
+    new THREE.PlaneGeometry(3.0,0.94),
+    new THREE.MeshBasicMaterial({map:txtTex,transparent:true,opacity:0,depthWrite:false})
+  );
+  txtMesh.position.set(0,-0.5,-3.5);
+  txtMesh.userData._endingText=true;
+  camera.add(txtMesh);
+
+  // Position camera on hilltop looking at horizon
+  camera.position.set(0,0.2,3.5);
+
+  // Fade in text after 3s
+  setTimeout(()=>{
+    let op=0;
+    const fadeTxt=setInterval(()=>{
+      if(!endingActive){clearInterval(fadeTxt);return;}
+      op=Math.min(1,op+0.008);
+      txtMesh.material.opacity=op;
+      if(op>=1)clearInterval(fadeTxt);
+    },30);
+  },3000);
+
+  // Show restart after 10s
+  setTimeout(()=>{
+    if(!endingActive)return;
+    if(vrRestartBtn){
+      vrRestartBtn.visible=true;
+      if(vrRestartBtn.userData._label)vrRestartBtn.userData._label.visible=true;
+      if(!interactables.includes(vrRestartBtn))interactables.push(vrRestartBtn);
+    }
+  },10000);
+}
+
+function teardownEndingScene(){
+  endingActive=false;
+  camera.children.filter(c=>c.userData&&c.userData._endingText).forEach(c=>camera.remove(c));
+  while(endingGroup.children.length)endingGroup.remove(endingGroup.children[0]);
+  endingGroup.visible=false;
+  scene.children.forEach(obj=>{obj.visible=true;});
 }
 
 // ══════════════════════════════════════════════════════
@@ -941,7 +1188,8 @@ function tickTime(){
 function killTimers(){
   if(!G)return;
   [G.tickTimer,G.timeTimer,G.mMoveTimer,G.mDoorTimer,G.mRetreatTimer,G.lureCDTimer,
-   G.hoboMoveTimer,G.chapoKillTimer,G.maduroTimer,G.diddyMoveTimer,G.alarmCDTimer
+   G.hoboMoveTimer,G.chapoKillTimer,G.maduroTimer,G.diddyMoveTimer,G.alarmCDTimer,
+   G.bidenKillTimer,G.bidenSpawnTimer
   ].forEach(t=>{if(t){try{clearInterval(t);clearTimeout(t);}catch(e){}}});
 }
 
@@ -957,6 +1205,8 @@ function startGame(){
   doorAnim.left.open=1;doorAnim.left.target=1;doorAnim.right.open=1;doorAnim.right.target=1;
   if(doorMeshes.left)doorMeshes.left.position.y=-0.5;if(doorMeshes.right)doorMeshes.right.position.y=-0.5;
   initAudio();
+  // Stop menu music if playing
+  if(window._menuAudio){window._menuAudio.pause();window._menuAudio.currentTime=0;window._menuAudio=null;}
   const ac=getAudioCtx();
   if(ac&&ac.state==='suspended')ac.resume().then(()=>{play('ambience');}).catch(()=>{play('ambience');});
   else play('ambience');
@@ -971,12 +1221,14 @@ function startGame(){
   scheduleMaduro();
   if(G.jeffreyActive){G.jeffreyStep=0;G.jeffreyPos=JEFFREY_PATH[0];G.jeffreyTimer=JEFFREY_SWITCH_S;}
   if(G.diddyActive)setTimeout(scheduleDiddyMove,8000);
+  if(G.cfg.bidenActive)scheduleBiden();
   drawBigScreen();drawWallStatusScreen();updateCooldownButtons();
 }
 window.startGame=startGame;
 
 function restartGame(){
   killTimers();stopAll();
+  if(endingActive)teardownEndingScene();
   if(G){G.running=false;G.dead=false;G.won=false;}G=null;
   gameTimeStr='12:00 AM';alarmSphereMat.opacity=0;
   doorAnim.left.open=1;doorAnim.left.target=1;doorAnim.right.open=1;doorAnim.right.target=1;
@@ -990,9 +1242,15 @@ window.restartGame=restartGame;
 document.getElementById('warnBtn').addEventListener('click',()=>{
   document.getElementById('warnScreen').style.display='none';
   if(xrSupported){requestVRSession();setTimeout(showVRMenu,800);}
+  // Start menu music — a simple Audio element so it works before full initAudio()
+  const menuAudio=new Audio('Audio/Music.mp3');
+  menuAudio.loop=true;menuAudio.volume=0.55;
+  menuAudio.play().catch(()=>{});
+  window._menuAudio=menuAudio;
 });
 
 buildRoom();
+buildBidenSprites();
 Object.values(FILES).forEach(src=>{if(src.endsWith('.png')||src.endsWith('.jpg')){const i=new Image();i.src=src;}});
 CAMS.forEach(c=>loadCamBg(c.id,()=>{}));
 </script>
