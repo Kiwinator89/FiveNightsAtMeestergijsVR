@@ -104,13 +104,18 @@ function onTriggerRelease(idx){
   if(idx===1){rightTriggerHeld=false;} // stopWindUp handled by pollGamepads
   if(idx===0)leftTriggerHeld=false;
 }
-function pollGamepads(){
+function pollGamepads(dt){
   if(!G||!G.running)return;
   if(rightTriggerHeld){
     const hit=castFromController(1);
     const aimingAtWind=hit&&hit.userData.action==='windUp';
     if(aimingAtWind){
       if(!G.isWindingUp)startWindUp();
+      // Wind the music box directly here every frame using delta time
+      // 20 units per second (same as before: 8 per 400ms tick)
+      if(G.camOpen&&G.curCam===MUSIC_CAM_ID){
+        G.musicBox=Math.min(100,G.musicBox+20*dt);
+      }
     } else {
       if(G.isWindingUp)stopWindUp();
     }
@@ -682,9 +687,9 @@ function redrawVRMenu(){
   ctx.fillStyle='#cc0000';ctx.font='bold 48px monospace';ctx.textAlign='center';
   ctx.fillText('FIVE NIGHTS AT',512,70);ctx.fillText('MEESTER GIJS',512,128);
   ctx.fillStyle='#333';ctx.font='16px monospace';ctx.fillText('VR EDITION',512,165);
-  [{n:1,l:'NACHT 1',s:'Meester Gijs · Hobo Meester Gijs',y:242},{n:2,l:'NACHT 2',s:'+Tumor Tom +Joe Biden',y:310},
-   {n:3,l:'NACHT 3',s:'+Jeffrey · Biden',y:378},{n:4,l:'NACHT 4',s:'+El Chapo',y:446},
-   {n:5,l:'NACHT 5',s:'MEESTER GIJS ZIJN LAATSTE TEST',y:514}].forEach(n=>{
+  [{n:1,l:'NACHT 1',s:'Gijs · Hobo',y:242},{n:2,l:'NACHT 2',s:'+Tom · Biden',y:310},
+   {n:3,l:'NACHT 3',s:'+Jeffrey · Biden',y:378},{n:4,l:'NACHT 4',s:'+Chapo · Biden',y:446},
+   {n:5,l:'NACHT 5',s:'ALLES + Biden',y:514}].forEach(n=>{
     const sel=selectedNight===n.n,hov=vrMenuHovered===('night:'+n.n);
     const bg=sel?'rgba(120,0,0,0.55)':hov?'rgba(60,0,0,0.45)':'rgba(20,0,0,0.3)';
     const brd=sel?'#cc0000':hov?'#660000':'#330000';
@@ -736,7 +741,7 @@ renderer.setAnimationLoop(time=>{
   }
 
   updateJsPlane(dt);
-  pollGamepads();
+  pollGamepads(dt);
   updatePointerHighlight();
   if(G&&G.running){updateCooldownButtons();drawDigitalClock();}
 
@@ -930,9 +935,8 @@ function tickMusicBox(){
   if(!G.cfg.tomActive||G.dead||G.won)return;
   // Auto-stop winding if player switched away from music cam or closed cameras
   if(G.isWindingUp&&(!G.camOpen||G.curCam!==MUSIC_CAM_ID)){stopWindUp();}
-  if(G.isWindingUp&&G.camOpen&&G.curCam===MUSIC_CAM_ID){
-    G.musicBox=Math.min(100,G.musicBox+MB_WIND_RATE);
-  }else{
+  // Drain only — winding increment is handled per-frame in pollGamepads
+  if(!G.isWindingUp){
     const drain=MB_DRAIN_BASE+MB_DRAIN_SCALE*Math.min(G.hour,5);
     G.musicBox=Math.max(0,G.musicBox-drain);
     if(G.musicBox<=0)triggerTomJS();
@@ -943,7 +947,7 @@ function tickMusicBox(){
 // ══════════════════════════════════════════════════════
 //  BIDEN AI
 // ══════════════════════════════════════════════════════
-const BIDEN_APPEAR_IV=10000,BIDEN_CHANCE=0.10,BIDEN_KILL_DELAY=8000;
+const BIDEN_APPEAR_IV=10000,BIDEN_CHANCE=0.10,BIDEN_KILL_DELAY=5000;
 
 function scheduleBiden(){
   if(G.bidenSpawnTimer)clearInterval(G.bidenSpawnTimer);
