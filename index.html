@@ -94,9 +94,13 @@ for(let i=0;i<2;i++){
   scene.add(ctrl);scene.add(renderer.xr.getControllerGrip(i));
   controllers[i]=ctrl;
 }
+// Trigger state — beide controllers bijhouden
+const triggerHeld=[false,false];
+
 function onTriggerPress(idx){
-  if(idx===1)rightTriggerHeld=true;
-  if(idx===0)leftTriggerHeld=true;
+  triggerHeld[idx]=true;
+  rightTriggerHeld=triggerHeld[0]||triggerHeld[1];
+  leftTriggerHeld=triggerHeld[0]||triggerHeld[1];
   const hit=castFromController(idx);
   if(hit&&hit.userData.vrMenuAction==='restart'){restartGame();return;}
   if(hit&&hit.userData.vrMenuAction==='briefingStart'){hideBriefing();startGame();return;}
@@ -104,13 +108,34 @@ function onTriggerPress(idx){
   if(!G||!G.running)return;
   if(hit&&hit.userData.action){const a=hit.userData.action;if(a==='windUp')return;handleVRAction(a);return;}
 }
-function onTriggerRelease(idx){if(idx===1){rightTriggerHeld=false;}if(idx===0)leftTriggerHeld=false;}
+function onTriggerRelease(idx){
+  triggerHeld[idx]=false;
+  rightTriggerHeld=triggerHeld[0]||triggerHeld[1];
+  leftTriggerHeld=false;
+}
+
 function pollGamepads(dt){
   if(!G||!G.running)return;
-  if(rightTriggerHeld&&G.camOpen&&G.curCam===MUSIC_CAM_ID&&G.cfg.tomActive){
-    // Kijk of speler naar de windUp knop wijst
-    const hit=castFromController(1)||castFromController(0);
-    const aimingAtWind=hit&&hit.userData.action==='windUp';
+
+  // Gamepad API als extra backup voor trigger detectie
+  let anyTriggerDown=triggerHeld[0]||triggerHeld[1];
+  if(!anyTriggerDown&&navigator.getGamepads){
+    const pads=navigator.getGamepads();
+    for(const pad of pads){
+      if(!pad)continue;
+      // Quest trigger = axes[0] of buttons[0] (select)
+      if(pad.buttons&&pad.buttons[0]&&pad.buttons[0].pressed){anyTriggerDown=true;break;}
+      if(pad.buttons&&pad.buttons[1]&&pad.buttons[1].pressed){anyTriggerDown=true;break;}
+    }
+  }
+
+  if(anyTriggerDown&&G.camOpen&&G.curCam===MUSIC_CAM_ID&&G.cfg.tomActive){
+    // Check beide controllers op windUp knop
+    let aimingAtWind=false;
+    for(let i=0;i<2;i++){
+      const hit=castFromController(i);
+      if(hit&&hit.userData.action==='windUp'){aimingAtWind=true;break;}
+    }
     if(aimingAtWind){
       if(!G.isWindingUp)startWindUp();
       G.musicBox=Math.min(100,G.musicBox+20*dt);
