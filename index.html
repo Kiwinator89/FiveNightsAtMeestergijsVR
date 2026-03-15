@@ -108,8 +108,9 @@ function pollGamepads(){
   if(G&&G.running&&rightTriggerHeld){
     const hit=castFromController(1);
     if(hit&&hit.userData.action==='windUp'){if(!G.isWindingUp)startWindUp();}
-    else if(G.isWindingUp&&!hit)stopWindUp();
+    else if(G.isWindingUp)stopWindUp();
   }
+  if(!rightTriggerHeld&&G&&G.isWindingUp)stopWindUp();
 }
 
 // ══════════════════════════════════════════════════════
@@ -890,7 +891,7 @@ function inLureRange(){if(!G||!G.camOpen)return false;const adj={0:[1],1:[0,2],2
 function useLure(){if(!G||!G.lureReady||!inLureRange()||G.dead||G.won)return;if(G.cfg.hoboActive&&G.hoboPos===G.curCam&&G.curCam!==MUSIC_CAM_ID){triggerHoboJS();return;}play('lure');if(G.diddyActive&&G.diddyPos===G.curCam&&G.curCam!==MUSIC_CAM_ID){if(G.diddyMoveTimer)clearTimeout(G.diddyMoveTimer);G.diddyPos=Math.max(0,G.diddyPos-1);G.diddyPath=null;scheduleDiddyMove();}const pb={5:3,6:4,4:2,3:2,2:1,1:0,0:0};const np=pb[G.mPos];if(np!==undefined){G.mPos=np;if(G.mDoorTimer){clearTimeout(G.mDoorTimer);G.mDoorTimer=null;}if(G.mRetreatTimer){clearTimeout(G.mRetreatTimer);G.mRetreatTimer=null;}}G.lureReady=false;G.lureCD=LURE_CD_S;clearInterval(G.lureCDTimer);G.lureCDTimer=setInterval(()=>{G.lureCD--;if(G.lureCD<=0){G.lureReady=true;G.lureCD=0;clearInterval(G.lureCDTimer);}},1000);}window.useLure=useLure;
 function useCameraAlarm(){if(!G||!G.alarmReady||G.dead||G.won)return;play('cameraAlarm');if(G.chapoActive&&(G.curCam===CHAPO_CAM_ID||G.chapoAlarm))resetChapo();if(G.diddyActive&&G.diddyPos===G.curCam&&G.curCam!==MUSIC_CAM_ID)resetDiddy();G.alarmReady=false;G.alarmCD=ALARM_CD_S;clearInterval(G.alarmCDTimer);G.alarmCDTimer=setInterval(()=>{G.alarmCD--;if(G.alarmCD<=0){G.alarmReady=true;G.alarmCD=0;clearInterval(G.alarmCDTimer);}},1000);}window.useCameraAlarm=useCameraAlarm;
 function startWindUp(){if(!G||G.dead||G.won||!G.camOpen||G.curCam!==MUSIC_CAM_ID||G.isWindingUp)return;G.isWindingUp=true;if(SFX.windUp){SFX.windUp.currentTime=0;SFX.windUp.play().catch(()=>{});}}window.startWindUp=startWindUp;
-function stopWindUp(){if(!G||!G.isWindingUp)return;G.isWindingUp=false;stop('windUp');}window.stopWindUp=stopWindUp;
+function stopWindUp(){if(!G)return;G.isWindingUp=false;stop('windUp');}window.stopWindUp=stopWindUp;
 
 // ══════════════════════════════════════════════════════
 //  AI SECTIONS 17-22
@@ -914,7 +915,19 @@ function maduroSpawn(id){G.maduroPos=id;G.maduroWatchMs=0;}
 function maduroDespawn(){if(G.maduroPos<0)return;G.maduroPos=-1;G.maduroWatchMs=0;}
 function tickMaduro(){if(G.dead||G.won)return;if(!G.maduroDisabled)G.maduroDisabled={};Object.keys(G.maduroDisabled).forEach(cId=>{if(G.maduroDisabled[cId]>0)G.maduroDisabled[cId]-=TICK_MS;if(G.maduroDisabled[cId]<0)G.maduroDisabled[cId]=0;});if(G.maduroPos>=0&&G.camOpen&&G.curCam===G.maduroPos&&!(G.maduroDisabled[G.curCam]>0)){G.maduroWatchMs+=TICK_MS;if(G.maduroWatchMs>=MADURO_WATCH_LIM)triggerMaduroDisable(G.maduroPos);}else if(G.maduroPos>=0)G.maduroWatchMs=0;}
 function triggerMaduroDisable(camId){play('shock');G.maduroPos=-1;G.maduroWatchMs=0;if(!G.maduroDisabled)G.maduroDisabled={};G.maduroDisabled[camId]=MADURO_DISABLE_MS;setTimeout(()=>{if(!G.dead&&!G.won&&G.camOpen&&G.curCam===camId){const other=CAMS.find(c=>c.id!==camId&&!(G.maduroDisabled&&G.maduroDisabled[c.id]>0));if(other)switchCam(other.id);}},2200);}
-function tickMusicBox(){if(!G.cfg.tomActive||G.dead||G.won)return;if(G.isWindingUp&&G.camOpen&&G.curCam===MUSIC_CAM_ID)G.musicBox=Math.min(100,G.musicBox+MB_WIND_RATE);else{const drain=MB_DRAIN_BASE+MB_DRAIN_SCALE*Math.min(G.hour,5);G.musicBox=Math.max(0,G.musicBox-drain);if(G.musicBox<=0)triggerTomJS();}if(SFX.muziek)SFX.muziek.playbackRate=G.musicBox>50?1:G.musicBox>25?0.82:G.musicBox>10?0.62:0.4;}
+function tickMusicBox(){
+  if(!G.cfg.tomActive||G.dead||G.won)return;
+  // Auto-stop winding if player switched away from music cam or closed cameras
+  if(G.isWindingUp&&(!G.camOpen||G.curCam!==MUSIC_CAM_ID)){stopWindUp();}
+  if(G.isWindingUp&&G.camOpen&&G.curCam===MUSIC_CAM_ID){
+    G.musicBox=Math.min(100,G.musicBox+MB_WIND_RATE);
+  }else{
+    const drain=MB_DRAIN_BASE+MB_DRAIN_SCALE*Math.min(G.hour,5);
+    G.musicBox=Math.max(0,G.musicBox-drain);
+    if(G.musicBox<=0)triggerTomJS();
+  }
+  if(SFX.muziek)SFX.muziek.playbackRate=G.musicBox>50?1:G.musicBox>25?0.82:G.musicBox>10?0.62:0.4;
+}
 
 // ══════════════════════════════════════════════════════
 //  BIDEN AI
