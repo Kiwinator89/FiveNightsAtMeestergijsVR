@@ -99,6 +99,7 @@ function onTriggerPress(idx){
   if(idx===0)leftTriggerHeld=true;
   const hit=castFromController(idx);
   if(hit&&hit.userData.vrMenuAction==='restart'){restartGame();return;}
+  if(hit&&hit.userData.vrMenuAction==='briefingStart'){hideBriefing();startGame();return;}
   if(vrMenuState!=='hidden'){if(hit&&hit.userData.vrMenuAction){handleVRMenuClick(hit.userData.vrMenuAction);return;}return;}
   if(!G||!G.running)return;
   if(hit&&hit.userData.action){const a=hit.userData.action;if(a==='windUp')return;handleVRAction(a);return;}
@@ -681,8 +682,9 @@ function redrawVRMenu(){
 }
 function handleVRMenuClick(action){
   if(action==='restart'){restartGame();return;}
+  if(action==='briefingStart'){hideBriefing();startGame();return;}
   if(action.startsWith('night:')){selectNight(parseInt(action.split(':')[1]));redrawVRMenu();}
-  else if(action==='start'&&selectedNight>0){hideVRMenu();startGame();}
+  else if(action==='start'&&selectedNight>0){hideVRMenu();showBriefing();}
 }
 function showVRMenu(){
   vrMenuState='visible';vrMenuGroup.visible=true;
@@ -692,6 +694,111 @@ function showVRMenu(){
   vrMenuGroup.lookAt(camera.position);redrawVRMenu();
 }
 function hideVRMenu(){vrMenuState='hidden';vrMenuGroup.visible=false;vrMenuHovered=null;}
+
+// ══════════════════════════════════════════════════════
+//  BRIEFING SCHERM — toont karakter hints voor de nacht
+// ══════════════════════════════════════════════════════
+const briefingGroup=new THREE.Group();scene.add(briefingGroup);briefingGroup.visible=false;
+const briefingCanvas=document.createElement('canvas');briefingCanvas.width=1024;briefingCanvas.height=768;
+const briefingCtx=briefingCanvas.getContext('2d');
+const briefingTex=new THREE.CanvasTexture(briefingCanvas);
+const briefingMesh=new THREE.Mesh(new THREE.PlaneGeometry(2.8,2.1),new THREE.MeshBasicMaterial({map:briefingTex,transparent:true}));
+briefingMesh.position.set(0,0,0);briefingGroup.add(briefingMesh);
+
+// Onzichtbare klik-knop onderaan
+const briefingBtn=new THREE.Mesh(new THREE.PlaneGeometry(2.2,0.28),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+briefingBtn.position.set(0,-0.88,0.02);briefingBtn.userData.vrMenuAction='briefingStart';briefingBtn.userData._origColor=0x000000;
+briefingGroup.add(briefingBtn);interactables.push(briefingBtn);
+
+const CHAR_HINTS={
+  gijs:   {name:'MEESTER GIJS',    color:'#cc2200', hint:'Wordt gelokt door geluid. Kijk op de camera\'s om te zien door welke deur hij binnenkomt — en sluit hem buiten.'},
+  hobo:   {name:'HOBO MEESTER GIJS',color:'#884400', hint:'Hij houdt niet van geluid. Gebruik het lokken alleen als je zeker weet met wie je te maken hebt.'},
+  tom:    {name:'TUMOR TOM',       color:'#880088', hint:'Je wilt er niet achter komen wat er gebeurt als de muziek stopt met spelen...'},
+  jeffrey:{name:'JEFFREY EPSTEIN', color:'#006688', hint:'Hij vindt het niet leuk om aangekeken te worden. Staar naar hem op de camera om hem op zijn plek te houden.'},
+  chapo:  {name:'EL CHAPO',        color:'#558800', hint:'Hij sluipt dichterbij terwijl je niet kijkt. Houd hem in de gaten — of gebruik je alarm als het te laat is.'},
+  diddy:  {name:'DIDDY',           color:'#660044', hint:'Gebruik je alarm en audiosysteem slim om hem tegen te houden. Hij laat zich niet zomaar afschrikken.'},
+  biden:  {name:'JOE BIDEN',       color:'#336699', hint:'Je hoort hem aankomen. Sluit de juiste deur — anders volgen er dodelijke consequenties.'},
+};
+
+const NIGHT_CHARS={
+  1:['gijs','hobo'],
+  2:['gijs','hobo','tom','biden'],
+  3:['gijs','hobo','tom','biden','jeffrey'],
+  4:['gijs','hobo','tom','biden','jeffrey','chapo'],
+  5:['gijs','hobo','tom','biden','jeffrey','chapo','diddy'],
+};
+
+function drawBriefing(){
+  const ctx=briefingCtx,W=1024,H=768;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='rgba(2,0,0,0.97)';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#550000';ctx.lineWidth=3;ctx.strokeRect(6,6,W-12,H-12);
+  ctx.strokeStyle='#220000';ctx.lineWidth=1;ctx.strokeRect(12,12,W-24,H-24);
+
+  // Titel
+  ctx.fillStyle='#cc0000';ctx.font='bold 28px monospace';ctx.textAlign='center';
+  ctx.fillText('VEILIGHEIDSBRIEFING',W/2,52);
+  ctx.fillStyle='#441111';ctx.font='16px monospace';
+  ctx.fillText(`NACHT ${selectedNight} — BEKENDE BEDREIGINGEN`,W/2,78);
+  ctx.strokeStyle='#330000';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(40,92);ctx.lineTo(W-40,92);ctx.stroke();
+
+  const chars=NIGHT_CHARS[selectedNight]||[];
+  const cols=chars.length<=4?1:2;
+  const colW=cols===1?(W-80):((W-100)/2);
+  const startY=110;
+  const rowH=cols===1?84:102;
+
+  chars.forEach((key,i)=>{
+    const c=CHAR_HINTS[key];if(!c)return;
+    const col=cols===2?i%2:0;
+    const row=cols===2?Math.floor(i/2):i;
+    const bx=40+col*(colW+20);
+    const by=startY+row*rowH;
+    const bw=colW;const bh=rowH-8;
+
+    // Kaart achtergrond
+    ctx.fillStyle='rgba(15,0,0,0.7)';ctx.fillRect(bx,by,bw,bh);
+    ctx.strokeStyle=c.color+'55';ctx.lineWidth=1;ctx.strokeRect(bx,by,bw,bh);
+
+    // Kleurstrip links
+    ctx.fillStyle=c.color+'88';ctx.fillRect(bx,by,4,bh);
+
+    // Naam
+    ctx.fillStyle=c.color;ctx.font='bold 14px monospace';ctx.textAlign='left';
+    ctx.fillText(c.name,bx+14,by+20);
+
+    // Hint tekst — wrappen
+    ctx.fillStyle='#aa8877';ctx.font='13px monospace';
+    const words=c.hint.split(' ');let line='',ly=by+38,lh=16;
+    const maxW=bw-20;
+    words.forEach(w=>{
+      const test=line+w+' ';
+      if(ctx.measureText(test).width>maxW&&line){
+        ctx.fillText(line.trim(),bx+14,ly);ly+=lh;line=w+' ';
+      }else line=test;
+    });
+    if(line)ctx.fillText(line.trim(),bx+14,ly);
+  });
+
+  // Start knop
+  const btnY=H-70;
+  ctx.fillStyle='#004400';ctx.fillRect(180,btnY,W-360,50);
+  ctx.strokeStyle='#00aa44';ctx.lineWidth=2;ctx.strokeRect(180,btnY,W-360,50);
+  ctx.fillStyle='#00ff66';ctx.font='bold 22px monospace';ctx.textAlign='center';
+  ctx.fillText('▶  NACHT BEGINNEN',W/2,btnY+32);
+
+  briefingTex.needsUpdate=true;
+}
+
+function showBriefing(){
+  briefingGroup.visible=true;
+  const fwd=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+  briefingGroup.position.copy(camera.position).addScaledVector(fwd,2.8);
+  briefingGroup.position.y=Math.max(0.8,camera.position.y);
+  briefingGroup.lookAt(camera.position);
+  drawBriefing();
+}
+function hideBriefing(){briefingGroup.visible=false;}
 
 let lastT=0,flickT=0,bigScreenTimer=0,wallScreenTimer=0;
 // Snellere refresh voor vloeiende Chapo animaties
@@ -1047,6 +1154,7 @@ window.startGame=startGame;
 function restartGame(){
   killTimers();stopAll();
   if(endingActive)teardownEndingScene();
+  hideBriefing();
   if(G){G.running=false;G.dead=false;G.won=false;}G=null;
   gameTimeStr='12:00 AM';alarmSphereMat.opacity=0;
   doorAnim.left.open=1;doorAnim.left.target=1;doorAnim.right.open=1;doorAnim.right.target=1;
