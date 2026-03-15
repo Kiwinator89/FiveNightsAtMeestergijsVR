@@ -560,10 +560,10 @@ function drawAnimatronicsOnFeed(ctx,camId,fx,fy,fw,fh){
   const present=[];
   if(G.cfg.gijsActive&&G.mPos===camId&&camId!==MUSIC_CAM_ID)present.push({key:'gijs',scale:0.55,bottomPin:true});
   if(G.cfg.hoboActive&&G.hoboPos===camId&&camId!==MUSIC_CAM_ID)present.push({key:'hobo',scale:0.50,bottomPin:true});
-  if(G.jeffreyActive&&G.jeffreyPos===camId&&camId!==MUSIC_CAM_ID)present.push({key:'jeffrey',scale:0.78});
+  if(G.jeffreyActive&&G.jeffreyPos===camId&&camId!==MUSIC_CAM_ID)present.push({key:'jeffrey',scale:0.78,bottomPin:true});
   if(G.chapoActive&&camId===CHAPO_CAM_ID&&!G.chapoAlarm)present.push({key:'chapo',scale:0.72});
   if(G.diddyActive&&G.diddyPos===camId&&camId!==MUSIC_CAM_ID)present.push({key:'diddy',scale:0.52,bottomPin:true});
-  if(G.maduroPos===camId)present.push({key:'maduro',scale:0.55,alpha:0.7});
+  if(G.maduroPos===camId)present.push({key:'maduro',scale:0.55,alpha:0.7,bottomPin:true});
 
   const n=present.length;
   if(n>0){
