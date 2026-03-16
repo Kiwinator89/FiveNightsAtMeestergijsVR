@@ -19,7 +19,7 @@ body{background:#000;overflow:hidden;font-family:'Share Tech Mono',monospace}
 .menu-btn:hover{border-color:#cc0000;color:#ff2200;box-shadow:0 0 20px #66000055}
 #threeCanvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0;z-index:1}
 </style>
-</head>
+</head> 
 <body>
 <div id="vrRequiredScreen"><div class="vr-req-box"><div class="vr-req-title">🥽 VR HEADSET REQUIRED</div><div class="vr-req-msg">VR headset required to play this game.<br><br>Please open this page in your Meta Quest browser<br>or another WebXR-compatible VR headset.</div></div></div>
 <div id="warnScreen"><div class="warn-box"><div class="warn-title">⚠ WAARSCHUWING</div><div class="warn-line">Dit spel bevat jumpscares en harde geluiden.</div><div class="warn-line">Spelen met koptelefoon op eigen risico.</div><div class="warn-line">Satirische horror-parodie — volledig fictief.</div><div class="warn-line">VR modus vereist — zet uw headset op.</div><button class="menu-btn" style="width:100%;margin-top:20px" id="warnBtn">IK BEGRIJP HET — DOORGAAN ▶</button></div></div>
@@ -732,7 +732,7 @@ const CHAR_HINTS={
   jeffrey:{name:'JEFFREY EPSTEIN', color:'#006688', hint:'Hij vindt het niet leuk om aangekeken te worden. Staar naar hem op de camera om hem op zijn plek te houden.'},
   chapo:  {name:'EL CHAPO',        color:'#558800', hint:'Hij sluipt dichterbij terwijl je niet kijkt. Houd hem in de gaten — of gebruik je alarm als het te laat is.'},
   diddy:  {name:'DIDDY',           color:'#660044', hint:'Gebruik je alarm en audiosysteem slim om hem tegen te houden. Hij laat zich niet zomaar afschrikken.'},
-  biden:  {name:'JOE BIDEN',       color:'#336699', hint:'Je hoort hem aankomen. Sluit de juiste deur — anders volgen er dodelijke consequenties.'},
+  biden:  {name:'JOE BIDEN',       color:'#336699', hint:'Je hoort hem aankomen. Sluit de juiste deur of anders volgen er dodelijke consequenties.'},
 };
 
 const NIGHT_CHARS={
@@ -1028,7 +1028,7 @@ function tickMusicBox(){
   if(!G.isWindingUp){const drain=MB_DRAIN_BASE+MB_DRAIN_SCALE*Math.min(G.hour,5);G.musicBox=Math.max(0,G.musicBox-drain);if(G.musicBox<=0)triggerTomJS();}
   if(SFX.muziek)SFX.muziek.playbackRate=G.musicBox>50?1:G.musicBox>25?0.82:G.musicBox>10?0.62:0.4;
 }
-const BIDEN_APPEAR_IV=10000,BIDEN_CHANCE=0.10,BIDEN_KILL_DELAY=5000;
+const BIDEN_APPEAR_IV=10000,BIDEN_CHANCE=0.10,BIDEN_KILL_DELAY=15000;
 function scheduleBiden(){
   if(G.bidenSpawnTimer)clearInterval(G.bidenSpawnTimer);
   if(G.dead||G.won||!G.cfg.bidenActive)return;
